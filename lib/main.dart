@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/services/webusb_service.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
+import 'package:plinkyhub/widgets/linux_webusb_instructions.dart';
 import 'package:plinkyhub/widgets/patch_controls.dart';
 import 'package:plinkyhub/widgets/patch_details.dart';
 
@@ -107,6 +108,7 @@ class _PlinkyEditorPageState extends ConsumerState<PlinkyEditorPage> {
                     ),
                   ),
                 ),
+              const LinuxWebusbInstructions(),
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: state.connectionState ==
