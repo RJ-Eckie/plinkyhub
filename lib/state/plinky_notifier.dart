@@ -218,6 +218,11 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     }
   }
 
+  void loadPatchFromBytes(Uint8List data) {
+    final patch = Patch(data.buffer);
+    state = state.copyWith(patch: patch);
+  }
+
   void clearPatch() {
     state = state.copyWith(patch: null);
   }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/category.dart';
+import 'package:plinkyhub/models/patch.dart';
+import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
+import 'package:plinkyhub/state/saved_patches_notifier.dart';
 import 'package:plinkyhub/utils/compress.dart';
 import 'package:plinkyhub/widgets/parameter_tile.dart';
 import 'package:plinkyhub/widgets/randomize_controls.dart';
@@ -37,10 +40,16 @@ class PatchDetails extends ConsumerWidget {
           'browser memory.',
         ),
         const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: () =>
-              ref.read(plinkyProvider.notifier).clearPatch(),
-          child: const Text('Clear patch in browser memory'),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: () =>
+                  ref.read(plinkyProvider.notifier).clearPatch(),
+              child: const Text('Clear patch in browser memory'),
+            ),
+            const SizedBox(width: 8),
+            _SaveToCloudButton(patch: patch),
+          ],
         ),
         const SizedBox(height: 16),
         Text(
@@ -151,6 +160,85 @@ class PatchDetails extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _SaveToCloudButton extends ConsumerWidget {
+  const _SaveToCloudButton({required this.patch});
+
+  final Patch patch;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSignedIn = ref.watch(authenticationProvider).user != null;
+
+    return ElevatedButton.icon(
+      onPressed: isSignedIn
+          ? () => _showSaveDialog(context, ref)
+          : null,
+      icon: const Icon(Icons.cloud_upload, size: 18),
+      label: Text(isSignedIn ? 'Save to cloud' : 'Sign in to save'),
+    );
+  }
+
+  void _showSaveDialog(BuildContext context, WidgetRef ref) {
+    final descriptionController = TextEditingController();
+    var isPublic = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            'Save "${patch.name.isEmpty ? '(unnamed)' : patch.name}" to cloud',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description (optional)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile(
+                title: const Text('Share publicly'),
+                subtitle: const Text(
+                  'Allow others to find and load this patch',
+                ),
+                value: isPublic,
+                onChanged: (value) {
+                  setDialogState(() => isPublic = value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(savedPatchesProvider.notifier).savePatch(
+                      patch,
+                      description: descriptionController.text,
+                      isPublic: isPublic,
+                    );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Patch saved to cloud')),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
