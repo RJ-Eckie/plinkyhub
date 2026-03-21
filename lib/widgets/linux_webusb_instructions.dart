@@ -20,6 +20,7 @@ class LinuxWebusbInstructions extends StatelessWidget {
         title: Text('Linux: WebUSB access denied?'),
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.only(bottom: 8),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _InstructionStep(
             number: '1',
