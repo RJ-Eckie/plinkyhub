@@ -5,6 +5,7 @@ import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SavedPatchesPage extends ConsumerStatefulWidget {
   const SavedPatchesPage({super.key});
@@ -20,7 +21,13 @@ class _SavedPatchesPageState extends ConsumerState<SavedPatchesPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final isSignedIn =
+        Supabase.instance.client.auth.currentUser != null;
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: isSignedIn ? 0 : 1,
+    );
     _tabController.addListener(() {
       if (_tabController.index == 1 && !_tabController.indexIsChanging) {
         ref.read(savedPatchesProvider.notifier).fetchPublicPatches();
@@ -38,32 +45,14 @@ class _SavedPatchesPageState extends ConsumerState<SavedPatchesPage>
   Widget build(BuildContext context) {
     final authenticationState = ref.watch(authenticationProvider);
     final savedPatchesState = ref.watch(savedPatchesProvider);
-
-    if (authenticationState.user == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off, size: 64),
-            const SizedBox(height: 16),
-            const Text('Sign in to save and manage your patches'),
-            const SizedBox(height: 16),
-            PlinkyButton(
-              onPressed: () => showSignInDialog(context),
-              icon: Icons.login,
-              label: 'Sign in',
-            ),
-          ],
-        ),
-      );
-    }
+    final isSignedIn = authenticationState.user != null;
 
     return Column(
       children: [
         TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'My Patches'),
+            Tab(text: 'Patches'),
             Tab(text: 'Community Patches'),
           ],
         ),
@@ -81,14 +70,34 @@ class _SavedPatchesPageState extends ConsumerState<SavedPatchesPage>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _PatchList(
-                patches: savedPatchesState.userPatches,
-                isLoading: savedPatchesState.isLoading,
-                isOwned: true,
-                onRefresh: () => ref
-                    .read(savedPatchesProvider.notifier)
-                    .fetchUserPatches(),
-              ),
+              if (isSignedIn)
+                _PatchList(
+                  patches: savedPatchesState.userPatches,
+                  isLoading: savedPatchesState.isLoading,
+                  isOwned: true,
+                  onRefresh: () => ref
+                      .read(savedPatchesProvider.notifier)
+                      .fetchUserPatches(),
+                )
+              else
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 64),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Sign in to save and manage your patches',
+                      ),
+                      const SizedBox(height: 16),
+                      PlinkyButton(
+                        onPressed: () => showSignInDialog(context),
+                        icon: Icons.login,
+                        label: 'Sign in',
+                      ),
+                    ],
+                  ),
+                ),
               _PatchList(
                 patches: savedPatchesState.publicPatches,
                 isLoading: savedPatchesState.isLoading,
