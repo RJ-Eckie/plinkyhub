@@ -19,15 +19,39 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
     final currentUser = _supabase.auth.currentUser;
     _authSubscription?.cancel();
     _authSubscription =
-        _supabase.auth.onAuthStateChange.listen((authState) {
+        _supabase.auth.onAuthStateChange.listen((authState) async {
+      final user = authState.session?.user;
+      String? username;
+      if (user != null) {
+        username = await _fetchUsername(user.id);
+      }
       state = state.copyWith(
-        user: authState.session?.user,
+        user: user,
+        username: username,
         isLoading: false,
         errorMessage: null,
       );
     });
     ref.onDispose(() => _authSubscription?.cancel());
+    if (currentUser != null) {
+      _fetchUsername(currentUser.id).then((username) {
+        state = state.copyWith(username: username);
+      });
+    }
     return AuthenticationState(user: currentUser);
+  }
+
+  Future<String?> _fetchUsername(String userId) async {
+    try {
+      final response = await _supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', userId)
+          .maybeSingle();
+      return response?['username'] as String?;
+    } on PostgrestException catch (_) {
+      return null;
+    }
   }
 
   Future<void> signIn(String email, String password) async {
@@ -49,18 +73,30 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
     }
   }
 
-  Future<void> signUp(String email, String password) async {
+  Future<void> signUp(String email, String password, String username) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
       );
+      if (response.user != null) {
+        await _supabase.from('profiles').insert({
+          'id': response.user!.id,
+          'username': username,
+        });
+      }
       state = state.copyWith(
         user: response.user,
+        username: username,
         isLoading: false,
       );
     } on AuthException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.message,
+      );
+    } on PostgrestException catch (error) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.message,

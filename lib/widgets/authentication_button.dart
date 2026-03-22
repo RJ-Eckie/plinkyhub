@@ -35,8 +35,11 @@ class AuthenticationButton extends ConsumerWidget {
       );
     }
 
+    final username = authenticationState.username;
+    final displayName = username ?? user.email ?? 'Account';
+
     return PopupMenuButton<String>(
-      tooltip: user.email ?? 'Account',
+      tooltip: displayName,
       onSelected: (value) {
         if (value == 'sign_out') {
           ref.read(authenticationProvider.notifier).signOut();
@@ -46,7 +49,7 @@ class AuthenticationButton extends ConsumerWidget {
         PopupMenuItem<String>(
           enabled: false,
           child: Text(
-            user.email ?? 'Signed in',
+            displayName,
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
@@ -59,7 +62,7 @@ class AuthenticationButton extends ConsumerWidget {
       child: CircleAvatar(
         radius: 16,
         child: Text(
-          (user.email ?? '?')[0].toUpperCase(),
+          displayName[0].toUpperCase(),
           style: const TextStyle(fontSize: 14),
         ),
       ),
@@ -88,12 +91,14 @@ class SignInDialog extends ConsumerStatefulWidget {
 class _SignInDialogState extends ConsumerState<SignInDialog> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
   bool _isSignUp = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -124,6 +129,17 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
               ),
               const SizedBox(height: 12),
             ],
+            if (_isSignUp) ...[
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+            ],
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -131,7 +147,7 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
-              autofocus: true,
+              autofocus: !_isSignUp,
             ),
             const SizedBox(height: 12),
             TextField(
@@ -178,13 +194,17 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
   void _submit() {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final username = _usernameController.text.trim();
     if (email.isEmpty || password.isEmpty) {
+      return;
+    }
+    if (_isSignUp && username.isEmpty) {
       return;
     }
 
     final notifier = ref.read(authenticationProvider.notifier);
     if (_isSignUp) {
-      notifier.signUp(email, password);
+      notifier.signUp(email, password, username);
     } else {
       notifier.signIn(email, password);
     }

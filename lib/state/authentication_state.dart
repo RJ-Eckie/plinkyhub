@@ -8,6 +8,7 @@ abstract class AuthenticationState with _$AuthenticationState {
   const factory AuthenticationState({
     @Default(false) bool isLoading,
     User? user,
+    String? username,
     String? errorMessage,
   }) = _AuthenticationState;
 }
