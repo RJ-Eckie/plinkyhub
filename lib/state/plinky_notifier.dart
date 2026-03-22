@@ -249,4 +249,14 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
   set patchCategory(PatchCategory category) {
     state.patch?.category = category;
   }
+
+  set patchArp(bool value) {
+    state.patch?.arp = value;
+    ref.invalidateSelf();
+  }
+
+  set patchLatch(bool value) {
+    state.patch?.latch = value;
+    ref.invalidateSelf();
+  }
 }

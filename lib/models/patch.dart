@@ -47,7 +47,22 @@ class Patch {
   ByteBuffer get buffer => _buffer;
 
   bool get arp => (_bitFieldUint8[0] & 1) > 0;
+  set arp(bool value) {
+    if (value) {
+      _bitFieldUint8[0] |= 1;
+    } else {
+      _bitFieldUint8[0] &= ~1;
+    }
+  }
+
   bool get latch => (_bitFieldUint8[0] & 2) > 0;
+  set latch(bool value) {
+    if (value) {
+      _bitFieldUint8[0] |= 2;
+    } else {
+      _bitFieldUint8[0] &= ~2;
+    }
+  }
   int get loopStart => _bitFieldInt8[1];
   int get loopLength => _bitFieldInt8[2];
 

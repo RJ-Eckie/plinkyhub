@@ -18,10 +18,9 @@ class PatchDetailsHeader extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _SaveToCloudButton(patch: patch),
-          ],
+        Text(
+          'Parameters',
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
         Row(
@@ -81,28 +80,103 @@ class PatchDetailsHeader extends ConsumerWidget {
                 },
               ),
             ),
+            const SizedBox(width: 8),
+            _SaveToCloudButton(patch: patch),
+            const SizedBox(width: 8),
+            PlinkyButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => const _RandomizeDialog(),
+              ),
+              icon: Icons.shuffle,
+              label: 'Randomize patch',
+            ),
           ],
         ),
-        const SizedBox(height: 8),
-        PlinkyButton(
-          onPressed: () => showDialog<void>(
-            context: context,
-            builder: (context) => const _RandomizeDialog(),
-          ),
-          icon: Icons.shuffle,
-          label: 'Randomize patch',
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Parameters',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Arp: ${patch.arp} | '
-          'Latch: ${patch.latch} | '
-          'Loop start: ${patch.loopStart} | '
-          'Loop length: ${patch.loopLength}',
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 24,
+          runSpacing: 8,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.music_note, size: 20),
+                const SizedBox(width: 4),
+                DropdownButton<bool>(
+                  value: patch.arp,
+                  isDense: true,
+                  underline: const SizedBox.shrink(),
+                  items: const [
+                    DropdownMenuItem(
+                      value: true,
+                      child: Text('Arp: On',
+                          style: TextStyle(fontSize: 15)),
+                    ),
+                    DropdownMenuItem(
+                      value: false,
+                      child: Text('Arp: Off',
+                          style: TextStyle(fontSize: 15)),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(plinkyProvider.notifier).patchArp =
+                          value;
+                    }
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock, size: 20),
+                const SizedBox(width: 4),
+                DropdownButton<bool>(
+                  value: patch.latch,
+                  isDense: true,
+                  underline: const SizedBox.shrink(),
+                  items: const [
+                    DropdownMenuItem(
+                      value: true,
+                      child: Text('Latch: On',
+                          style: TextStyle(fontSize: 15)),
+                    ),
+                    DropdownMenuItem(
+                      value: false,
+                      child: Text('Latch: Off',
+                          style: TextStyle(fontSize: 15)),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(plinkyProvider.notifier).patchLatch =
+                          value;
+                    }
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.first_page, size: 20),
+                const SizedBox(width: 4),
+                Text('Loop start: ${patch.loopStart}',
+                    style: const TextStyle(fontSize: 15)),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.straighten, size: 20),
+                const SizedBox(width: 4),
+                Text('Loop length: ${patch.loopLength}',
+                    style: const TextStyle(fontSize: 15)),
+              ],
+            ),
+          ],
         ),
       ],
     );
@@ -229,87 +303,123 @@ class _RandomizeDialogState extends ConsumerState<_RandomizeDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Randomize patch'),
-      content: SingleChildScrollView(
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 500),
+        child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Select which parameter groups to randomize. '
-              'To transfer to Plinky, press "Save patch".',
+              'Select which parameter groups to randomize.',
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _RandomizeGroupSection(
+                        title: 'Synth',
+                        groups: const [RandomizeGroup.synth],
+                        selected: _selectedGroups,
+                        onChanged: _onGroupToggled,
+                      ),
+                      const SizedBox(height: 16),
+                      _RandomizeGroupSection(
+                        title: 'Envelope',
+                        groups: const [
+                          RandomizeGroup.envelope1,
+                          RandomizeGroup.envelope2,
+                        ],
+                        selected: _selectedGroups,
+                        onChanged: _onGroupToggled,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _RandomizeGroupSection(
+                        title: 'Effects',
+                        groups: const [RandomizeGroup.effects],
+                        selected: _selectedGroups,
+                        onChanged: _onGroupToggled,
+                      ),
+                      const SizedBox(height: 16),
+                      _RandomizeGroupSection(
+                        title: 'Arp / Seq',
+                        groups: const [
+                          RandomizeGroup.arpeggiator,
+                          RandomizeGroup.sequencer,
+                        ],
+                        selected: _selectedGroups,
+                        onChanged: _onGroupToggled,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _RandomizeGroupSection(
+                        title: 'Sampler',
+                        groups: const [RandomizeGroup.sampler],
+                        selected: _selectedGroups,
+                        onChanged: _onGroupToggled,
+                      ),
+                      const SizedBox(height: 16),
+                      _RandomizeGroupSection(
+                        title: 'Modulation',
+                        groups: const [
+                          RandomizeGroup.modA,
+                          RandomizeGroup.modB,
+                          RandomizeGroup.modX,
+                          RandomizeGroup.modY,
+                        ],
+                        selected: _selectedGroups,
+                        onChanged: _onGroupToggled,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                PlinkyButton(
-                  onPressed: _selectAll,
-                  icon: Icons.select_all,
-                  label: 'Select all',
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _selectedGroups.length ==
+                            RandomizeGroup.values.length
+                        ? true
+                        : _selectedGroups.isEmpty
+                            ? false
+                            : null,
+                    tristate: true,
+                    onChanged: (value) {
+                      if (value == true) {
+                        _selectAll();
+                      } else {
+                        _clearAll();
+                      }
+                    },
+                  ),
                 ),
                 const SizedBox(width: 8),
-                PlinkyButton(
-                  onPressed: _clearAll,
-                  icon: Icons.deselect,
-                  label: 'Clear all',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 24,
-              runSpacing: 16,
-              children: [
-                _RandomizeGroupSection(
-                  title: 'Synth',
-                  groups: const [RandomizeGroup.synth],
-                  selected: _selectedGroups,
-                  onChanged: _onGroupToggled,
-                ),
-                _RandomizeGroupSection(
-                  title: 'Envelope',
-                  groups: const [
-                    RandomizeGroup.envelope1,
-                    RandomizeGroup.envelope2,
-                  ],
-                  selected: _selectedGroups,
-                  onChanged: _onGroupToggled,
-                ),
-                _RandomizeGroupSection(
-                  title: 'Effects',
-                  groups: const [RandomizeGroup.effects],
-                  selected: _selectedGroups,
-                  onChanged: _onGroupToggled,
-                ),
-                _RandomizeGroupSection(
-                  title: 'Arp / Seq',
-                  groups: const [
-                    RandomizeGroup.arpeggiator,
-                    RandomizeGroup.sequencer,
-                  ],
-                  selected: _selectedGroups,
-                  onChanged: _onGroupToggled,
-                ),
-                _RandomizeGroupSection(
-                  title: 'Sampler',
-                  groups: const [RandomizeGroup.sampler],
-                  selected: _selectedGroups,
-                  onChanged: _onGroupToggled,
-                ),
-                _RandomizeGroupSection(
-                  title: 'Modulation',
-                  groups: const [
-                    RandomizeGroup.modA,
-                    RandomizeGroup.modB,
-                    RandomizeGroup.modX,
-                    RandomizeGroup.modY,
-                  ],
-                  selected: _selectedGroups,
-                  onChanged: _onGroupToggled,
-                ),
+                const Text('Select all'),
               ],
             ),
           ],
         ),
+      ),
       ),
       actions: [
         PlinkyButton(
