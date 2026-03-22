@@ -120,15 +120,6 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (authenticationState.errorMessage != null) ...[
-              Text(
-                authenticationState.errorMessage!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
             if (_isSignUp) ...[
               TextField(
                 controller: _usernameController,
@@ -159,6 +150,15 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
               obscureText: true,
               onSubmitted: (_) => _submit(),
             ),
+            if (authenticationState.errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                authenticationState.errorMessage!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
           ],
         ),
       ),

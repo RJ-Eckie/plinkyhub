@@ -91,6 +91,11 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
         isLoading: false,
         errorMessage: _friendlyAuthError(error.message),
       );
+    } on Exception catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _friendlyAuthError(error.toString()),
+      );
     }
   }
 
