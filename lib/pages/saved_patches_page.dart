@@ -52,7 +52,7 @@ class _SavedPatchesPageState extends ConsumerState<SavedPatchesPage>
         TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Patches'),
+            Tab(text: 'My Patches'),
             Tab(text: 'Community Patches'),
           ],
         ),
