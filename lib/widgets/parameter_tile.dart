@@ -255,10 +255,12 @@ class _ModulationColumn extends StatelessWidget {
             children: [
               SizedBox(
                 width: 60,
-                child: Text(
-                  entry.key,
-                  style: const TextStyle(fontSize: 13),
-                ),
+                child: entry.key == 'Random'
+                    ? const Icon(Icons.shuffle, size: 16)
+                    : Text(
+                        entry.key,
+                        style: const TextStyle(fontSize: 13),
+                      ),
               ),
               Expanded(
                 child: SizedBox(
