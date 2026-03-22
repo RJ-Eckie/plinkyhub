@@ -14,9 +14,73 @@ class ParameterTile extends StatefulWidget {
 class _ParameterTileState extends State<ParameterTile> {
   Parameter get parameter => widget.parameter;
 
+  late final TextEditingController _valueController;
+  late final Map<String, TextEditingController> _modulationControllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _valueController = TextEditingController(
+      text: parameter.displayValue,
+    );
+    _modulationControllers = {
+      'base': TextEditingController(text: parameter.displayValue),
+      'envelope': TextEditingController(
+        text: formatValue(parameter.modulations.envelope),
+      ),
+      'pressure': TextEditingController(
+        text: formatValue(parameter.modulations.pressure),
+      ),
+      'random': TextEditingController(
+        text: formatValue(parameter.modulations.random),
+      ),
+      'a': TextEditingController(
+        text: formatValue(parameter.modulations.a),
+      ),
+      'b': TextEditingController(
+        text: formatValue(parameter.modulations.b),
+      ),
+      'x': TextEditingController(
+        text: formatValue(parameter.modulations.x),
+      ),
+      'y': TextEditingController(
+        text: formatValue(parameter.modulations.y),
+      ),
+    };
+  }
+
+  @override
+  void dispose() {
+    _valueController.dispose();
+    for (final controller in _modulationControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _updateControllerTexts() {
+    _valueController.text = parameter.displayValue;
+    _modulationControllers['base']!.text = parameter.displayValue;
+    _modulationControllers['envelope']!.text =
+        formatValue(parameter.modulations.envelope);
+    _modulationControllers['pressure']!.text =
+        formatValue(parameter.modulations.pressure);
+    _modulationControllers['random']!.text =
+        formatValue(parameter.modulations.random);
+    _modulationControllers['a']!.text =
+        formatValue(parameter.modulations.a);
+    _modulationControllers['b']!.text =
+        formatValue(parameter.modulations.b);
+    _modulationControllers['x']!.text =
+        formatValue(parameter.modulations.x);
+    _modulationControllers['y']!.text =
+        formatValue(parameter.modulations.y);
+  }
+
   void _onSliderChanged(double newValue) {
     setState(() {
       parameter.value = newValue.round();
+      _updateControllerTexts();
     });
   }
 
@@ -26,6 +90,7 @@ class _ParameterTileState extends State<ParameterTile> {
     }
     setState(() {
       parameter.value = newValue;
+      _updateControllerTexts();
     });
   }
 
@@ -40,6 +105,7 @@ class _ParameterTileState extends State<ParameterTile> {
     setState(() {
       parameter.value =
           denormalized.clamp(rangeMinimum, rangeMaximum);
+      _updateControllerTexts();
     });
   }
 
@@ -66,6 +132,7 @@ class _ParameterTileState extends State<ParameterTile> {
         case 'random':
           parameter.modulations.random = denormalized;
       }
+      _updateControllerTexts();
     });
   }
 
@@ -97,7 +164,7 @@ class _ParameterTileState extends State<ParameterTile> {
                   height: 40,
                   color: colorScheme.onPrimaryContainer,
                   errorBuilder: (context, error, stackTrace) =>
-                      const SizedBox(width: 32, height: 32),
+                      const SizedBox(width: 40, height: 40),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -112,9 +179,7 @@ class _ParameterTileState extends State<ParameterTile> {
                   SizedBox(
                     width: 64,
                     child: TextField(
-                      controller: TextEditingController(
-                        text: parameter.displayValue,
-                      ),
+                      controller: _valueController,
                       style: TextStyle(
                         color: colorScheme.onPrimaryContainer,
                         fontSize: 14,
@@ -175,12 +240,10 @@ class _ParameterTileState extends State<ParameterTile> {
                     Expanded(
                       child: _ModulationColumn(
                         entries: {
-                          'Base': parameter.displayValue,
-                          'Env': formatValue(parameter.modulations.envelope),
-                          'Pressure':
-                              formatValue(parameter.modulations.pressure),
-                          'Random':
-                              formatValue(parameter.modulations.random),
+                          'Base': _modulationControllers['base']!,
+                          'Env': _modulationControllers['envelope']!,
+                          'Pressure': _modulationControllers['pressure']!,
+                          'Random': _modulationControllers['random']!,
                         },
                         onChanged: (source, value) {
                           final sourceKey = switch (source) {
@@ -201,10 +264,10 @@ class _ParameterTileState extends State<ParameterTile> {
                     Expanded(
                       child: _ModulationColumn(
                         entries: {
-                          'A': formatValue(parameter.modulations.a),
-                          'B': formatValue(parameter.modulations.b),
-                          'X': formatValue(parameter.modulations.x),
-                          'Y': formatValue(parameter.modulations.y),
+                          'A': _modulationControllers['a']!,
+                          'B': _modulationControllers['b']!,
+                          'X': _modulationControllers['x']!,
+                          'Y': _modulationControllers['y']!,
                         },
                         labelOnRight: true,
                         onChanged: (source, value) {
@@ -245,7 +308,7 @@ class _ModulationColumn extends StatelessWidget {
     this.labelOnRight = false,
   });
 
-  final Map<String, String> entries;
+  final Map<String, TextEditingController> entries;
   final void Function(String source, String value) onChanged;
   final bool labelOnRight;
 
@@ -260,7 +323,7 @@ class _ModulationColumn extends StatelessWidget {
         final field = SizedBox(
           width: 64,
           child: TextField(
-            controller: TextEditingController(text: entry.value),
+            controller: entry.value,
             style: const TextStyle(fontSize: 14),
             decoration: const InputDecoration(
               isDense: true,

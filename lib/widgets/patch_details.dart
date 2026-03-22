@@ -4,37 +4,17 @@ import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
-import 'package:plinkyhub/state/plinky_state.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
-import 'package:plinkyhub/widgets/parameter_tile.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/randomize_controls.dart';
 
-class PatchDetails extends ConsumerWidget {
-  const PatchDetails({super.key});
+class PatchDetailsHeader extends ConsumerWidget {
+  const PatchDetailsHeader({required this.patch, super.key});
+
+  final Patch patch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(plinkyProvider);
-    final patch = state.patch;
-
-    final isLoading =
-        state.connectionState == PlinkyConnectionState.loadingPatch;
-
-    if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (patch == null) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('No patch in browser memory'),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -128,37 +108,6 @@ class PatchDetails extends ConsumerWidget {
           'Latch: ${patch.latch} | '
           'Loop start: ${patch.loopStart} | '
           'Loop length: ${patch.loopLength}',
-        ),
-        const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const minimumTileWidth = 320.0;
-            final columnCount = (constraints.maxWidth /
-                    minimumTileWidth)
-                .floor()
-                .clamp(1, 6);
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: patch.parameters
-                  .where(
-                    (parameter) =>
-                        parameter.name != null &&
-                        !parameter.name!.endsWith('_UNUSED'),
-                  )
-                  .map((parameter) {
-                return SizedBox(
-                  width:
-                      (constraints.maxWidth -
-                          (columnCount - 1) * 8) /
-                      columnCount,
-                  child: ParameterTile(
-                    parameter: parameter,
-                  ),
-                );
-              }).toList(),
-            );
-          },
         ),
       ],
     );
