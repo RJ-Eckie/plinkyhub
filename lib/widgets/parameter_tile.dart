@@ -175,7 +175,27 @@ class _ParameterTileState extends State<ParameterTile> {
                     ),
                   ),
                 ),
-                if (!hasDropdown)
+                if (!hasDropdown) ...[
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 18,
+                      icon: Icon(
+                        Icons.restart_alt,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      tooltip: 'Reset value',
+                      onPressed: () {
+                        setState(() {
+                          parameter.value = 0;
+                          _updateControllerTexts();
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 4),
                   SizedBox(
                     width: 64,
                     child: TextField(
@@ -200,6 +220,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       onSubmitted: _onNormalizedValueChanged,
                     ),
                   ),
+                ],
               ],
             ),
           ),
