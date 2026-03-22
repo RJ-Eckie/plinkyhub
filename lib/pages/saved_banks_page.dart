@@ -417,6 +417,8 @@ class _CreateBankTabState extends ConsumerState<_CreateBankTab> {
             },
           ),
           const SizedBox(height: 16),
+          _SamplesSection(slots: _slots),
+          const SizedBox(height: 16),
           Center(
             child: PlinkyButton(
               onPressed: savedBanksState.isLoading ? null : _saveBank,
@@ -459,6 +461,83 @@ class _CreateBankTabState extends ConsumerState<_CreateBankTab> {
         _slots[i] = (patchId: null, sampleId: null);
       }
     });
+  }
+}
+
+class _SamplesSection extends ConsumerWidget {
+  const _SamplesSection({required this.slots});
+
+  final List<({String? patchId, String? sampleId})> slots;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final samples = ref.watch(
+      savedSamplesProvider.select((state) => state.userSamples),
+    );
+
+    final uniqueSampleIds =
+        slots.map((slot) => slot.sampleId).whereType<String>().toSet().toList();
+    final hasOverflow = uniqueSampleIds.length > 8;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Samples',
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        if (hasOverflow)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'A bank can use at most 8 samples. '
+              'Currently using ${uniqueSampleIds.length}.',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+          ),
+        Row(
+          children: List.generate(8, (index) {
+            final sampleId =
+                index < uniqueSampleIds.length ? uniqueSampleIds[index] : null;
+            final sample = sampleId != null
+                ? samples
+                    .where((sample) => sample.id == sampleId)
+                    .firstOrNull
+                : null;
+            return Expanded(
+              child: Card(
+                color: sampleId != null
+                    ? theme.colorScheme.primaryContainer
+                    : null,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${index + 1}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        sample?.name ?? '-',
+                        style: theme.textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
   }
 }
 
