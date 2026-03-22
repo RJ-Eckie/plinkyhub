@@ -27,30 +27,24 @@ class AboutPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text('PlinkyHub is made by Lukas Klingsbo (spydon).'),
-          const SizedBox(height: 8),
-          const Text(
-            'Based on the original Plinky WebUSB editor by '
-            'Orangetronic, miunau and wraybowling.',
+          const SizedBox(height: 16),
+          Text(
+            'Special thanks to:',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          Wrap(
-            children: [
-              const Text('Parameter icons by '),
-              GestureDetector(
-                onTap: () => web.window.open(
-                  'https://x.com/mmalex',
-                  '_blank',
-                ),
-                child: Text(
-                  '@mmalex',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-              const Text('.'),
-            ],
+          const Text(
+            '\u2022 mmalex and Making Sound Machines for creating '
+            'the amazing Plinky',
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '\u2022 RJ for creating the new firmware',
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '\u2022 Orangetronic, miunau and wraybowling for the '
+            'original Plinky WebUSB editor',
           ),
           const SizedBox(height: 24),
           Text(
@@ -78,6 +72,14 @@ class AboutPage extends StatelessWidget {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () => web.window.open(
+              'https://github.com/spydon/plinkyhub',
+              '_blank',
+            ),
+            icon: const Icon(Icons.code),
+            label: const Text('PlinkyHub GitHub'),
+          ),
+          TextButton.icon(
+            onPressed: () => web.window.open(
               'https://plinkysynth.com',
               '_blank',
             ),
@@ -91,14 +93,6 @@ class AboutPage extends StatelessWidget {
             ),
             icon: const Icon(Icons.piano),
             label: const Text('Original Plinky WebUSB Editor'),
-          ),
-          TextButton.icon(
-            onPressed: () => web.window.open(
-              'https://github.com/spydon/plinkyhub',
-              '_blank',
-            ),
-            icon: const Icon(Icons.code),
-            label: const Text('PlinkyHub GitHub'),
           ),
         ],
       ),
