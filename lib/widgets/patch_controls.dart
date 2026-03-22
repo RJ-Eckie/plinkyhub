@@ -48,11 +48,6 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Per-patch operations - you can load and save '
-          'patches on the device.',
-        ),
-        const SizedBox(height: 8),
         Row(
           children: [
             const Text('Patch number'),

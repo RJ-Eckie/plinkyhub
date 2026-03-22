@@ -15,6 +15,9 @@ abstract class SavedPatch with _$SavedPatch {
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
     @Default('') String description,
     @Default(false) @JsonKey(name: 'is_public') bool isPublic,
+    @Default('') String username,
+    @Default(0) @JsonKey(name: 'star_count') int starCount,
+    @Default(false) @JsonKey(name: 'is_starred') bool isStarred,
   }) = _SavedPatch;
 
   factory SavedPatch.fromJson(Map<String, dynamic> json) =>

@@ -26,6 +26,35 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
     return const SavedPatchesState();
   }
 
+  Future<List<SavedPatch>> _parsePatchRows(List<dynamic> response) async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    Set<String> starredPatchIds = {};
+
+    if (userId != null) {
+      final stars = await _supabase
+          .from('patch_stars')
+          .select('patch_id')
+          .eq('user_id', userId);
+      starredPatchIds = (stars as List)
+          .map((row) => row['patch_id'] as String)
+          .toSet();
+    }
+
+    return response.map((row) {
+      final map = row as Map<String, dynamic>;
+      final profile = map['profiles'] as Map<String, dynamic>?;
+      final starCountList = map['patch_stars'] as List<dynamic>?;
+      return SavedPatch.fromJson({
+        ...map,
+        'username': profile?['username'] ?? '',
+        'star_count': starCountList?.isNotEmpty == true
+            ? starCountList!.first['count'] as int
+            : 0,
+        'is_starred': starredPatchIds.contains(map['id']),
+      });
+    }).toList();
+  }
+
   Future<void> fetchUserPatches() async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
@@ -36,15 +65,11 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
     try {
       final response = await _supabase
           .from('patches')
-          .select()
+          .select('*, profiles(username), patch_stars(count)')
           .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
-      final patches =
-          (response as List).map((row) {
-            return SavedPatch.fromJson(row as Map<String, dynamic>);
-          }).toList();
-
+      final patches = await _parsePatchRows(response as List);
       state = state.copyWith(userPatches: patches, isLoading: false);
     } on Exception catch (error) {
       state = state.copyWith(
@@ -60,7 +85,7 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
       final userId = ref.read(authenticationProvider).user?.id;
       var query = _supabase
           .from('patches')
-          .select()
+          .select('*, profiles(username), patch_stars(count)')
           .eq('is_public', true);
 
       // Exclude own patches from community list.
@@ -70,11 +95,7 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
 
       final response = await query.order('updated_at', ascending: false);
 
-      final patches =
-          (response as List).map((row) {
-            return SavedPatch.fromJson(row as Map<String, dynamic>);
-          }).toList();
-
+      final patches = await _parsePatchRows(response as List);
       state = state.copyWith(publicPatches: patches, isLoading: false);
     } on Exception catch (error) {
       state = state.copyWith(
@@ -153,6 +174,64 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
         errorMessage: error.toString(),
       );
     }
+  }
+
+  Future<void> toggleStar(SavedPatch patch) async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
+      return;
+    }
+
+    try {
+      if (patch.isStarred) {
+        await _supabase
+            .from('patch_stars')
+            .delete()
+            .eq('patch_id', patch.id)
+            .eq('user_id', userId);
+      } else {
+        await _supabase.from('patch_stars').insert({
+          'patch_id': patch.id,
+          'user_id': userId,
+        });
+      }
+
+      // Optimistically update both lists.
+      final delta = patch.isStarred ? -1 : 1;
+      state = state.copyWith(
+        userPatches: _updateStarInList(
+          state.userPatches,
+          patch.id,
+          !patch.isStarred,
+          delta,
+        ),
+        publicPatches: _updateStarInList(
+          state.publicPatches,
+          patch.id,
+          !patch.isStarred,
+          delta,
+        ),
+      );
+    } on Exception catch (error) {
+      state = state.copyWith(errorMessage: error.toString());
+    }
+  }
+
+  List<SavedPatch> _updateStarInList(
+    List<SavedPatch> patches,
+    String patchId,
+    bool isStarred,
+    int delta,
+  ) {
+    return patches.map((patch) {
+      if (patch.id == patchId) {
+        return patch.copyWith(
+          isStarred: isStarred,
+          starCount: patch.starCount + delta,
+        );
+      }
+      return patch;
+    }).toList();
   }
 
   void loadPatchIntoEditor(SavedPatch savedPatch) {

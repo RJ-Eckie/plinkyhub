@@ -235,7 +235,10 @@ class _PatchCard extends ConsumerWidget {
             ],
             const SizedBox(height: 4),
             Text(
-              _formatDate(patch.updatedAt),
+              [
+                if (patch.username.isNotEmpty) 'by ${patch.username}',
+                _formatDate(patch.updatedAt),
+              ].join(' · '),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -255,6 +258,8 @@ class _PatchCard extends ConsumerWidget {
                   icon: Icons.download,
                   label: 'Load into editor',
                 ),
+                const SizedBox(width: 8),
+                _StarButton(patch: patch),
                 const Spacer(),
                 if (isOwned) ...[
                   IconButton(
@@ -323,5 +328,41 @@ class _PatchCard extends ConsumerWidget {
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _StarButton extends ConsumerWidget {
+  const _StarButton({required this.patch});
+
+  final SavedPatch patch;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSignedIn =
+        ref.watch(authenticationProvider).user != null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            patch.isStarred ? Icons.star : Icons.star_border,
+            size: 20,
+            color: patch.isStarred ? Colors.amber : null,
+          ),
+          tooltip: patch.isStarred ? 'Remove star' : 'Star this patch',
+          onPressed: isSignedIn
+              ? () => ref
+                  .read(savedPatchesProvider.notifier)
+                  .toggleStar(patch)
+              : null,
+        ),
+        if (patch.starCount > 0)
+          Text(
+            '${patch.starCount}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+      ],
+    );
   }
 }
