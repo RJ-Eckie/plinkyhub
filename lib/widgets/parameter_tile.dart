@@ -154,14 +154,14 @@ class _ParameterTileState extends State<ParameterTile> {
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            color: colorScheme.primaryContainer,
+            color: colorScheme.surfaceContainerHigh,
             child: Row(
               children: [
                 Image.asset(
                   'assets/icons/${parameter.icon}',
                   width: 40,
                   height: 40,
-                  color: colorScheme.onPrimaryContainer,
+                  color: Colors.white,
                   errorBuilder: (context, error, stackTrace) =>
                       const SizedBox(width: 40, height: 40),
                 ),
@@ -170,7 +170,7 @@ class _ParameterTileState extends State<ParameterTile> {
                   child: Text(
                     parameter.name ?? parameter.id,
                     style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -183,7 +183,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       iconSize: 18,
                       icon: Icon(
                         Icons.info_outline,
-                        color: colorScheme.onPrimaryContainer,
+                        color: Colors.white,
                       ),
                       tooltip: 'Details',
                       onPressed: () {
@@ -219,7 +219,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       iconSize: 18,
                       icon: Icon(
                         Icons.restart_alt,
-                        color: colorScheme.onPrimaryContainer,
+                        color: Colors.white,
                       ),
                       tooltip: 'Reset value',
                       onPressed: () {
@@ -244,7 +244,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       child: TextField(
                         controller: _valueController,
                         style: TextStyle(
-                          color: colorScheme.onPrimaryContainer,
+                          color: Colors.white,
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
@@ -256,7 +256,7 @@ class _ParameterTileState extends State<ParameterTile> {
                           border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                              color: colorScheme.onPrimaryContainer,
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -298,7 +298,7 @@ class _ParameterTileState extends State<ParameterTile> {
                     ),
                     min: rangeMinimum,
                     max: rangeMaximum,
-                    inactiveColor: colorScheme.onSurface.withValues(alpha: 0.3),
+                    inactiveColor: Colors.white.withValues(alpha: 0.3),
                     onChanged: _onSliderChanged,
                   ),
                   // Modulation matrix

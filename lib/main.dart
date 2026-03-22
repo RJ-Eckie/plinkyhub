@@ -60,13 +60,13 @@ class PlinkyHubApp extends ConsumerWidget {
       title: 'PlinkyHub',
       themeMode: themeMode,
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF28222E),
+        colorSchemeSeed: const Color(0xFF00897B),
         brightness: Brightness.light,
         useMaterial3: true,
         textTheme: textTheme,
       ),
       darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF28222E),
+        colorSchemeSeed: const Color(0xFF00897B),
         brightness: Brightness.dark,
         useMaterial3: true,
         textTheme: textTheme,

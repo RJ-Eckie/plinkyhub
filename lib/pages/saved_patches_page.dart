@@ -340,9 +340,9 @@ class _StarButton extends ConsumerWidget {
             color: patch.isStarred ? Colors.amber : null,
           ),
           tooltip: patch.isStarred ? 'Remove star' : 'Star this patch',
-          onPressed: isSignedIn
-              ? () => ref.read(savedPatchesProvider.notifier).toggleStar(patch)
-              : null,
+          onPressed: () => isSignedIn
+              ? ref.read(savedPatchesProvider.notifier).toggleStar(patch)
+              : showSignInDialog(context),
         ),
         if (patch.starCount > 0)
           Text(
