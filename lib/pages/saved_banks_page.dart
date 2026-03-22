@@ -9,7 +9,6 @@ import 'package:plinkyhub/state/saved_patches_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SavedBanksPage extends ConsumerStatefulWidget {
   const SavedBanksPage({super.key});
@@ -25,11 +24,10 @@ class _SavedBanksPageState extends ConsumerState<SavedBanksPage>
   @override
   void initState() {
     super.initState();
-    final isSignedIn = Supabase.instance.client.auth.currentUser != null;
     _tabController = TabController(
       length: 3,
       vsync: this,
-      initialIndex: isSignedIn ? 0 : 2,
+      initialIndex: 0,
     );
     _tabController.addListener(() {
       if (_tabController.index == 2 && !_tabController.indexIsChanging) {
