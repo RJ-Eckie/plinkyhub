@@ -35,7 +35,7 @@ class AboutPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             '\u2022 mmalex and Making Sound Machines for creating '
-            'the amazing Plinky',
+            'the amazing Plinky and Plinky+',
           ),
           const SizedBox(height: 4),
           const Text(
@@ -45,6 +45,10 @@ class AboutPage extends StatelessWidget {
           const Text(
             '\u2022 Orangetronic, miunau and wraybowling for the '
             'original Plinky WebUSB editor',
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '\u2022 mmalex for the parameter icons',
           ),
           const SizedBox(height: 24),
           Text(
