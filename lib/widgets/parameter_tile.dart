@@ -76,6 +76,9 @@ class _ParameterTileState extends State<ParameterTile> {
     final rangeMinimum = parameter.minimum < 0 ? -1024.0 : 0.0;
     const rangeMaximum = 1024.0;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -85,14 +88,14 @@ class _ParameterTileState extends State<ParameterTile> {
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            color: const Color(0xFF28222E),
+            color: colorScheme.primaryContainer,
             child: Row(
               children: [
                 Image.network(
                   'icons/${parameter.icon}',
                   width: 40,
                   height: 40,
-                  color: Colors.white,
+                  color: colorScheme.onPrimaryContainer,
                   errorBuilder: (context, error, stackTrace) =>
                       const SizedBox(width: 40, height: 40),
                 ),
@@ -100,7 +103,9 @@ class _ParameterTileState extends State<ParameterTile> {
                 Expanded(
                   child: Text(
                     parameter.name ?? parameter.id,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                    ),
                   ),
                 ),
                 if (!hasDropdown)
@@ -110,16 +115,21 @@ class _ParameterTileState extends State<ParameterTile> {
                       controller: TextEditingController(
                         text: parameter.displayValue,
                       ),
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        color: colorScheme.onPrimaryContainer,
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 4,
                           vertical: 4,
                         ),
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(
+                            color: colorScheme.onPrimaryContainer,
+                          ),
                         ),
                       ),
                       onSubmitted: _onNormalizedValueChanged,
@@ -131,7 +141,7 @@ class _ParameterTileState extends State<ParameterTile> {
           // Body
           Container(
             padding: const EdgeInsets.all(8),
-            color: const Color(0xFFF3F3F3),
+            color: colorScheme.surfaceContainerHighest,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
