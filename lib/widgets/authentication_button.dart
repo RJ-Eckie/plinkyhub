@@ -182,8 +182,7 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
           label: 'Cancel',
         ),
         PlinkyButton(
-          onPressed:
-              authenticationState.isLoading ? null : _submit,
+          onPressed: authenticationState.isLoading ? null : _submit,
           icon: Icons.login,
           label: _isSignUp ? 'Sign up' : 'Sign in',
         ),

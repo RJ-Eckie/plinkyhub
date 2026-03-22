@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/models/saved_patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
-import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class SavedPatchesPage extends ConsumerStatefulWidget {
@@ -136,9 +136,7 @@ class _PatchList extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isOwned
-                  ? 'No saved patches yet'
-                  : 'No community patches yet',
+              isOwned ? 'No saved patches yet' : 'No community patches yet',
             ),
             const SizedBox(height: 8),
             PlinkyButton(
@@ -251,9 +249,7 @@ class _PatchCard extends ConsumerWidget {
                     ref
                         .read(savedPatchesProvider.notifier)
                         .loadPatchIntoEditor(patch);
-                    ref
-                        .read(selectedPageProvider.notifier)
-                        .select(0);
+                    ref.read(selectedPageProvider.notifier).selected = 0;
                   },
                   icon: Icons.download,
                   label: 'Load into editor',
@@ -264,14 +260,10 @@ class _PatchCard extends ConsumerWidget {
                 if (isOwned) ...[
                   IconButton(
                     icon: Icon(
-                      patch.isPublic
-                          ? Icons.public
-                          : Icons.public_off,
+                      patch.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
-                    tooltip: patch.isPublic
-                        ? 'Make private'
-                        : 'Make public',
+                    tooltip: patch.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
                       ref
                           .read(savedPatchesProvider.notifier)
@@ -313,9 +305,7 @@ class _PatchCard extends ConsumerWidget {
           PlinkyButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ref
-                  .read(savedPatchesProvider.notifier)
-                  .deletePatch(patch.id);
+              ref.read(savedPatchesProvider.notifier).deletePatch(patch.id);
             },
             icon: Icons.delete,
             label: 'Delete',
@@ -338,8 +328,7 @@ class _StarButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSignedIn =
-        ref.watch(authenticationProvider).user != null;
+    final isSignedIn = ref.watch(authenticationProvider).user != null;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -352,9 +341,7 @@ class _StarButton extends ConsumerWidget {
           ),
           tooltip: patch.isStarred ? 'Remove star' : 'Star this patch',
           onPressed: isSignedIn
-              ? () => ref
-                  .read(savedPatchesProvider.notifier)
-                  .toggleStar(patch)
+              ? () => ref.read(savedPatchesProvider.notifier).toggleStar(patch)
               : null,
         ),
         if (patch.starCount > 0)

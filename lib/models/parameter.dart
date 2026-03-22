@@ -46,8 +46,8 @@ class Parameter {
     this.maximum = 127,
     this.controlChange = -1,
     this.enumNames,
-  })  : _array = array,
-        modulations = ParameterModulations(array);
+  }) : _array = array,
+       modulations = ParameterModulations(array);
 
   final String id;
   final Int16List _array;
@@ -78,8 +78,7 @@ class Parameter {
     }
     final length = enumNames!.length;
     return List.generate(length, (index) {
-      final optionValue = (index * (1024 / length) +
-              (1024 / length * 0.5))
+      final optionValue = (index * (1024 / length) + (1024 / length * 0.5))
           .floor();
       return SelectOption(
         label: enumNames![index],

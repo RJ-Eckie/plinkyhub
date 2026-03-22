@@ -266,7 +266,9 @@ class _PackCard extends ConsumerWidget {
                     ),
                     tooltip: pack.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
-                      ref.read(savedPacksProvider.notifier).updatePack(
+                      ref
+                          .read(savedPacksProvider.notifier)
+                          .updatePack(
                             pack.id,
                             isPublic: !pack.isPublic,
                           );
@@ -331,8 +333,10 @@ class _CreatePackTabState extends ConsumerState<_CreatePackTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isPublic = false;
-  final List<({String? patchId, String? sampleId})> _slots =
-      List.generate(32, (_) => (patchId: null, sampleId: null));
+  final List<({String? patchId, String? sampleId})> _slots = List.generate(
+    32,
+    (_) => (patchId: null, sampleId: null),
+  );
 
   @override
   void dispose() {
@@ -442,7 +446,9 @@ class _CreatePackTabState extends ConsumerState<_CreatePackTab> {
       ));
     }
 
-    ref.read(savedPacksProvider.notifier).savePack(
+    ref
+        .read(savedPacksProvider.notifier)
+        .savePack(
           _nameController.text,
           description: _descriptionController.text,
           isPublic: _isPublic,
@@ -476,8 +482,11 @@ class _SamplesSection extends ConsumerWidget {
       savedSamplesProvider.select((state) => state.userSamples),
     );
 
-    final uniqueSampleIds =
-        slots.map((slot) => slot.sampleId).whereType<String>().toSet().toList();
+    final uniqueSampleIds = slots
+        .map((slot) => slot.sampleId)
+        .whereType<String>()
+        .toSet()
+        .toList();
     final hasOverflow = uniqueSampleIds.length > 8;
 
     return Column(
@@ -499,12 +508,11 @@ class _SamplesSection extends ConsumerWidget {
           ),
         Row(
           children: List.generate(8, (index) {
-            final sampleId =
-                index < uniqueSampleIds.length ? uniqueSampleIds[index] : null;
+            final sampleId = index < uniqueSampleIds.length
+                ? uniqueSampleIds[index]
+                : null;
             final sample = sampleId != null
-                ? samples
-                    .where((sample) => sample.id == sampleId)
-                    .firstOrNull
+                ? samples.where((sample) => sample.id == sampleId).firstOrNull
                 : null;
             return Expanded(
               child: Card(
@@ -512,8 +520,10 @@ class _SamplesSection extends ConsumerWidget {
                     ? theme.colorScheme.primaryContainer
                     : null,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
                   child: Column(
                     children: [
                       Text(
@@ -567,18 +577,12 @@ class _PackSlotTile extends ConsumerWidget {
     );
 
     final patchName = patchId != null
-        ? patches
-                .where((patch) => patch.id == patchId)
-                .firstOrNull
-                ?.name ??
-            '(unknown)'
+        ? patches.where((patch) => patch.id == patchId).firstOrNull?.name ??
+              '(unknown)'
         : 'Empty';
     final sampleName = sampleId != null
-        ? samples
-                .where((sample) => sample.id == sampleId)
-                .firstOrNull
-                ?.name ??
-            '(unknown)'
+        ? samples.where((sample) => sample.id == sampleId).firstOrNull?.name ??
+              '(unknown)'
         : 'None';
 
     return Card(

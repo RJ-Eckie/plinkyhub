@@ -18,15 +18,13 @@ extension type USB._(JSObject _) implements JSObject {
   );
 }
 
-extension type USBDeviceRequestOptions._(JSObject _)
-    implements JSObject {
+extension type USBDeviceRequestOptions._(JSObject _) implements JSObject {
   external factory USBDeviceRequestOptions({
     JSArray<USBDeviceFilter> filters,
   });
 }
 
-extension type USBDeviceFilter._(JSObject _)
-    implements JSObject {
+extension type USBDeviceFilter._(JSObject _) implements JSObject {
   external factory USBDeviceFilter({int vendorId});
 }
 
@@ -57,8 +55,7 @@ extension type USBDevice._(JSObject _) implements JSObject {
   );
 }
 
-extension type USBControlTransferParameters._(JSObject _)
-    implements JSObject {
+extension type USBControlTransferParameters._(JSObject _) implements JSObject {
   external factory USBControlTransferParameters({
     String requestType,
     String recipient,
@@ -68,32 +65,27 @@ extension type USBControlTransferParameters._(JSObject _)
   });
 }
 
-extension type USBConfiguration._(JSObject _)
-    implements JSObject {
+extension type USBConfiguration._(JSObject _) implements JSObject {
   external JSArray<USBInterface> get interfaces;
 }
 
-extension type USBInterface._(JSObject _)
-    implements JSObject {
+extension type USBInterface._(JSObject _) implements JSObject {
   external int get interfaceNumber;
   external JSArray<USBAlternateInterface> get alternates;
 }
 
-extension type USBAlternateInterface._(JSObject _)
-    implements JSObject {
+extension type USBAlternateInterface._(JSObject _) implements JSObject {
   external int get interfaceClass;
   external int get alternateSetting;
   external JSArray<USBEndpoint> get endpoints;
 }
 
-extension type USBEndpoint._(JSObject _)
-    implements JSObject {
+extension type USBEndpoint._(JSObject _) implements JSObject {
   external String get direction;
   external int get endpointNumber;
 }
 
-extension type USBInTransferResult._(JSObject _)
-    implements JSObject {
+extension type USBInTransferResult._(JSObject _) implements JSObject {
   external JSDataView? get data;
 }
 
@@ -124,8 +116,7 @@ class WebUsbService {
 
     final filters = _vendorFilters
         .map(
-          (vendorId) =>
-              USBDeviceFilter(vendorId: vendorId),
+          (vendorId) => USBDeviceFilter(vendorId: vendorId),
         )
         .toList();
 
@@ -151,9 +142,7 @@ class WebUsbService {
 
     _setEndpoints();
 
-    await _device!
-        .claimInterface(_interfaceNumber)
-        .toDart;
+    await _device!.claimInterface(_interfaceNumber).toDart;
 
     try {
       await _device!
@@ -174,9 +163,7 @@ class WebUsbService {
       value: 0x01,
       index: _interfaceNumber,
     );
-    await _device!
-        .controlTransferOut(controlSetup)
-        .toDart;
+    await _device!.controlTransferOut(controlSetup).toDart;
 
     _connected = true;
     unawaited(_readLoop());
@@ -191,8 +178,7 @@ class WebUsbService {
 
       for (final alternate in alternates) {
         if (alternate.interfaceClass == 0xFF) {
-          _interfaceNumber =
-              usbInterface.interfaceNumber;
+          _interfaceNumber = usbInterface.interfaceNumber;
           final endpoints = alternate.endpoints.toDart;
 
           for (final endpoint in endpoints) {
@@ -245,17 +231,14 @@ class WebUsbService {
     _connected = false;
     if (_device != null) {
       try {
-        final controlSetup =
-            USBControlTransferParameters(
+        final controlSetup = USBControlTransferParameters(
           requestType: 'class',
           recipient: 'interface',
           request: 0x22,
           value: 0x00,
           index: _interfaceNumber,
         );
-        await _device!
-            .controlTransferOut(controlSetup)
-            .toDart;
+        await _device!.controlTransferOut(controlSetup).toDart;
         await _device!.close().toDart;
       } on Object {
         // Ignore errors during disconnect.

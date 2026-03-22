@@ -8,8 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedSamplesProvider =
     NotifierProvider<SavedSamplesNotifier, SavedSamplesState>(
-  SavedSamplesNotifier.new,
-);
+      SavedSamplesNotifier.new,
+    );
 
 class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   SupabaseClient get _supabase => Supabase.instance.client;
@@ -54,10 +54,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final userId = ref.read(authenticationProvider).user?.id;
-      var query = _supabase
-          .from('samples')
-          .select()
-          .eq('is_public', true);
+      var query = _supabase.from('samples').select().eq('is_public', true);
 
       if (userId != null) {
         query = query.neq('user_id', userId);
@@ -89,10 +86,12 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _supabase.storage.from('samples').uploadBinary(
-        sample.filePath,
-        fileBytes,
-      );
+      await _supabase.storage
+          .from('samples')
+          .uploadBinary(
+            sample.filePath,
+            fileBytes,
+          );
 
       final json = sample.toJson()
         ..remove('id')
@@ -112,11 +111,14 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   Future<void> updateSample(SavedSample sample) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final json = sample.copyWith(
-        updatedAt: DateTime.now(),
-      ).toJson()
-        ..remove('id')
-        ..remove('created_at');
+      final json =
+          sample
+              .copyWith(
+                updatedAt: DateTime.now(),
+              )
+              .toJson()
+            ..remove('id')
+            ..remove('created_at');
       await _supabase.from('samples').update(json).eq('id', sample.id);
       await fetchUserSamples();
     } on Exception catch (error) {

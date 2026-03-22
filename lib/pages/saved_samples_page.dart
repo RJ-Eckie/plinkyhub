@@ -138,9 +138,7 @@ class _SampleList extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isOwned
-                  ? 'No saved samples yet'
-                  : 'No community samples yet',
+              isOwned ? 'No saved samples yet' : 'No community samples yet',
             ),
             const SizedBox(height: 8),
             if (isOwned) ...[
@@ -272,8 +270,7 @@ class _SampleCard extends ConsumerWidget {
                       sample.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
-                    tooltip:
-                        sample.isPublic ? 'Make private' : 'Make public',
+                    tooltip: sample.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
                       ref
                           .read(savedSamplesProvider.notifier)
@@ -316,9 +313,7 @@ class _SampleCard extends ConsumerWidget {
           PlinkyButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ref
-                  .read(savedSamplesProvider.notifier)
-                  .deleteSample(sample.id);
+              ref.read(savedSamplesProvider.notifier).deleteSample(sample.id);
             },
             icon: Icons.delete,
             label: 'Delete',
@@ -424,7 +419,9 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
       fineTune: _fineTune,
     );
 
-    await ref.read(savedSamplesProvider.notifier).saveSample(
+    await ref
+        .read(savedSamplesProvider.notifier)
+        .saveSample(
           sample,
           _fileBytes!,
         );
@@ -447,55 +444,52 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            PlinkyButton(
-              onPressed: _isUploading ? null : _pickFile,
-              icon: Icons.audio_file,
-              label: _fileName ?? 'Choose file',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
+              PlinkyButton(
+                onPressed: _isUploading ? null : _pickFile,
+                icon: Icons.audio_file,
+                label: _fileName ?? 'Choose file',
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
               ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            _BaseNoteSelector(
-              baseNote: _baseNote,
-              fineTune: _fineTune,
-              enabled: !_isUploading,
-              onBaseNoteChanged: (value) =>
-                  setState(() => _baseNote = value),
-              onFineTuneChanged: (value) =>
-                  setState(() => _fineTune = value),
-            ),
-            const SizedBox(height: 16),
-            _SlicePointsEditor(
-              slicePoints: _slicePoints,
-              enabled: !_isUploading,
-              onChanged: (points) =>
-                  setState(() => _slicePoints = points),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              title: const Text('Share with community'),
-              value: _isPublic,
-              onChanged: _isUploading
-                  ? null
-                  : (value) => setState(() => _isPublic = value),
-            ),
-          ],
-        ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              _BaseNoteSelector(
+                baseNote: _baseNote,
+                fineTune: _fineTune,
+                enabled: !_isUploading,
+                onBaseNoteChanged: (value) => setState(() => _baseNote = value),
+                onFineTuneChanged: (value) => setState(() => _fineTune = value),
+              ),
+              const SizedBox(height: 16),
+              _SlicePointsEditor(
+                slicePoints: _slicePoints,
+                enabled: !_isUploading,
+                onChanged: (points) => setState(() => _slicePoints = points),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: const Text('Share with community'),
+                value: _isPublic,
+                onChanged: _isUploading
+                    ? null
+                    : (value) => setState(() => _isPublic = value),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -620,8 +614,8 @@ class _BaseNoteSelector extends StatelessWidget {
           '$noteName$octave'
           '${fineTune != 0 ? ' (${fineTune > 0 ? '+' : ''}${fineTune}c)' : ''}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -666,8 +660,9 @@ class _SlicePointsEditor extends StatelessWidget {
             painter: _SlicePointsPainter(
               slicePoints: slicePoints,
               color: Theme.of(context).colorScheme.primary,
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
             ),
             size: const Size(double.infinity, 60),
           ),

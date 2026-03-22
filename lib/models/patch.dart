@@ -63,6 +63,7 @@ class Patch {
       _bitFieldUint8[0] &= ~2;
     }
   }
+
   int get loopStart => _bitFieldInt8[1];
   int get loopLength => _bitFieldInt8[2];
 
@@ -95,8 +96,7 @@ class Patch {
   set name(String value) {
     final array = Uint8List.view(_buffer, 1544, 8);
     for (var index = 0; index < 8; index++) {
-      array[index] =
-          index < value.length ? value.codeUnitAt(index) : 0;
+      array[index] = index < value.length ? value.codeUnitAt(index) : 0;
     }
   }
 

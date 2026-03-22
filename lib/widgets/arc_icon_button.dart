@@ -84,10 +84,9 @@ class _ArcIconButtonState extends State<ArcIconButton>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final selectedColor = widget.arcColor ?? theme.colorScheme.primary;
-    final unselectedColor = widget.arcColor ??
-        theme.colorScheme.onSurface.withValues(alpha: 0.4);
-    final selectedForeground =
-        widget.iconColor ?? theme.colorScheme.primary;
+    final unselectedColor =
+        widget.arcColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.4);
+    final selectedForeground = widget.iconColor ?? theme.colorScheme.primary;
     final unselectedForeground =
         widget.iconColor ?? theme.colorScheme.onSurface;
 
@@ -121,7 +120,8 @@ class _ArcIconButtonState extends State<ArcIconButton>
                 size: widget.size * 0.3,
               ),
               child: DefaultTextStyle(
-                style: widget.textStyle ??
+                style:
+                    widget.textStyle ??
                     theme.textTheme.labelSmall!.copyWith(
                       color: foreground,
                     ),
@@ -192,12 +192,20 @@ class _ArcPainter extends CustomPainter {
     final sweepAngle = fullSweep * 0.85;
     final offset = (fullSweep - sweepAngle) / 2;
     canvas.drawArc(
-      rect, pi / 2 + gapAngle / 2 + offset, sweepAngle, false, paint,
+      rect,
+      pi / 2 + gapAngle / 2 + offset,
+      sweepAngle,
+      false,
+      paint,
     );
 
     // Right arc: from top-right to bottom-right
     canvas.drawArc(
-      rect, -pi / 2 + gapAngle / 2 + offset, sweepAngle, false, paint,
+      rect,
+      -pi / 2 + gapAngle / 2 + offset,
+      sweepAngle,
+      false,
+      paint,
     );
 
     final glowCenter = Offset(size.width * 0.05, size.height * 0.05);
@@ -220,20 +228,21 @@ class _ArcPainter extends CustomPainter {
 
     // Outer soft glow
     final glowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          glowColor.withValues(
-            alpha: _lerp(baseInner, hoverInner, h),
-          ),
-          glowColor.withValues(
-            alpha: _lerp(baseMid, hoverMid, h),
-          ),
-          glowColor.withValues(alpha: 0),
-        ],
-        stops: const [0, 0.5, 1],
-      ).createShader(
-        Rect.fromCircle(center: glowCenter, radius: glowRadius),
-      );
+      ..shader =
+          RadialGradient(
+            colors: [
+              glowColor.withValues(
+                alpha: _lerp(baseInner, hoverInner, h),
+              ),
+              glowColor.withValues(
+                alpha: _lerp(baseMid, hoverMid, h),
+              ),
+              glowColor.withValues(alpha: 0),
+            ],
+            stops: const [0, 0.5, 1],
+          ).createShader(
+            Rect.fromCircle(center: glowCenter, radius: glowRadius),
+          );
     canvas.drawCircle(glowCenter, glowRadius, glowPaint);
 
     // Bright core

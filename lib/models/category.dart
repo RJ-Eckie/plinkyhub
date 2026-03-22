@@ -1,7 +1,6 @@
 import 'package:plinkyhub/models/plinky_params.dart';
 
-const _randomizeGroupParameterIds =
-    <RandomizeGroup, List<String>>{
+const _randomizeGroupParameterIds = <RandomizeGroup, List<String>>{
   RandomizeGroup.synth: synthParams,
   RandomizeGroup.envelope1: envelope1Params,
   RandomizeGroup.envelope2: envelope2Params,
@@ -27,14 +26,14 @@ enum RandomizeGroup {
   modA('mod-a', 'A'),
   modB('mod-b', 'B'),
   modX('mod-x', 'X'),
-  modY('mod-y', 'Y');
+  modY('mod-y', 'Y')
+  ;
 
   const RandomizeGroup(this.id, this.displayName);
   final String id;
   final String displayName;
 
-  List<String> get parameterIds =>
-      _randomizeGroupParameterIds[this]!;
+  List<String> get parameterIds => _randomizeGroupParameterIds[this]!;
 }
 
 /// Sound type categories assignable to a patch on the
@@ -61,7 +60,8 @@ enum PatchCategory {
   sadness('Sadness'),
   wild('Wild'),
   gnarly('Gnarly'),
-  weird('Weird');
+  weird('Weird')
+  ;
 
   const PatchCategory(this.label);
   final String label;

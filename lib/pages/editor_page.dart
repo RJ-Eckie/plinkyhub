@@ -29,9 +29,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     final uri = Uri.base;
     final patchParameter = uri.queryParameters['p'];
     if (patchParameter != null && patchParameter.isNotEmpty) {
-      ref
-          .read(plinkyProvider.notifier)
-          .parsePatchFromUrl(patchParameter);
+      ref.read(plinkyProvider.notifier).parsePatchFromUrl(patchParameter);
     }
   }
 
@@ -42,20 +40,17 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     final isConnected = switch (state.connectionState) {
       PlinkyConnectionState.connected ||
       PlinkyConnectionState.loadingPatch ||
-      PlinkyConnectionState.savingPatch =>
-        true,
+      PlinkyConnectionState.savingPatch => true,
       _ => false,
     };
-    final isError =
-        state.connectionState == PlinkyConnectionState.error;
+    final isError = state.connectionState == PlinkyConnectionState.error;
     final isLoading =
         state.connectionState == PlinkyConnectionState.loadingPatch;
 
     final filteredParameters = patch?.parameters
         .where(
           (parameter) =>
-              parameter.name != null &&
-              !parameter.name!.endsWith('_UNUSED'),
+              parameter.name != null && !parameter.name!.endsWith('_UNUSED'),
         )
         .toList();
 
@@ -66,8 +61,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             .floor()
             .clamp(1, 6);
         final tileWidth =
-            (constraints.maxWidth - 32 - (columnCount - 1) * 8) /
-                columnCount;
+            (constraints.maxWidth - 32 - (columnCount - 1) * 8) / columnCount;
 
         return CustomScrollView(
           slivers: [
@@ -92,13 +86,11 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   child: PatchDetailsHeader(patch: patch),
                 ),
               ),
-              if (filteredParameters != null &&
-                  filteredParameters.isNotEmpty)
+              if (filteredParameters != null && filteredParameters.isNotEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   sliver: SliverGrid(
-                    gridDelegate:
-                        SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columnCount,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
@@ -159,15 +151,12 @@ class _EditorHeader extends StatelessWidget {
                 color: switch (state.connectionState) {
                   PlinkyConnectionState.connected ||
                   PlinkyConnectionState.loadingPatch ||
-                  PlinkyConnectionState.savingPatch =>
-                    Colors.green,
+                  PlinkyConnectionState.savingPatch => Colors.green,
                   PlinkyConnectionState.connecting => Colors.orange,
                   PlinkyConnectionState.error => Colors.red,
-                  PlinkyConnectionState.disconnected =>
-                    Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.5),
+                  PlinkyConnectionState.disconnected => Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
                 },
               ),
             ),
@@ -217,8 +206,7 @@ class _ConnectButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(plinkyProvider);
     return PlinkyButton(
-      onPressed: state.connectionState ==
-              PlinkyConnectionState.connecting
+      onPressed: state.connectionState == PlinkyConnectionState.connecting
           ? null
           : () => ref.read(plinkyProvider.notifier).connect(),
       icon: Icons.usb,

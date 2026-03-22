@@ -61,20 +61,19 @@ class _ParameterTileState extends State<ParameterTile> {
   void _updateControllerTexts() {
     _valueController.text = parameter.displayValue;
     _modulationControllers['base']!.text = parameter.displayValue;
-    _modulationControllers['envelope']!.text =
-        formatValue(parameter.modulations.envelope);
-    _modulationControllers['pressure']!.text =
-        formatValue(parameter.modulations.pressure);
-    _modulationControllers['random']!.text =
-        formatValue(parameter.modulations.random);
-    _modulationControllers['a']!.text =
-        formatValue(parameter.modulations.a);
-    _modulationControllers['b']!.text =
-        formatValue(parameter.modulations.b);
-    _modulationControllers['x']!.text =
-        formatValue(parameter.modulations.x);
-    _modulationControllers['y']!.text =
-        formatValue(parameter.modulations.y);
+    _modulationControllers['envelope']!.text = formatValue(
+      parameter.modulations.envelope,
+    );
+    _modulationControllers['pressure']!.text = formatValue(
+      parameter.modulations.pressure,
+    );
+    _modulationControllers['random']!.text = formatValue(
+      parameter.modulations.random,
+    );
+    _modulationControllers['a']!.text = formatValue(parameter.modulations.a);
+    _modulationControllers['b']!.text = formatValue(parameter.modulations.b);
+    _modulationControllers['x']!.text = formatValue(parameter.modulations.x);
+    _modulationControllers['y']!.text = formatValue(parameter.modulations.y);
   }
 
   void _onSliderChanged(double newValue) {
@@ -103,8 +102,7 @@ class _ParameterTileState extends State<ParameterTile> {
     final rangeMinimum = parameter.minimum < 0 ? -1024 : 0;
     const rangeMaximum = 1024;
     setState(() {
-      parameter.value =
-          denormalized.clamp(rangeMinimum, rangeMaximum);
+      parameter.value = denormalized.clamp(rangeMinimum, rangeMaximum);
       _updateControllerTexts();
     });
   }
@@ -203,8 +201,7 @@ class _ParameterTileState extends State<ParameterTile> {
                             ),
                             actions: [
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(),
+                                onPressed: () => Navigator.of(context).pop(),
                                 child: const Text('Close'),
                               ),
                             ],
@@ -296,9 +293,9 @@ class _ParameterTileState extends State<ParameterTile> {
                 children: [
                   Slider(
                     value: parameter.value.toDouble().clamp(
-                          rangeMinimum,
-                          rangeMaximum,
-                        ),
+                      rangeMinimum,
+                      rangeMaximum,
+                    ),
                     min: rangeMinimum,
                     max: rangeMaximum,
                     inactiveColor: colorScheme.onSurface.withValues(alpha: 0.3),

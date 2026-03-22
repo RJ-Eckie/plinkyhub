@@ -8,8 +8,7 @@ class PatchControls extends ConsumerStatefulWidget {
   const PatchControls({super.key});
 
   @override
-  ConsumerState<PatchControls> createState() =>
-      _PatchControlsState();
+  ConsumerState<PatchControls> createState() => _PatchControlsState();
 }
 
 class _PatchControlsState extends ConsumerState<PatchControls> {
@@ -40,10 +39,9 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(plinkyProvider);
-    final isLoading = state.connectionState ==
-            PlinkyConnectionState.loadingPatch ||
-        state.connectionState ==
-            PlinkyConnectionState.savingPatch;
+    final isLoading =
+        state.connectionState == PlinkyConnectionState.loadingPatch ||
+        state.connectionState == PlinkyConnectionState.savingPatch;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,9 +73,7 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
                   ? null
                   : () {
                       _updatePatchNumber();
-                      ref
-                          .read(plinkyProvider.notifier)
-                          .loadPatch();
+                      ref.read(plinkyProvider.notifier).loadPatch();
                     },
               icon: Icons.download,
               label: 'Load from Plinky',
@@ -88,9 +84,7 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
                   ? null
                   : () {
                       _updatePatchNumber();
-                      ref
-                          .read(plinkyProvider.notifier)
-                          .savePatch();
+                      ref.read(plinkyProvider.notifier).savePatch();
                     },
               icon: Icons.upload,
               label: 'Save to Plinky',
@@ -99,8 +93,7 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
             PlinkyButton(
               onPressed: isLoading || state.patch == null
                   ? null
-                  : () =>
-                      ref.read(plinkyProvider.notifier).clearPatch(),
+                  : () => ref.read(plinkyProvider.notifier).clearPatch(),
               icon: Icons.delete_outline,
               label: 'Clear loaded patch',
             ),

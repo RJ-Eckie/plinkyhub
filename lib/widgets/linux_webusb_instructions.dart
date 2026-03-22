@@ -93,8 +93,7 @@ class _InstructionStep extends StatelessWidget {
                 ),
               ),
             ),
-          if (detail != null)
-            SelectableText(detail!),
+          if (detail != null) SelectableText(detail!),
         ],
       ),
     );

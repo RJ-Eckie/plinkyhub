@@ -6,8 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedPacksProvider =
     NotifierProvider<SavedPacksNotifier, SavedPacksState>(
-  SavedPacksNotifier.new,
-);
+      SavedPacksNotifier.new,
+    );
 
 class SavedPacksNotifier extends Notifier<SavedPacksState> {
   SupabaseClient get _supabase => Supabase.instance.client;
@@ -104,12 +104,14 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
       final slotRows = slots
           .where((slot) => slot.patchId != null || slot.sampleId != null)
-          .map((slot) => {
-                'pack_id': packId,
-                'slot_number': slot.slotNumber,
-                'patch_id': slot.patchId,
-                'sample_id': slot.sampleId,
-              })
+          .map(
+            (slot) => {
+              'pack_id': packId,
+              'slot_number': slot.slotNumber,
+              'patch_id': slot.patchId,
+              'sample_id': slot.sampleId,
+            },
+          )
           .toList();
 
       if (slotRows.isNotEmpty) {

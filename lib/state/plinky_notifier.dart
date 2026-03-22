@@ -11,8 +11,9 @@ import 'package:plinkyhub/utils/compress.dart';
 const _usbBufferSize = 64;
 const _magicHeader = [0xF3, 0x0F, 0xAB, 0xCA];
 
-final plinkyProvider =
-    NotifierProvider<PlinkyNotifier, PlinkyState>(PlinkyNotifier.new);
+final plinkyProvider = NotifierProvider<PlinkyNotifier, PlinkyState>(
+  PlinkyNotifier.new,
+);
 
 class PlinkyNotifier extends Notifier<PlinkyState> {
   final WebUsbService _webUsbService = WebUsbService();
@@ -107,8 +108,10 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
         processedBytes += chunk.length;
       }
 
-      final totalLength =
-          chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
+      final totalLength = chunks.fold<int>(
+        0,
+        (sum, chunk) => sum + chunk.length,
+      );
       final patchData = Uint8List(totalLength);
       var offset = 0;
       for (final chunk in chunks) {

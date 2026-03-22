@@ -1,28 +1,117 @@
 /// Ordered list of param IDs matching the Plinky firmware binary layout.
 const eParams = [
-  'P_PWM', 'P_DRIVE', 'P_PITCH', 'P_OCT', 'P_GLIDE', 'P_INTERVAL',
-  'P_NOISE', 'P_MIXRESO', 'P_ROTATE', 'P_SCALE', 'P_MICROTUNE', 'P_STRIDE',
-  'P_SENS', 'P_A', 'P_D', 'P_S', 'P_R', 'P_ENV1_UNUSED', 'P_ENV_LEVEL1',
-  'P_A2', 'P_D2', 'P_S2', 'P_R2', 'P_ENV2_UNUSED', 'P_DLSEND', 'P_DLTIME',
-  'P_DLRATIO', 'P_DLWOB', 'P_DLFB', 'P_TEMPO', 'P_RVSEND', 'P_RVTIME',
-  'P_RVSHIM', 'P_RVWOB', 'P_RVUNUSED', 'P_SWING', 'P_ARPONOFF', 'P_ARPMODE',
-  'P_ARPDIV', 'P_ARPPROB', 'P_ARPLEN', 'P_ARPOCT', 'P_LATCHONOFF',
-  'P_SEQMODE', 'P_SEQDIV', 'P_SEQPROB', 'P_SEQLEN', 'P_GATE_LENGTH',
-  'P_SMP_POS', 'P_SMP_GRAINSIZE', 'P_SMP_RATE', 'P_SMP_TIME', 'P_SAMPLE',
-  'P_SEQPAT', 'P_JIT_POS', 'P_JIT_GRAINSIZE', 'P_JIT_RATE', 'P_JIT_PULSE',
-  'P_JIT_UNUSED', 'P_SEQSTEP', 'P_ASCALE', 'P_AOFFSET', 'P_ADEPTH',
-  'P_AFREQ', 'P_ASHAPE', 'P_AWARP', 'P_BSCALE', 'P_BOFFSET', 'P_BDEPTH',
-  'P_BFREQ', 'P_BSHAPE', 'P_BWARP', 'P_XSCALE', 'P_XOFFSET', 'P_XDEPTH',
-  'P_XFREQ', 'P_XSHAPE', 'P_XWARP', 'P_YSCALE', 'P_YOFFSET', 'P_YDEPTH',
-  'P_YFREQ', 'P_YSHAPE', 'P_YWARP', 'P_MIXSYNTH', 'P_MIXWETDRY', 'P_MIXHPF',
-  'P_MIX_UNUSED', 'P_CV_QUANT', 'P_HEADPHONE', 'P_MIXINPUT', 'P_MIXINWETDRY',
-  'P_SYS_UNUSED1', 'P_SYS_UNUSED2', 'P_SYS_UNUSED3', 'P_ACCEL_SENS',
+  'P_PWM',
+  'P_DRIVE',
+  'P_PITCH',
+  'P_OCT',
+  'P_GLIDE',
+  'P_INTERVAL',
+  'P_NOISE',
+  'P_MIXRESO',
+  'P_ROTATE',
+  'P_SCALE',
+  'P_MICROTUNE',
+  'P_STRIDE',
+  'P_SENS',
+  'P_A',
+  'P_D',
+  'P_S',
+  'P_R',
+  'P_ENV1_UNUSED',
+  'P_ENV_LEVEL1',
+  'P_A2',
+  'P_D2',
+  'P_S2',
+  'P_R2',
+  'P_ENV2_UNUSED',
+  'P_DLSEND',
+  'P_DLTIME',
+  'P_DLRATIO',
+  'P_DLWOB',
+  'P_DLFB',
+  'P_TEMPO',
+  'P_RVSEND',
+  'P_RVTIME',
+  'P_RVSHIM',
+  'P_RVWOB',
+  'P_RVUNUSED',
+  'P_SWING',
+  'P_ARPONOFF',
+  'P_ARPMODE',
+  'P_ARPDIV',
+  'P_ARPPROB',
+  'P_ARPLEN',
+  'P_ARPOCT',
+  'P_LATCHONOFF',
+  'P_SEQMODE',
+  'P_SEQDIV',
+  'P_SEQPROB',
+  'P_SEQLEN',
+  'P_GATE_LENGTH',
+  'P_SMP_POS',
+  'P_SMP_GRAINSIZE',
+  'P_SMP_RATE',
+  'P_SMP_TIME',
+  'P_SAMPLE',
+  'P_SEQPAT',
+  'P_JIT_POS',
+  'P_JIT_GRAINSIZE',
+  'P_JIT_RATE',
+  'P_JIT_PULSE',
+  'P_JIT_UNUSED',
+  'P_SEQSTEP',
+  'P_ASCALE',
+  'P_AOFFSET',
+  'P_ADEPTH',
+  'P_AFREQ',
+  'P_ASHAPE',
+  'P_AWARP',
+  'P_BSCALE',
+  'P_BOFFSET',
+  'P_BDEPTH',
+  'P_BFREQ',
+  'P_BSHAPE',
+  'P_BWARP',
+  'P_XSCALE',
+  'P_XOFFSET',
+  'P_XDEPTH',
+  'P_XFREQ',
+  'P_XSHAPE',
+  'P_XWARP',
+  'P_YSCALE',
+  'P_YOFFSET',
+  'P_YDEPTH',
+  'P_YFREQ',
+  'P_YSHAPE',
+  'P_YWARP',
+  'P_MIXSYNTH',
+  'P_MIXWETDRY',
+  'P_MIXHPF',
+  'P_MIX_UNUSED',
+  'P_CV_QUANT',
+  'P_HEADPHONE',
+  'P_MIXINPUT',
+  'P_MIXINWETDRY',
+  'P_SYS_UNUSED1',
+  'P_SYS_UNUSED2',
+  'P_SYS_UNUSED3',
+  'P_ACCEL_SENS',
 ];
 
 // Randomization category groups
 const synthParams = [
-  'P_PWM', 'P_DRIVE', 'P_PITCH', 'P_OCT', 'P_GLIDE', 'P_INTERVAL',
-  'P_NOISE', 'P_MIXRESO', 'P_ROTATE', 'P_SCALE', 'P_MICROTUNE', 'P_STRIDE',
+  'P_PWM',
+  'P_DRIVE',
+  'P_PITCH',
+  'P_OCT',
+  'P_GLIDE',
+  'P_INTERVAL',
+  'P_NOISE',
+  'P_MIXRESO',
+  'P_ROTATE',
+  'P_SCALE',
+  'P_MICROTUNE',
+  'P_STRIDE',
   'P_SENS',
 ];
 
@@ -31,37 +120,79 @@ const envelope1Params = ['P_A', 'P_D', 'P_S', 'P_R', 'P_ENV_LEVEL1'];
 const envelope2Params = ['P_A2', 'P_D2', 'P_S2', 'P_R2', 'P_ENV_LEVEL'];
 
 const effectParams = [
-  'P_DLSEND', 'P_DLTIME', 'P_DLRATIO', 'P_DLWOB', 'P_DLFB', 'P_TEMPO',
-  'P_RVSEND', 'P_RVTIME', 'P_RVSHIM', 'P_RVWOB',
+  'P_DLSEND',
+  'P_DLTIME',
+  'P_DLRATIO',
+  'P_DLWOB',
+  'P_DLFB',
+  'P_TEMPO',
+  'P_RVSEND',
+  'P_RVTIME',
+  'P_RVSHIM',
+  'P_RVWOB',
 ];
 
 const arpParams = [
-  'P_ARPMODE', 'P_ARPDIV', 'P_ARPPROB', 'P_ARPLEN', 'P_ARPOCT',
+  'P_ARPMODE',
+  'P_ARPDIV',
+  'P_ARPPROB',
+  'P_ARPLEN',
+  'P_ARPOCT',
 ];
 
 const seqParams = [
-  'P_SEQMODE', 'P_SEQDIV', 'P_SEQPROB', 'P_SEQLEN', 'P_GATE_LENGTH',
+  'P_SEQMODE',
+  'P_SEQDIV',
+  'P_SEQPROB',
+  'P_SEQLEN',
+  'P_GATE_LENGTH',
 ];
 
 const samplerParams = [
-  'P_SMP_POS', 'P_SMP_GRAINSIZE', 'P_SMP_RATE', 'P_SMP_TIME',
-  'P_JIT_POS', 'P_JIT_GRAINSIZE', 'P_JIT_RATE', 'P_JIT_PULSE',
+  'P_SMP_POS',
+  'P_SMP_GRAINSIZE',
+  'P_SMP_RATE',
+  'P_SMP_TIME',
+  'P_JIT_POS',
+  'P_JIT_GRAINSIZE',
+  'P_JIT_RATE',
+  'P_JIT_PULSE',
 ];
 
 const modAParams = [
-  'P_ASCALE', 'P_AOFFSET', 'P_ADEPTH', 'P_AFREQ', 'P_ASHAPE', 'P_AWARP',
+  'P_ASCALE',
+  'P_AOFFSET',
+  'P_ADEPTH',
+  'P_AFREQ',
+  'P_ASHAPE',
+  'P_AWARP',
 ];
 
 const modBParams = [
-  'P_BSCALE', 'P_BOFFSET', 'P_BDEPTH', 'P_BFREQ', 'P_BSHAPE', 'P_BWARP',
+  'P_BSCALE',
+  'P_BOFFSET',
+  'P_BDEPTH',
+  'P_BFREQ',
+  'P_BSHAPE',
+  'P_BWARP',
 ];
 
 const modXParams = [
-  'P_XSCALE', 'P_XOFFSET', 'P_XDEPTH', 'P_XFREQ', 'P_XSHAPE', 'P_XWARP',
+  'P_XSCALE',
+  'P_XOFFSET',
+  'P_XDEPTH',
+  'P_XFREQ',
+  'P_XSHAPE',
+  'P_XWARP',
 ];
 
 const modYParams = [
-  'P_YSCALE', 'P_YOFFSET', 'P_YDEPTH', 'P_YFREQ', 'P_YSHAPE', 'P_YWARP',
+  'P_YSCALE',
+  'P_YOFFSET',
+  'P_YDEPTH',
+  'P_YFREQ',
+  'P_YSHAPE',
+  'P_YWARP',
 ];
 
 class PlinkyParamDef {
@@ -91,7 +222,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 100,
     cc: 13,
     name: 'Shape',
-    description: 'Controls the shape of the oscillators in '
+    description:
+        'Controls the shape of the oscillators in '
         'Plinky. When exactly 0%, you get 4 sawtooths per '
         'voice. When positive, you blend smoothly through '
         '16 ROM wavetable shapes. When negative, you get '
@@ -103,7 +235,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1024,
     cc: 4,
     name: 'Distortion',
-    description: 'Drive/Saturation. When turned up high, '
+    description:
+        'Drive/Saturation. When turned up high, '
         'the saturation unit will create guitar-like tones, '
         'especially when playing polyphonically.',
   ),
@@ -113,7 +246,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1024,
     cc: 9,
     name: 'Pitch',
-    description: 'Use this to (fine) tune plinky. Range is '
+    description:
+        'Use this to (fine) tune plinky. Range is '
         '1 octave up or down, unquantized.',
   ),
   PlinkyParamDef(
@@ -121,7 +255,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: -1024,
     max: 1024,
     name: 'Octave',
-    description: 'Use this to quickly change pitch, '
+    description:
+        'Use this to quickly change pitch, '
         'quantized to octaves.',
   ),
   PlinkyParamDef(
@@ -130,7 +265,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 5,
     name: 'Glide',
-    description: 'Controls the speed of the portamento '
+    description:
+        'Controls the speed of the portamento '
         'between notes in a single voice. Higher = slower',
   ),
   PlinkyParamDef(
@@ -139,7 +275,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 14,
     name: 'Interval',
-    description: 'Each voice has several oscillators, and '
+    description:
+        'Each voice has several oscillators, and '
         'this sets a fixed interval between them, from +1 '
         'to -1 octaves.',
   ),
@@ -149,7 +286,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 2,
     name: 'Noise',
-    description: 'Each voice can add a variable amount of '
+    description:
+        'Each voice can add a variable amount of '
         'white noise to the oscillator, before the '
         'low-pass gate.',
   ),
@@ -159,7 +297,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 71,
     name: 'Resonance',
-    description: 'Each voice has a 2-pole lowpass gate. '
+    description:
+        'Each voice has a 2-pole lowpass gate. '
         'This parameter adds resonance to the filter.',
   ),
   PlinkyParamDef(
@@ -167,7 +306,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Degree',
-    description: 'A quantized pitch control that transposes '
+    description:
+        'A quantized pitch control that transposes '
         'plinky while staying in the same scale.',
   ),
   PlinkyParamDef(
@@ -175,8 +315,7 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 26,
     name: 'Scale',
-    description:
-        'Selects which scale of notes plinky uses',
+    description: 'Selects which scale of notes plinky uses',
     enumName: [
       'Major',
       'Minor',
@@ -211,7 +350,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Microtune',
-    description: 'Controls how much vertical movement of '
+    description:
+        'Controls how much vertical movement of '
         'your finger detunes the note.',
   ),
   PlinkyParamDef(
@@ -219,7 +359,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Stride',
-    description: 'Controls the interval, in semitones, '
+    description:
+        'Controls the interval, in semitones, '
         'between each column of plinky.',
   ),
   PlinkyParamDef(
@@ -228,7 +369,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 3,
     name: 'Sensitivity',
-    description: 'Master sensitivity, controlling the '
+    description:
+        'Master sensitivity, controlling the '
         'mapping of finger pressure to the '
         "opening/closing of each voice's low-pass gate.",
   ),
@@ -238,7 +380,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 73,
     name: 'Attack',
-    description: 'Attack time for the main envelope that '
+    description:
+        'Attack time for the main envelope that '
         'controls the lowpass gate.',
   ),
   PlinkyParamDef(
@@ -247,7 +390,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 75,
     name: 'Decay',
-    description: 'Decay time for the main envelope that '
+    description:
+        'Decay time for the main envelope that '
         'controls the lowpass gate.',
   ),
   PlinkyParamDef(
@@ -256,7 +400,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 74,
     name: 'Sustain',
-    description: 'Sustain level for the main envelope that '
+    description:
+        'Sustain level for the main envelope that '
         'controls the lowpass gate.',
   ),
   PlinkyParamDef(
@@ -265,7 +410,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 72,
     name: 'Release',
-    description: 'Release time for the main envelope that '
+    description:
+        'Release time for the main envelope that '
         'controls the lowpass gate.',
   ),
   PlinkyParamDef(
@@ -325,8 +471,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 94,
     name: 'Delay Send',
-    description:
-        'Amount of the dry sound sent to the delay unit.',
+    description: 'Amount of the dry sound sent to the delay unit.',
   ),
   PlinkyParamDef(
     id: 'P_DLTIME',
@@ -341,7 +486,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Delay Ratio',
-    description: 'Moves the right tap to an earlier time, '
+    description:
+        'Moves the right tap to an earlier time, '
         'causing ping-pong poly-rhythmic repeats.',
   ),
   PlinkyParamDef(
@@ -349,7 +495,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Delay Wobble',
-    description: 'Amount of simulated tape speed wobble '
+    description:
+        'Amount of simulated tape speed wobble '
         'in the delay.',
   ),
   PlinkyParamDef(
@@ -358,7 +505,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 95,
     name: 'Delay Feedback',
-    description: 'Amount of feedback - the volume of each '
+    description:
+        'Amount of feedback - the volume of each '
         'echo reduces by this amount.',
   ),
   PlinkyParamDef(
@@ -366,7 +514,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: -1,
     max: 1,
     name: 'BPM',
-    description: 'Tempo in BPM. You can also tap this '
+    description:
+        'Tempo in BPM. You can also tap this '
         'parameter pad rhythmically to set the tempo.',
   ),
   PlinkyParamDef(
@@ -375,8 +524,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 91,
     name: 'Reverb Send',
-    description:
-        'Amount of the dry sound sent to the reverb unit.',
+    description: 'Amount of the dry sound sent to the reverb unit.',
   ),
   PlinkyParamDef(
     id: 'P_RVTIME',
@@ -384,8 +532,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 92,
     name: 'Reverb Time',
-    description:
-        'Controls the length of the decay of the reverb.',
+    description: 'Controls the length of the decay of the reverb.',
   ),
   PlinkyParamDef(
     id: 'P_RVSHIM',
@@ -393,7 +540,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 93,
     name: 'Shimmer',
-    description: 'Amount of octave-up signal fed into the '
+    description:
+        'Amount of octave-up signal fed into the '
         'reverb, causing a shimmer effect.',
   ),
   PlinkyParamDef(
@@ -401,7 +549,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Reverb Wobble',
-    description: 'Amount of simulated tape speed wobble '
+    description:
+        'Amount of simulated tape speed wobble '
         'in the reverb.',
   ),
   PlinkyParamDef(
@@ -415,7 +564,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Swing',
-    description: 'This parameter will be used to add swing '
+    description:
+        'This parameter will be used to add swing '
         'in a future firmware update.',
   ),
   PlinkyParamDef(
@@ -424,8 +574,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 1,
     cc: 102,
     name: 'Arp on/off',
-    description:
-        'Switches the arpeggiator on and off.',
+    description: 'Switches the arpeggiator on and off.',
   ),
   PlinkyParamDef(
     id: 'P_ARPMODE',
@@ -457,14 +606,30 @@ const plinkyParams = <PlinkyParamDef>[
     min: -1,
     max: 22,
     name: 'Arp Clock Divide',
-    description:
-        'Sets the speed of the arpeggiator.',
+    description: 'Sets the speed of the arpeggiator.',
     enumName: [
-      '1/32', '2/32', '3/32', '4/32', '5/32',
-      '6/32', '8/32', '10/32', '12/32', '16/32',
-      '20/32', '24/32', '32/32', '40/32', '48/32',
-      '64/32', '80/32', '96/32', '128/32', '160/32',
-      '192/32', '256/32',
+      '1/32',
+      '2/32',
+      '3/32',
+      '4/32',
+      '5/32',
+      '6/32',
+      '8/32',
+      '10/32',
+      '12/32',
+      '16/32',
+      '20/32',
+      '24/32',
+      '32/32',
+      '40/32',
+      '48/32',
+      '64/32',
+      '80/32',
+      '96/32',
+      '128/32',
+      '160/32',
+      '192/32',
+      '256/32',
     ],
   ),
   PlinkyParamDef(
@@ -472,7 +637,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Arp Probability / Density',
-    description: 'Sets the probability of the arpeggiator '
+    description:
+        'Sets the probability of the arpeggiator '
         'progressing on each tick of its clock.',
   ),
   PlinkyParamDef(
@@ -480,7 +646,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: -17,
     max: 17,
     name: 'Arp Pattern Length',
-    description: 'Sets the length of the euclidean pattern '
+    description:
+        'Sets the length of the euclidean pattern '
         'used by the arp.',
   ),
   PlinkyParamDef(
@@ -488,7 +655,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 4,
     name: 'Arp Octaves',
-    description: 'Sets how many octaves the arpeggiator '
+    description:
+        'Sets how many octaves the arpeggiator '
         'ranges over.',
   ),
   PlinkyParamDef(
@@ -496,7 +664,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Latch on/off',
-    description: 'Switches the latch on/off. When on, '
+    description:
+        'Switches the latch on/off. When on, '
         'played notes will sustain even when you take your '
         'fingers off plinky.',
   ),
@@ -505,7 +674,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 6,
     name: 'Sequencer Mode',
-    description: 'Sets the order that notes are played '
+    description:
+        'Sets the order that notes are played '
         'by the sequencer.',
     enumName: [
       'Pause',
@@ -523,11 +693,28 @@ const plinkyParams = <PlinkyParamDef>[
     name: 'Seq Clock Divide',
     description: 'Sets the speed of the sequencer.',
     enumName: [
-      '1/32', '2/32', '3/32', '4/32', '5/32',
-      '6/32', '8/32', '10/32', '12/32', '16/32',
-      '20/32', '24/32', '32/32', '40/32', '48/32',
-      '64/32', '80/32', '96/32', '128/32', '160/32',
-      '192/32', '256/32',
+      '1/32',
+      '2/32',
+      '3/32',
+      '4/32',
+      '5/32',
+      '6/32',
+      '8/32',
+      '10/32',
+      '12/32',
+      '16/32',
+      '20/32',
+      '24/32',
+      '32/32',
+      '40/32',
+      '48/32',
+      '64/32',
+      '80/32',
+      '96/32',
+      '128/32',
+      '160/32',
+      '192/32',
+      '256/32',
     ],
   ),
   PlinkyParamDef(
@@ -535,7 +722,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 1,
     name: 'Seq Probability / Density',
-    description: 'Sets the probability of the sequencer '
+    description:
+        'Sets the probability of the sequencer '
         'progressing on each tick of its clock.',
   ),
   PlinkyParamDef(
@@ -543,7 +731,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: -17,
     max: 17,
     name: 'Seq Pattern Length',
-    description: 'Sets the length of the euclidean pattern '
+    description:
+        'Sets the length of the euclidean pattern '
         'used by the sequencer.',
   ),
   PlinkyParamDef(
@@ -552,8 +741,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 11,
     name: 'Gate length',
-    description:
-        'Sets the length of the gate of each step.',
+    description: 'Sets the length of the gate of each step.',
   ),
   PlinkyParamDef(
     id: 'P_SMP_POS',
@@ -561,7 +749,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 15,
     name: 'Sample position',
-    description: 'Controls the starting point of the '
+    description:
+        'Controls the starting point of the '
         'sample playback.',
   ),
   PlinkyParamDef(
@@ -578,7 +767,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 17,
     name: 'Sample playback rate',
-    description: 'Determines at what relative speed the '
+    description:
+        'Determines at what relative speed the '
         'sample is played back.',
   ),
   PlinkyParamDef(
@@ -587,7 +777,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 18,
     name: 'Sample playback time',
-    description: 'Determines at what relative speed the '
+    description:
+        'Determines at what relative speed the '
         'sample is played back, without changing the pitch.',
   ),
   PlinkyParamDef(
@@ -604,12 +795,34 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 83,
     name: 'Sequencer pattern #',
-    description: 'Controls which sequencer pattern is '
+    description:
+        'Controls which sequencer pattern is '
         'being played back.',
     enumName: [
-      '1', '2', '3', '4', '5', '6', '7', '8',
-      '9', '10', '11', '12', '13', '14', '15', '16',
-      '17', '18', '19', '20', '21', '22', '23', '24',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+      '12',
+      '13',
+      '14',
+      '15',
+      '16',
+      '17',
+      '18',
+      '19',
+      '20',
+      '21',
+      '22',
+      '23',
+      '24',
     ],
   ),
   PlinkyParamDef(
@@ -617,7 +830,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Sample position jitter',
-    description: 'Adds randomness to the sample '
+    description:
+        'Adds randomness to the sample '
         'playback position.',
   ),
   PlinkyParamDef(
@@ -625,7 +839,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Grain size jitter',
-    description: 'Adds randomness to the sample '
+    description:
+        'Adds randomness to the sample '
         'grain size.',
   ),
   PlinkyParamDef(
@@ -633,7 +848,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Sample speed jitter',
-    description: 'Adds randomness to the sample '
+    description:
+        'Adds randomness to the sample '
         'playback speed.',
   ),
   PlinkyParamDef(
@@ -654,7 +870,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 85,
     name: 'Pattern offset',
-    description: 'Offsets the starting point of the '
+    description:
+        'Offsets the starting point of the '
         'sequencer pattern.',
   ),
   PlinkyParamDef(
@@ -662,7 +879,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'A scale',
-    description: 'An attenuator for the signal coming '
+    description:
+        'An attenuator for the signal coming '
         'from the corresponding CV input jacks.',
   ),
   PlinkyParamDef(
@@ -679,7 +897,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 25,
     name: 'A depth',
-    description: 'Attenuator for the internal LFOs. '
+    description:
+        'Attenuator for the internal LFOs. '
         'Turn this up for LFOs.',
   ),
   PlinkyParamDef(
@@ -688,8 +907,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 26,
     name: 'A rate',
-    description:
-        'Controls the rate of the internal LFO.',
+    description: 'Controls the rate of the internal LFO.',
   ),
   PlinkyParamDef(
     id: 'P_ASHAPE',
@@ -710,7 +928,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'B scale',
-    description: 'An attenuator for the signal coming '
+    description:
+        'An attenuator for the signal coming '
         'from the corresponding CV input jacks.',
   ),
   PlinkyParamDef(
@@ -727,7 +946,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 28,
     name: 'B depth',
-    description: 'Attenuator for the internal LFOs. '
+    description:
+        'Attenuator for the internal LFOs. '
         'Turn this up for LFOs.',
   ),
   PlinkyParamDef(
@@ -736,8 +956,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 29,
     name: 'B rate',
-    description:
-        'Controls the rate of the internal LFO.',
+    description: 'Controls the rate of the internal LFO.',
   ),
   PlinkyParamDef(
     id: 'P_BSHAPE',
@@ -758,7 +977,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'X scale',
-    description: 'An attenuator for the signal coming '
+    description:
+        'An attenuator for the signal coming '
         'from the corresponding CV input jacks.',
   ),
   PlinkyParamDef(
@@ -775,7 +995,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 77,
     name: 'X depth',
-    description: 'Attenuator for the internal LFOs. '
+    description:
+        'Attenuator for the internal LFOs. '
         'Turn this up for LFOs.',
   ),
   PlinkyParamDef(
@@ -784,8 +1005,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 76,
     name: 'X rate',
-    description:
-        'Controls the rate of the internal LFO.',
+    description: 'Controls the rate of the internal LFO.',
   ),
   PlinkyParamDef(
     id: 'P_XSHAPE',
@@ -806,7 +1026,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Y scale',
-    description: 'An attenuator for the signal coming '
+    description:
+        'An attenuator for the signal coming '
         'from the corresponding CV input jacks.',
   ),
   PlinkyParamDef(
@@ -823,7 +1044,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 80,
     name: 'Y depth',
-    description: 'Attenuator for the internal LFOs. '
+    description:
+        'Attenuator for the internal LFOs. '
         'Turn this up for LFOs.',
   ),
   PlinkyParamDef(
@@ -832,8 +1054,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 79,
     name: 'Y rate',
-    description:
-        'Controls the rate of the internal LFO.',
+    description: 'Controls the rate of the internal LFO.',
   ),
   PlinkyParamDef(
     id: 'P_YSHAPE',
@@ -855,7 +1076,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 7,
     name: 'Synth level',
-    description: "Sets the gain level of Plinky's "
+    description:
+        "Sets the gain level of Plinky's "
         'synth / sampler.',
   ),
   PlinkyParamDef(
@@ -864,7 +1086,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 8,
     name: 'Synth wet/dry',
-    description: 'Sets the balance between the dry signal '
+    description:
+        'Sets the balance between the dry signal '
         'and the wet signal of the Reverb and Delay units.',
   ),
   PlinkyParamDef(
@@ -886,7 +1109,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Pitch quantization',
-    description: 'Choose if pitch CV transposition is '
+    description:
+        'Choose if pitch CV transposition is '
         'unquantized, quantized to semitones, or '
         'transposed in-scale.',
   ),
@@ -895,7 +1119,8 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Headphone level',
-    description: 'Sets the level of the final output '
+    description:
+        'Sets the level of the final output '
         'stage for the headphone out.',
   ),
   PlinkyParamDef(
@@ -904,8 +1129,7 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 89,
     name: 'Input level',
-    description:
-        "Sets the gain level of Plinky's inputs.",
+    description: "Sets the gain level of Plinky's inputs.",
   ),
   PlinkyParamDef(
     id: 'P_MIXINWETDRY',
@@ -913,7 +1137,8 @@ const plinkyParams = <PlinkyParamDef>[
     max: 127,
     cc: 90,
     name: 'Input wet/dry',
-    description: 'Sets the balance between the dry signal '
+    description:
+        'Sets the balance between the dry signal '
         'of the audio inputs and the wet signal.',
   ),
   PlinkyParamDef(
@@ -939,8 +1164,7 @@ const plinkyParams = <PlinkyParamDef>[
     min: 0,
     max: 127,
     name: 'Accelerometer sensitivity',
-    description:
-        'Sets the sensitivity of the accelerometer.',
+    description: 'Sets the sensitivity of the accelerometer.',
   ),
 ];
 

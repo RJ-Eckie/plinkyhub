@@ -6,8 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final authenticationProvider =
     NotifierProvider<AuthenticationNotifier, AuthenticationState>(
-  AuthenticationNotifier.new,
-);
+      AuthenticationNotifier.new,
+    );
 
 class AuthenticationNotifier extends Notifier<AuthenticationState> {
   StreamSubscription<AuthState>? _authSubscription;
@@ -18,8 +18,9 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
   AuthenticationState build() {
     final currentUser = _supabase.auth.currentUser;
     _authSubscription?.cancel();
-    _authSubscription =
-        _supabase.auth.onAuthStateChange.listen((authState) async {
+    _authSubscription = _supabase.auth.onAuthStateChange.listen((
+      authState,
+    ) async {
       final user = authState.session?.user;
       String? username;
       if (user != null) {
@@ -141,8 +142,7 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
         lower.contains('rate limit')) {
       return 'Too many attempts. Please wait a moment and try again.';
     }
-    if (lower.contains('password') &&
-        lower.contains('at least')) {
+    if (lower.contains('password') && lower.contains('at least')) {
       return 'Password is too short. '
           'Please use at least 6 characters.';
     }

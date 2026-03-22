@@ -11,8 +11,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedPatchesProvider =
     NotifierProvider<SavedPatchesNotifier, SavedPatchesState>(
-  SavedPatchesNotifier.new,
-);
+      SavedPatchesNotifier.new,
+    );
 
 class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
   SupabaseClient get _supabase => Supabase.instance.client;
@@ -28,28 +28,30 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
 
   Future<List<SavedPatch>> _parsePatchRows(List<dynamic> response) async {
     final userId = ref.read(authenticationProvider).user?.id;
-    Set<String> starredPatchIds = {};
+    final starredPatchIds = <String>{};
 
     if (userId != null) {
       final stars = await _supabase
           .from('patch_stars')
           .select('patch_id')
           .eq('user_id', userId);
-      starredPatchIds = (stars as List)
-          .map((row) => row['patch_id'] as String)
-          .toSet();
+      starredPatchIds.addAll([
+        for (final row in stars as List)
+          (row as Map<String, dynamic>)['patch_id'] as String,
+      ]);
     }
 
     return response.map((row) {
       final map = row as Map<String, dynamic>;
       final profile = map['profiles'] as Map<String, dynamic>?;
       final starCountList = map['patch_stars'] as List<dynamic>?;
+      final firstStar = starCountList?.isNotEmpty == true
+          ? starCountList!.first as Map<String, dynamic>
+          : null;
       return SavedPatch.fromJson({
         ...map,
         'username': profile?['username'] ?? '',
-        'star_count': starCountList?.isNotEmpty == true
-            ? starCountList!.first['count'] as int
-            : 0,
+        'star_count': firstStar?['count'] as int? ?? 0,
         'is_starred': starredPatchIds.contains(map['id']),
       });
     }).toList();

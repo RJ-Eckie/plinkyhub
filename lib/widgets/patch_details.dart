@@ -41,8 +41,7 @@ class PatchDetailsHeader extends ConsumerWidget {
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (value) {
-                  ref.read(plinkyProvider.notifier).patchName =
-                      value;
+                  ref.read(plinkyProvider.notifier).patchName = value;
                 },
               ),
             ),
@@ -63,17 +62,13 @@ class PatchDetailsHeader extends ConsumerWidget {
                   return DropdownMenuItem<PatchCategory>(
                     value: category,
                     child: Text(
-                      category.label.isEmpty
-                          ? '(none)'
-                          : category.label,
+                      category.label.isEmpty ? '(none)' : category.label,
                     ),
                   );
                 }).toList(),
                 onChanged: (value) {
                   if (value != null) {
-                    ref
-                        .read(plinkyProvider.notifier)
-                        .patchCategory = value;
+                    ref.read(plinkyProvider.notifier).patchCategory = value;
                   }
                 },
               ),
@@ -108,19 +103,16 @@ class PatchDetailsHeader extends ConsumerWidget {
                   items: const [
                     DropdownMenuItem(
                       value: true,
-                      child: Text('Arp: On',
-                          style: TextStyle(fontSize: 15)),
+                      child: Text('Arp: On', style: TextStyle(fontSize: 15)),
                     ),
                     DropdownMenuItem(
                       value: false,
-                      child: Text('Arp: Off',
-                          style: TextStyle(fontSize: 15)),
+                      child: Text('Arp: Off', style: TextStyle(fontSize: 15)),
                     ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
-                      ref.read(plinkyProvider.notifier).patchArp =
-                          value;
+                      ref.read(plinkyProvider.notifier).patchArp = value;
                     }
                   },
                 ),
@@ -138,19 +130,16 @@ class PatchDetailsHeader extends ConsumerWidget {
                   items: const [
                     DropdownMenuItem(
                       value: true,
-                      child: Text('Latch: On',
-                          style: TextStyle(fontSize: 15)),
+                      child: Text('Latch: On', style: TextStyle(fontSize: 15)),
                     ),
                     DropdownMenuItem(
                       value: false,
-                      child: Text('Latch: Off',
-                          style: TextStyle(fontSize: 15)),
+                      child: Text('Latch: Off', style: TextStyle(fontSize: 15)),
                     ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
-                      ref.read(plinkyProvider.notifier).patchLatch =
-                          value;
+                      ref.read(plinkyProvider.notifier).patchLatch = value;
                     }
                   },
                 ),
@@ -161,8 +150,10 @@ class PatchDetailsHeader extends ConsumerWidget {
               children: [
                 const Icon(Icons.first_page, size: 20),
                 const SizedBox(width: 4),
-                Text('Loop start: ${patch.loopStart}',
-                    style: const TextStyle(fontSize: 15)),
+                Text(
+                  'Loop start: ${patch.loopStart}',
+                  style: const TextStyle(fontSize: 15),
+                ),
               ],
             ),
             Row(
@@ -170,8 +161,10 @@ class PatchDetailsHeader extends ConsumerWidget {
               children: [
                 const Icon(Icons.straighten, size: 20),
                 const SizedBox(width: 4),
-                Text('Loop length: ${patch.loopLength}',
-                    style: const TextStyle(fontSize: 15)),
+                Text(
+                  'Loop length: ${patch.loopLength}',
+                  style: const TextStyle(fontSize: 15),
+                ),
               ],
             ),
           ],
@@ -191,9 +184,7 @@ class _SaveToCloudButton extends ConsumerWidget {
     final isSignedIn = ref.watch(authenticationProvider).user != null;
 
     return PlinkyButton(
-      onPressed: isSignedIn
-          ? () => _showSaveDialog(context, ref)
-          : null,
+      onPressed: isSignedIn ? () => _showSaveDialog(context, ref) : null,
       icon: Icons.cloud_upload,
       label: isSignedIn ? 'Save to cloud' : 'Sign in to save',
     );
@@ -243,7 +234,9 @@ class _SaveToCloudButton extends ConsumerWidget {
             PlinkyButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                ref.read(savedPatchesProvider.notifier).savePatch(
+                ref
+                    .read(savedPatchesProvider.notifier)
+                    .savePatch(
                       patch,
                       description: descriptionController.text,
                       isPublic: isPublic,
@@ -266,13 +259,11 @@ class _RandomizeDialog extends ConsumerStatefulWidget {
   const _RandomizeDialog();
 
   @override
-  ConsumerState<_RandomizeDialog> createState() =>
-      _RandomizeDialogState();
+  ConsumerState<_RandomizeDialog> createState() => _RandomizeDialogState();
 }
 
 class _RandomizeDialogState extends ConsumerState<_RandomizeDialog> {
-  final Set<RandomizeGroup> _selectedGroups =
-      Set.of(RandomizeGroup.values);
+  final Set<RandomizeGroup> _selectedGroups = Set.of(RandomizeGroup.values);
 
   void _selectAll() {
     setState(() {
@@ -304,120 +295,120 @@ class _RandomizeDialogState extends ConsumerState<_RandomizeDialog> {
       content: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 500),
         child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Select which parameter groups to randomize.',
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _RandomizeGroupSection(
-                        title: 'Synth',
-                        groups: const [RandomizeGroup.synth],
-                        selected: _selectedGroups,
-                        onChanged: _onGroupToggled,
-                      ),
-                      const SizedBox(height: 16),
-                      _RandomizeGroupSection(
-                        title: 'Envelope',
-                        groups: const [
-                          RandomizeGroup.envelope1,
-                          RandomizeGroup.envelope2,
-                        ],
-                        selected: _selectedGroups,
-                        onChanged: _onGroupToggled,
-                      ),
-                    ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select which parameter groups to randomize.',
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _RandomizeGroupSection(
+                          title: 'Synth',
+                          groups: const [RandomizeGroup.synth],
+                          selected: _selectedGroups,
+                          onChanged: _onGroupToggled,
+                        ),
+                        const SizedBox(height: 16),
+                        _RandomizeGroupSection(
+                          title: 'Envelope',
+                          groups: const [
+                            RandomizeGroup.envelope1,
+                            RandomizeGroup.envelope2,
+                          ],
+                          selected: _selectedGroups,
+                          onChanged: _onGroupToggled,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _RandomizeGroupSection(
-                        title: 'Effects',
-                        groups: const [RandomizeGroup.effects],
-                        selected: _selectedGroups,
-                        onChanged: _onGroupToggled,
-                      ),
-                      const SizedBox(height: 16),
-                      _RandomizeGroupSection(
-                        title: 'Arp / Seq',
-                        groups: const [
-                          RandomizeGroup.arpeggiator,
-                          RandomizeGroup.sequencer,
-                        ],
-                        selected: _selectedGroups,
-                        onChanged: _onGroupToggled,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _RandomizeGroupSection(
+                          title: 'Effects',
+                          groups: const [RandomizeGroup.effects],
+                          selected: _selectedGroups,
+                          onChanged: _onGroupToggled,
+                        ),
+                        const SizedBox(height: 16),
+                        _RandomizeGroupSection(
+                          title: 'Arp / Seq',
+                          groups: const [
+                            RandomizeGroup.arpeggiator,
+                            RandomizeGroup.sequencer,
+                          ],
+                          selected: _selectedGroups,
+                          onChanged: _onGroupToggled,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _RandomizeGroupSection(
-                        title: 'Sampler',
-                        groups: const [RandomizeGroup.sampler],
-                        selected: _selectedGroups,
-                        onChanged: _onGroupToggled,
-                      ),
-                      const SizedBox(height: 16),
-                      _RandomizeGroupSection(
-                        title: 'Modulation',
-                        groups: const [
-                          RandomizeGroup.modA,
-                          RandomizeGroup.modB,
-                          RandomizeGroup.modX,
-                          RandomizeGroup.modY,
-                        ],
-                        selected: _selectedGroups,
-                        onChanged: _onGroupToggled,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _RandomizeGroupSection(
+                          title: 'Sampler',
+                          groups: const [RandomizeGroup.sampler],
+                          selected: _selectedGroups,
+                          onChanged: _onGroupToggled,
+                        ),
+                        const SizedBox(height: 16),
+                        _RandomizeGroupSection(
+                          title: 'Modulation',
+                          groups: const [
+                            RandomizeGroup.modA,
+                            RandomizeGroup.modB,
+                            RandomizeGroup.modX,
+                            RandomizeGroup.modY,
+                          ],
+                          selected: _selectedGroups,
+                          onChanged: _onGroupToggled,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    value: _selectedGroups.length ==
-                            RandomizeGroup.values.length
-                        ? true
-                        : _selectedGroups.isEmpty
-                            ? false
-                            : null,
-                    tristate: true,
-                    onChanged: (value) {
-                      if (value == true) {
-                        _selectAll();
-                      } else {
-                        _clearAll();
-                      }
-                    },
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Checkbox(
+                      value:
+                          _selectedGroups.length == RandomizeGroup.values.length
+                          ? true
+                          : _selectedGroups.isEmpty
+                          ? false
+                          : null,
+                      tristate: true,
+                      onChanged: (value) {
+                        if (value == true) {
+                          _selectAll();
+                        } else {
+                          _clearAll();
+                        }
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Text('Select all'),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  const Text('Select all'),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
       ),
       actions: [
         PlinkyButton(
@@ -456,7 +447,8 @@ class _RandomizeGroupSection extends StatelessWidget {
   final void Function({
     required RandomizeGroup group,
     required bool selected,
-  }) onChanged;
+  })
+  onChanged;
 
   @override
   Widget build(BuildContext context) {

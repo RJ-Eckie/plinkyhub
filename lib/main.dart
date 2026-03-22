@@ -20,14 +20,15 @@ Future<void> main() async {
   runApp(const ProviderScope(child: PlinkyHubApp()));
 }
 
-final selectedPageProvider =
-    NotifierProvider<SelectedPageNotifier, int>(SelectedPageNotifier.new);
+final selectedPageProvider = NotifierProvider<SelectedPageNotifier, int>(
+  SelectedPageNotifier.new,
+);
 
 class SelectedPageNotifier extends Notifier<int> {
   @override
   int build() => 0;
 
-  void select(int index) => state = index;
+  set selected(int index) => state = index;
 }
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
@@ -104,7 +105,7 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
               NavigationSidebar(
                 selectedIndex: selectedIndex,
                 onDestinationSelected: (index) {
-                  ref.read(selectedPageProvider.notifier).select(index);
+                  ref.read(selectedPageProvider.notifier).selected = index;
                 },
               ),
               const VerticalDivider(thickness: 1, width: 1),
