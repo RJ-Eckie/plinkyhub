@@ -165,6 +165,7 @@ class _ParameterTileState extends State<ParameterTile> {
                         ),
                     min: rangeMinimum,
                     max: rangeMaximum,
+                    inactiveColor: colorScheme.onSurface.withValues(alpha: 0.3),
                     onChanged: _onSliderChanged,
                   ),
                 // Modulation matrix
@@ -178,13 +179,14 @@ class _ParameterTileState extends State<ParameterTile> {
                           'Env': formatValue(parameter.modulations.envelope),
                           'Pressure':
                               formatValue(parameter.modulations.pressure),
-                          'A': formatValue(parameter.modulations.a),
+                          'Random':
+                              formatValue(parameter.modulations.random),
                         },
                         onChanged: (source, value) {
                           final sourceKey = switch (source) {
                             'Env' => 'envelope',
                             'Pressure' => 'pressure',
-                            'A' => 'a',
+                            'Random' => 'random',
                             'Base' => 'base',
                             _ => source.toLowerCase(),
                           };
@@ -199,11 +201,12 @@ class _ParameterTileState extends State<ParameterTile> {
                     Expanded(
                       child: _ModulationColumn(
                         entries: {
+                          'A': formatValue(parameter.modulations.a),
                           'B': formatValue(parameter.modulations.b),
                           'X': formatValue(parameter.modulations.x),
                           'Y': formatValue(parameter.modulations.y),
-                          'Random': formatValue(parameter.modulations.random),
                         },
+                        labelOnRight: true,
                         onChanged: (source, value) {
                           _onModulationChanged(source.toLowerCase(), value);
                         },
@@ -239,46 +242,48 @@ class _ModulationColumn extends StatelessWidget {
   const _ModulationColumn({
     required this.entries,
     required this.onChanged,
+    this.labelOnRight = false,
   });
 
   final Map<String, String> entries;
   final void Function(String source, String value) onChanged;
+  final bool labelOnRight;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: entries.entries.map((entry) {
+        final label = Text(
+          entry.key,
+          style: const TextStyle(fontSize: 14),
+        );
+        final field = SizedBox(
+          width: 64,
+          child: TextField(
+            controller: TextEditingController(text: entry.value),
+            style: const TextStyle(fontSize: 14),
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 4,
+              ),
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (value) => onChanged(entry.key, value),
+          ),
+        );
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 1),
           child: SizedBox(
             height: 30,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                entry.key == 'Random'
-                    ? const Icon(Icons.shuffle, size: 18)
-                    : Text(
-                        entry.key,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 64,
-                  child: TextField(
-                    controller: TextEditingController(text: entry.value),
-                    style: const TextStyle(fontSize: 14),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 4,
-                      ),
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (value) => onChanged(entry.key, value),
-                  ),
-                ),
-              ],
+              mainAxisAlignment: labelOnRight
+                  ? MainAxisAlignment.start
+                  : MainAxisAlignment.end,
+              children: labelOnRight
+                  ? [field, const SizedBox(width: 8), label]
+                  : [label, const SizedBox(width: 8), field],
             ),
           ),
         );
