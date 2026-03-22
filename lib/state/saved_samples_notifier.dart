@@ -79,12 +79,9 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   }
 
   Future<void> saveSample(
-    String name,
+    SavedSample sample,
     Uint8List fileBytes,
-    String fileName, {
-    String description = '',
-    bool isPublic = false,
-  }) async {
+  ) async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
@@ -92,19 +89,16 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final filePath = '$userId/$fileName';
       await _supabase.storage.from('samples').uploadBinary(
-        filePath,
+        sample.filePath,
         fileBytes,
       );
 
-      await _supabase.from('samples').insert({
-        'user_id': userId,
-        'name': name,
-        'description': description,
-        'is_public': isPublic,
-        'file_path': filePath,
-      });
+      final json = sample.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
+      await _supabase.from('samples').insert(json);
 
       await fetchUserSamples();
     } on Exception catch (error) {
@@ -115,28 +109,15 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     }
   }
 
-  Future<void> updateSample(
-    String id, {
-    String? name,
-    String? description,
-    bool? isPublic,
-  }) async {
+  Future<void> updateSample(SavedSample sample) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final updates = <String, dynamic>{
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-      if (name != null) {
-        updates['name'] = name;
-      }
-      if (description != null) {
-        updates['description'] = description;
-      }
-      if (isPublic != null) {
-        updates['is_public'] = isPublic;
-      }
-
-      await _supabase.from('samples').update(updates).eq('id', id);
+      final json = sample.copyWith(
+        updatedAt: DateTime.now(),
+      ).toJson()
+        ..remove('id')
+        ..remove('created_at');
+      await _supabase.from('samples').update(json).eq('id', sample.id);
       await fetchUserSamples();
     } on Exception catch (error) {
       state = state.copyWith(

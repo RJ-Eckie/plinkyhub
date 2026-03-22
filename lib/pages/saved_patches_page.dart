@@ -23,7 +23,6 @@ class _SavedPatchesPageState extends ConsumerState<SavedPatchesPage>
     _tabController = TabController(
       length: 2,
       vsync: this,
-      initialIndex: 0,
     );
     _tabController.addListener(() {
       if (_tabController.index == 1 && !_tabController.indexIsChanging) {

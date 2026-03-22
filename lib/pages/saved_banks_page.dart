@@ -27,7 +27,6 @@ class _SavedBanksPageState extends ConsumerState<SavedBanksPage>
     _tabController = TabController(
       length: 3,
       vsync: this,
-      initialIndex: 0,
     );
     _tabController.addListener(() {
       if (_tabController.index == 2 && !_tabController.indexIsChanging) {

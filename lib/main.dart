@@ -6,6 +6,7 @@ import 'package:plinkyhub/pages/about_page.dart';
 import 'package:plinkyhub/pages/editor_page.dart';
 import 'package:plinkyhub/pages/saved_banks_page.dart';
 import 'package:plinkyhub/pages/saved_patches_page.dart';
+import 'package:plinkyhub/pages/saved_samples_page.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -78,6 +79,7 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
     EditorPage(),
     SavedPatchesPage(),
     SavedBanksPage(),
+    SavedSamplesPage(),
     AboutPage(),
   ];
 

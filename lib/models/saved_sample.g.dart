@@ -15,6 +15,13 @@ _SavedSample _$SavedSampleFromJson(Map<String, dynamic> json) => _SavedSample(
   updatedAt: DateTime.parse(json['updated_at'] as String),
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
+  slicePoints:
+      (json['slice_points'] as List<dynamic>?)
+          ?.map((e) => (e as num).toDouble())
+          .toList() ??
+      defaultSlicePoints,
+  baseNote: (json['base_note'] as num?)?.toInt() ?? 60,
+  fineTune: (json['fine_tune'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$SavedSampleToJson(_SavedSample instance) =>
@@ -27,4 +34,7 @@ Map<String, dynamic> _$SavedSampleToJson(_SavedSample instance) =>
       'updated_at': instance.updatedAt.toIso8601String(),
       'description': instance.description,
       'is_public': instance.isPublic,
+      'slice_points': instance.slicePoints,
+      'base_note': instance.baseNote,
+      'fine_tune': instance.fineTune,
     };

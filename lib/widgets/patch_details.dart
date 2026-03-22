@@ -5,7 +5,6 @@ import 'package:plinkyhub/models/patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
-import 'package:plinkyhub/models/category.dart' show RandomizeGroup;
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class PatchDetailsHeader extends ConsumerWidget {
@@ -51,8 +50,7 @@ class PatchDetailsHeader extends ConsumerWidget {
             SizedBox(
               width: 160,
               child: DropdownButtonFormField<PatchCategory>(
-                value: patch.category,
-                isDense: true,
+                initialValue: patch.category,
                 decoration: const InputDecoration(
                   isDense: true,
                   contentPadding: EdgeInsets.symmetric(
