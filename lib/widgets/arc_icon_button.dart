@@ -35,8 +35,9 @@ class ArcIconButton extends StatefulWidget {
 }
 
 class _ArcIconButtonState extends State<ArcIconButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _hoverController;
+  late final AnimationController _selectionController;
 
   @override
   void initState() {
@@ -45,11 +46,29 @@ class _ArcIconButtonState extends State<ArcIconButton>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    _selectionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: widget.isSelected ? 1.0 : 0.0,
+    );
+  }
+
+  @override
+  void didUpdateWidget(ArcIconButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected != oldWidget.isSelected) {
+      if (widget.isSelected) {
+        _selectionController.forward();
+      } else {
+        _selectionController.reverse();
+      }
+    }
   }
 
   @override
   void dispose() {
     _hoverController.dispose();
+    _selectionController.dispose();
     super.dispose();
   }
 
@@ -64,14 +83,13 @@ class _ArcIconButtonState extends State<ArcIconButton>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = widget.arcColor ??
-        (widget.isSelected
-            ? theme.colorScheme.primary
-            : theme.colorScheme.onSurface.withValues(alpha: 0.4));
-    final foreground = widget.iconColor ??
-        (widget.isSelected
-            ? theme.colorScheme.primary
-            : theme.colorScheme.onSurface);
+    final selectedColor = widget.arcColor ?? theme.colorScheme.primary;
+    final unselectedColor = widget.arcColor ??
+        theme.colorScheme.onSurface.withValues(alpha: 0.4);
+    final selectedForeground =
+        widget.iconColor ?? theme.colorScheme.primary;
+    final unselectedForeground =
+        widget.iconColor ?? theme.colorScheme.onSurface;
 
     return InkWell(
       onTap: widget.onPressed,
@@ -81,35 +99,53 @@ class _ArcIconButtonState extends State<ArcIconButton>
         width: widget.size,
         height: widget.size,
         child: AnimatedBuilder(
-          animation: _hoverController,
-          builder: (context, child) => CustomPaint(
-            painter: _ArcPainter(
-              color: color,
-              gapAngle: widget.gapAngle,
-              strokeWidth: widget.strokeWidth,
-              isSelected: widget.isSelected,
-              hoverProgress: _hoverController.value,
-            ),
-            child: child,
-          ),
+          animation: Listenable.merge([
+            _hoverController,
+            _selectionController,
+          ]),
+          builder: (context, child) {
+            final selection = _selectionController.value;
+            final color = Color.lerp(
+              unselectedColor,
+              selectedColor,
+              selection,
+            )!;
+            final foreground = Color.lerp(
+              unselectedForeground,
+              selectedForeground,
+              selection,
+            )!;
+            return IconTheme(
+              data: IconThemeData(
+                color: foreground,
+                size: widget.size * 0.3,
+              ),
+              child: DefaultTextStyle(
+                style: widget.textStyle ??
+                    theme.textTheme.labelSmall!.copyWith(
+                      color: foreground,
+                    ),
+                textAlign: TextAlign.center,
+                child: CustomPaint(
+                  painter: _ArcPainter(
+                    color: color,
+                    gapAngle: widget.gapAngle,
+                    strokeWidth: widget.strokeWidth,
+                    selectionProgress: selection,
+                    hoverProgress: _hoverController.value,
+                  ),
+                  child: child,
+                ),
+              ),
+            );
+          },
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  widget.icon,
-                  color: foreground,
-                  size: widget.size * 0.3,
-                ),
+                Icon(widget.icon),
                 const SizedBox(height: 2),
-                Text(
-                  widget.label,
-                  style: widget.textStyle ??
-                      theme.textTheme.labelSmall?.copyWith(
-                        color: foreground,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
+                Text(widget.label),
               ],
             ),
           ),
@@ -126,14 +162,14 @@ class _ArcPainter extends CustomPainter {
     required this.color,
     required this.gapAngle,
     required this.strokeWidth,
-    required this.isSelected,
+    required this.selectionProgress,
     required this.hoverProgress,
   });
 
   final Color color;
   final double gapAngle;
   final double strokeWidth;
-  final bool isSelected;
+  final double selectionProgress;
   final double hoverProgress;
 
   @override
@@ -164,28 +200,31 @@ class _ArcPainter extends CustomPainter {
 
     final glowCenter = Offset(size.width * 0.05, size.height * 0.05);
     final glowRadius = size.width * 0.22;
-    final baseColor = isSelected
-        ? const Color(0xFF4488FF)
-        : const Color(0xFF888888);
-    final hoverColor =
-        isSelected ? const Color(0xFF4488FF) : Colors.white;
-    final glowColor =
-        Color.lerp(baseColor, hoverColor, hoverProgress)!;
+    final s = selectionProgress;
+    final h = hoverProgress;
 
-    final baseInner = isSelected ? 0.7 : 0.4;
-    final hoverInner = isSelected ? 0.9 : 0.6;
-    final baseMid = isSelected ? 0.2 : 0.1;
-    final hoverMid = isSelected ? 0.3 : 0.15;
+    final baseColor = Color.lerp(
+      const Color(0xFF888888),
+      const Color(0xFF4488FF),
+      s,
+    )!;
+    final hoverColor = Color.lerp(Colors.white, baseColor, s)!;
+    final glowColor = Color.lerp(baseColor, hoverColor, h)!;
+
+    final baseInner = _lerp(0.4, 0.7, s);
+    final hoverInner = _lerp(0.6, 0.9, s);
+    final baseMid = _lerp(0.1, 0.2, s);
+    final hoverMid = _lerp(0.15, 0.3, s);
 
     // Outer soft glow
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
           glowColor.withValues(
-            alpha: _lerp(baseInner, hoverInner, hoverProgress),
+            alpha: _lerp(baseInner, hoverInner, h),
           ),
           glowColor.withValues(
-            alpha: _lerp(baseMid, hoverMid, hoverProgress),
+            alpha: _lerp(baseMid, hoverMid, h),
           ),
           glowColor.withValues(alpha: 0),
         ],
@@ -196,16 +235,20 @@ class _ArcPainter extends CustomPainter {
     canvas.drawCircle(glowCenter, glowRadius, glowPaint);
 
     // Bright core
-    final baseCore = isSelected ? 0.9 : 0.5;
-    final hoverCore = isSelected ? 1.0 : 0.8;
+    final baseCore = _lerp(0.5, 0.9, s);
+    final hoverCore = _lerp(0.8, 1.0, s);
     final coreColor = Color.lerp(
-      isSelected ? Colors.white : const Color(0xFFAAAAAA),
+      Color.lerp(
+        const Color(0xFFAAAAAA),
+        Colors.white,
+        s,
+      ),
       Colors.white,
-      hoverProgress,
+      h,
     )!;
     final corePaint = Paint()
       ..color = coreColor.withValues(
-        alpha: _lerp(baseCore, hoverCore, hoverProgress),
+        alpha: _lerp(baseCore, hoverCore, h),
       )
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
     canvas.drawCircle(glowCenter, 2, corePaint);
@@ -216,6 +259,6 @@ class _ArcPainter extends CustomPainter {
       color != oldDelegate.color ||
       gapAngle != oldDelegate.gapAngle ||
       strokeWidth != oldDelegate.strokeWidth ||
-      isSelected != oldDelegate.isSelected ||
+      selectionProgress != oldDelegate.selectionProgress ||
       hoverProgress != oldDelegate.hoverProgress;
 }
