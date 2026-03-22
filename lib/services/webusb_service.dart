@@ -53,7 +53,7 @@ extension type USBDevice._(JSObject _) implements JSObject {
   );
   external JSPromise<JSAny?> transferOut(
     int endpointNumber,
-    JSArrayBuffer data,
+    JSUint8Array data,
   );
 }
 
@@ -236,7 +236,7 @@ class WebUsbService {
     await _device!
         .transferOut(
           _endpointOut,
-          data.buffer.toJS,
+          data.toJS,
         )
         .toDart;
   }

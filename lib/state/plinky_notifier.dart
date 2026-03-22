@@ -185,15 +185,23 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
         lowByte,
         highByte,
       ]);
-      await _webUsbService.send(headerBuffer);
+
+      // Fire off all sends without awaiting between them, matching
+      // the original editor which queues all transferOut calls
+      // synchronously. Awaiting each one individually can cause the
+      // device to miss data.
+      final futures = <Future<void>>[];
+      futures.add(_webUsbService.send(headerBuffer));
 
       var offset = 0;
       while (offset < data.length) {
         final end = (offset + _usbBufferSize).clamp(0, data.length);
         final chunk = data.sublist(offset, end);
-        await _webUsbService.send(chunk);
+        futures.add(_webUsbService.send(chunk));
         offset += _usbBufferSize;
       }
+
+      await Future.wait(futures);
 
       state = state.copyWith(
         connectionState: PlinkyConnectionState.connected,

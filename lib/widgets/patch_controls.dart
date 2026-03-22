@@ -85,11 +85,11 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
                           .loadPatch();
                     },
               icon: Icons.download,
-              label: 'Load patch',
+              label: 'Load from Plinky',
             ),
             const SizedBox(width: 8),
             PlinkyButton(
-              onPressed: isLoading
+              onPressed: isLoading || state.patch == null
                   ? null
                   : () {
                       _updatePatchNumber();
@@ -98,7 +98,7 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
                           .savePatch();
                     },
               icon: Icons.upload,
-              label: 'Save patch',
+              label: 'Save to Plinky',
             ),
             const SizedBox(width: 8),
             PlinkyButton(
