@@ -18,20 +18,16 @@ class PlinkyButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isEnabled = onPressed != null;
     final foreground = isEnabled
-        ? colorScheme.onPrimary
+        ? colorScheme.onSurface
         : colorScheme.onSurface.withValues(alpha: 0.38);
-    final background = isEnabled
-        ? colorScheme.primary
-        : colorScheme.onSurface.withValues(alpha: 0.12);
     final borderColor = isEnabled
-        ? colorScheme.primary.withValues(alpha: 0.4)
-        : Colors.transparent;
+        ? colorScheme.onSurface.withValues(alpha: 0.4)
+        : colorScheme.onSurface.withValues(alpha: 0.12);
 
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: foreground,
-        backgroundColor: background,
         side: BorderSide(color: borderColor, width: 1.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
