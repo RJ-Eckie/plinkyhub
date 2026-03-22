@@ -381,30 +381,34 @@ class _CreateBankTabState extends ConsumerState<_CreateBankTab> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 320,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
               childAspectRatio: 2.5,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
             itemCount: 32,
             itemBuilder: (context, index) {
+              // Column-major order: 1-8 first column, 9-16 second, etc.
+              final row = index ~/ 4;
+              final column = index % 4;
+              final slotIndex = column * 8 + row;
               return _BankSlotTile(
-                slotNumber: index,
-                patchId: _slots[index].patchId,
-                sampleId: _slots[index].sampleId,
+                slotNumber: slotIndex,
+                patchId: _slots[slotIndex].patchId,
+                sampleId: _slots[slotIndex].sampleId,
                 onPatchChanged: (patchId) {
                   setState(() {
-                    _slots[index] = (
+                    _slots[slotIndex] = (
                       patchId: patchId,
-                      sampleId: _slots[index].sampleId,
+                      sampleId: _slots[slotIndex].sampleId,
                     );
                   });
                 },
                 onSampleChanged: (sampleId) {
                   setState(() {
-                    _slots[index] = (
-                      patchId: _slots[index].patchId,
+                    _slots[slotIndex] = (
+                      patchId: _slots[slotIndex].patchId,
                       sampleId: sampleId,
                     );
                   });
@@ -499,22 +503,23 @@ class _BankSlotTile extends ConsumerWidget {
         : 'None';
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 28,
-              child: Text(
-                '${slotNumber + 1}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _showPatchPicker(context, patches),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: Text(
+                  '${slotNumber + 1}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: InkWell(
-                onTap: () => _showPatchPicker(context, patches),
+              Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,37 +540,37 @@ class _BankSlotTile extends ConsumerWidget {
                   ],
                 ),
               ),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 16),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'patch',
-                  child: Text('Pick patch'),
-                ),
-                const PopupMenuItem(
-                  value: 'sample',
-                  child: Text('Pick sample'),
-                ),
-                if (patchId != null || sampleId != null)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 16),
+                itemBuilder: (context) => [
                   const PopupMenuItem(
-                    value: 'clear',
-                    child: Text('Clear slot'),
+                    value: 'patch',
+                    child: Text('Pick patch'),
                   ),
-              ],
-              onSelected: (value) {
-                switch (value) {
-                  case 'patch':
-                    _showPatchPicker(context, patches);
-                  case 'sample':
-                    _showSamplePicker(context, samples);
-                  case 'clear':
-                    onPatchChanged(null);
-                    onSampleChanged(null);
-                }
-              },
-            ),
-          ],
+                  const PopupMenuItem(
+                    value: 'sample',
+                    child: Text('Pick sample'),
+                  ),
+                  if (patchId != null || sampleId != null)
+                    const PopupMenuItem(
+                      value: 'clear',
+                      child: Text('Clear slot'),
+                    ),
+                ],
+                onSelected: (value) {
+                  switch (value) {
+                    case 'patch':
+                      _showPatchPicker(context, patches);
+                    case 'sample':
+                      _showSamplePicker(context, samples);
+                    case 'clear':
+                      onPatchChanged(null);
+                      onSampleChanged(null);
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
