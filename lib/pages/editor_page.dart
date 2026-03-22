@@ -102,7 +102,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                       crossAxisCount: columnCount,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
-                      childAspectRatio: tileWidth / 310,
+                      childAspectRatio: tileWidth / 260,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {

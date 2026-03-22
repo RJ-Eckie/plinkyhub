@@ -149,6 +149,7 @@ class _ParameterTileState extends State<ParameterTile> {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
+      color: colorScheme.surfaceContainerHighest,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -175,6 +176,43 @@ class _ParameterTileState extends State<ParameterTile> {
                     ),
                   ),
                 ),
+                if (parameter.description.isNotEmpty)
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 18,
+                      icon: Icon(
+                        Icons.info_outline,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      tooltip: 'Details',
+                      onPressed: () {
+                        showDialog<void>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(
+                              parameter.name ?? parameter.id,
+                            ),
+                            content: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 300,
+                              ),
+                              child: Text(parameter.description),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 if (!hasDropdown) ...[
                   SizedBox(
                     width: 24,
@@ -198,52 +236,64 @@ class _ParameterTileState extends State<ParameterTile> {
                   const SizedBox(width: 4),
                   SizedBox(
                     width: 64,
-                    child: TextField(
-                      controller: _valueController,
-                      style: TextStyle(
-                        color: colorScheme.onPrimaryContainer,
-                        fontSize: 14,
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 4,
+                    child: Focus(
+                      onFocusChange: (hasFocus) {
+                        if (!hasFocus) {
+                          _onNormalizedValueChanged(
+                            _valueController.text,
+                          );
+                        }
+                      },
+                      child: TextField(
+                        controller: _valueController,
+                        style: TextStyle(
+                          color: colorScheme.onPrimaryContainer,
+                          fontSize: 14,
                         ),
-                        border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: colorScheme.onPrimaryContainer,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          border: const OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: colorScheme.onPrimaryContainer,
+                            ),
                           ),
                         ),
+                        onSubmitted: _onNormalizedValueChanged,
                       ),
-                      onSubmitted: _onNormalizedValueChanged,
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          // Body
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            color: colorScheme.surfaceContainerHighest,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (hasDropdown)
-                  DropdownButton<int>(
-                    value: parameter.getActiveSelectOption()?.value,
-                    isExpanded: true,
-                    items: selectOptions.map((option) {
-                      return DropdownMenuItem<int>(
-                        value: option.value,
-                        child: Text(option.label),
-                      );
-                    }).toList(),
-                    onChanged: _onDropdownChanged,
-                  )
-                else
+          if (hasDropdown)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+
+              child: DropdownButton<int>(
+                value: parameter.getActiveSelectOption()?.value,
+                isExpanded: true,
+                items: selectOptions.map((option) {
+                  return DropdownMenuItem<int>(
+                    value: option.value,
+                    child: Text(option.label),
+                  );
+                }).toList(),
+                onChanged: _onDropdownChanged,
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   Slider(
                     value: parameter.value.toDouble().clamp(
                           rangeMinimum,
@@ -254,68 +304,53 @@ class _ParameterTileState extends State<ParameterTile> {
                     inactiveColor: colorScheme.onSurface.withValues(alpha: 0.3),
                     onChanged: _onSliderChanged,
                   ),
-                // Modulation matrix
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _ModulationColumn(
-                        entries: {
-                          'Base': _modulationControllers['base']!,
-                          'Env': _modulationControllers['envelope']!,
-                          'Pressure': _modulationControllers['pressure']!,
-                          'Random': _modulationControllers['random']!,
-                        },
-                        onChanged: (source, value) {
-                          final sourceKey = switch (source) {
-                            'Env' => 'envelope',
-                            'Pressure' => 'pressure',
-                            'Random' => 'random',
-                            'Base' => 'base',
-                            _ => source.toLowerCase(),
-                          };
-                          if (sourceKey == 'base') {
-                            _onNormalizedValueChanged(value);
-                          } else {
-                            _onModulationChanged(sourceKey, value);
-                          }
-                        },
+                  // Modulation matrix
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _ModulationColumn(
+                          entries: {
+                            'Base': _modulationControllers['base']!,
+                            'Env': _modulationControllers['envelope']!,
+                            'Pressure': _modulationControllers['pressure']!,
+                            'Random': _modulationControllers['random']!,
+                          },
+                          onChanged: (source, value) {
+                            final sourceKey = switch (source) {
+                              'Env' => 'envelope',
+                              'Pressure' => 'pressure',
+                              'Random' => 'random',
+                              'Base' => 'base',
+                              _ => source.toLowerCase(),
+                            };
+                            if (sourceKey == 'base') {
+                              _onNormalizedValueChanged(value);
+                            } else {
+                              _onModulationChanged(sourceKey, value);
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _ModulationColumn(
-                        entries: {
-                          'A': _modulationControllers['a']!,
-                          'B': _modulationControllers['b']!,
-                          'X': _modulationControllers['x']!,
-                          'Y': _modulationControllers['y']!,
-                        },
-                        labelOnRight: true,
-                        onChanged: (source, value) {
-                          _onModulationChanged(source.toLowerCase(), value);
-                        },
+                      Expanded(
+                        child: _ModulationColumn(
+                          entries: {
+                            'A': _modulationControllers['a']!,
+                            'B': _modulationControllers['b']!,
+                            'X': _modulationControllers['x']!,
+                            'Y': _modulationControllers['y']!,
+                          },
+                          labelOnRight: true,
+                          onChanged: (source, value) {
+                            _onModulationChanged(source.toLowerCase(), value);
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                // Description
-                ExpansionTile(
-                  title: const Text(
-                    'Details',
-                    style: TextStyle(fontSize: 14),
+                    ],
                   ),
-                  tilePadding: EdgeInsets.zero,
-                  childrenPadding: const EdgeInsets.only(bottom: 8),
-                  children: [
-                    Text(
-                      parameter.description,
-                      style: const TextStyle(fontSize: 12, height: 1.3),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -343,18 +378,25 @@ class _ModulationColumn extends StatelessWidget {
         );
         final field = SizedBox(
           width: 64,
-          child: TextField(
-            controller: entry.value,
-            style: const TextStyle(fontSize: 14),
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 4,
-                vertical: 4,
+          child: Focus(
+            onFocusChange: (hasFocus) {
+              if (!hasFocus) {
+                onChanged(entry.key, entry.value.text);
+              }
+            },
+            child: TextField(
+              controller: entry.value,
+              style: const TextStyle(fontSize: 14),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 4,
+                ),
+                border: OutlineInputBorder(),
               ),
-              border: OutlineInputBorder(),
+              onSubmitted: (value) => onChanged(entry.key, value),
             ),
-            onSubmitted: (value) => onChanged(entry.key, value),
           ),
         );
         return Padding(

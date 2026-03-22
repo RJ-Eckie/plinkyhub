@@ -4,6 +4,7 @@ import 'package:plinkyhub/models/saved_patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
+import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class SavedPatchesPage extends ConsumerStatefulWidget {
@@ -247,11 +248,9 @@ class _PatchCard extends ConsumerWidget {
                     ref
                         .read(savedPatchesProvider.notifier)
                         .loadPatchIntoEditor(patch);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Patch loaded into editor'),
-                      ),
-                    );
+                    ref
+                        .read(selectedPageProvider.notifier)
+                        .select(0);
                   },
                   icon: Icons.download,
                   label: 'Load into editor',

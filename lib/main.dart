@@ -20,6 +20,16 @@ Future<void> main() async {
   runApp(const ProviderScope(child: PlinkyHubApp()));
 }
 
+final selectedPageProvider =
+    NotifierProvider<SelectedPageNotifier, int>(SelectedPageNotifier.new);
+
+class SelectedPageNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void select(int index) => state = index;
+}
+
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
   ThemeModeNotifier.new,
 );
@@ -73,8 +83,6 @@ class PlinkyHubShell extends ConsumerStatefulWidget {
 }
 
 class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
-  int _selectedIndex = 0;
-
   static const _pages = <Widget>[
     EditorPage(),
     SavedPatchesPage(),
@@ -85,6 +93,7 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = ref.watch(selectedPageProvider);
     final themeMode = ref.watch(themeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
     return Scaffold(
@@ -93,13 +102,13 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
           Row(
             children: [
               NavigationSidebar(
-                selectedIndex: _selectedIndex,
+                selectedIndex: selectedIndex,
                 onDestinationSelected: (index) {
-                  setState(() => _selectedIndex = index);
+                  ref.read(selectedPageProvider.notifier).select(index);
                 },
               ),
               const VerticalDivider(thickness: 1, width: 1),
-              Expanded(child: _pages[_selectedIndex]),
+              Expanded(child: _pages[selectedIndex]),
             ],
           ),
           Positioned(
