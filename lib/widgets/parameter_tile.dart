@@ -167,7 +167,7 @@ class _ParameterTileState extends State<ParameterTile> {
                   'assets/icons/${parameter.icon}',
                   width: 40,
                   height: 40,
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                   errorBuilder: (context, error, stackTrace) =>
                       const SizedBox(width: 40, height: 40),
                 ),
@@ -176,7 +176,7 @@ class _ParameterTileState extends State<ParameterTile> {
                   child: Text(
                     parameter.name ?? parameter.id,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -189,7 +189,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       iconSize: 18,
                       icon: Icon(
                         Icons.info_outline,
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                       ),
                       tooltip: 'Details',
                       onPressed: () {
@@ -225,7 +225,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       iconSize: 18,
                       icon: Icon(
                         Icons.restart_alt,
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                       ),
                       tooltip: 'Reset value',
                       onPressed: () {
@@ -250,7 +250,7 @@ class _ParameterTileState extends State<ParameterTile> {
                       child: TextField(
                         controller: _valueController,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
@@ -262,7 +262,7 @@ class _ParameterTileState extends State<ParameterTile> {
                           border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                              color: Colors.white,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -304,7 +304,7 @@ class _ParameterTileState extends State<ParameterTile> {
                     ),
                     min: rangeMinimum,
                     max: rangeMaximum,
-                    inactiveColor: Colors.white.withValues(alpha: 0.3),
+                    inactiveColor: colorScheme.onSurface.withValues(alpha: 0.3),
                     onChanged: _onSliderChanged,
                   ),
                   // Modulation matrix
