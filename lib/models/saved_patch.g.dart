@@ -16,8 +16,8 @@ _SavedPatch _$SavedPatchFromJson(Map<String, dynamic> json) => _SavedPatch(
   updatedAt: DateTime.parse(json['updated_at'] as String),
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
-  username: json['username'] as String? ?? '',
-  starCount: (json['star_count'] as num?)?.toInt() ?? 0,
+  username: _readUsername(json, 'username') as String? ?? '',
+  starCount: (_readStarCount(json, 'star_count') as num?)?.toInt() ?? 0,
   isStarred: json['is_starred'] as bool? ?? false,
 );
 

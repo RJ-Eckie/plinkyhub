@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedPatch {
 
- String get id;@JsonKey(name: 'user_id') String get userId; String get name; String get category;@JsonKey(name: 'patch_data') String get patchData;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt; String get description;@JsonKey(name: 'is_public') bool get isPublic; String get username;@JsonKey(name: 'star_count') int get starCount;@JsonKey(name: 'is_starred') bool get isStarred;
+ String get id;@JsonKey(name: 'user_id') String get userId; String get name; String get category;@JsonKey(name: 'patch_data') String get patchData;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt; String get description;@JsonKey(name: 'is_public') bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(name: 'star_count', readValue: _readStarCount) int get starCount;@JsonKey(name: 'is_starred') bool get isStarred;
 /// Create a copy of SavedPatch
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SavedPatchCopyWith<$Res>  {
   factory $SavedPatchCopyWith(SavedPatch value, $Res Function(SavedPatch) _then) = _$SavedPatchCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId, String name, String category,@JsonKey(name: 'patch_data') String patchData,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic, String username,@JsonKey(name: 'star_count') int starCount,@JsonKey(name: 'is_starred') bool isStarred
+ String id,@JsonKey(name: 'user_id') String userId, String name, String category,@JsonKey(name: 'patch_data') String patchData,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(name: 'star_count', readValue: _readStarCount) int starCount,@JsonKey(name: 'is_starred') bool isStarred
 });
 
 
@@ -164,7 +164,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name,  String category, @JsonKey(name: 'patch_data')  String patchData, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic,  String username, @JsonKey(name: 'star_count')  int starCount, @JsonKey(name: 'is_starred')  bool isStarred)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name,  String category, @JsonKey(name: 'patch_data')  String patchData, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedPatch() when $default != null:
 return $default(_that.id,_that.userId,_that.name,_that.category,_that.patchData,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred);case _:
@@ -185,7 +185,7 @@ return $default(_that.id,_that.userId,_that.name,_that.category,_that.patchData,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name,  String category, @JsonKey(name: 'patch_data')  String patchData, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic,  String username, @JsonKey(name: 'star_count')  int starCount, @JsonKey(name: 'is_starred')  bool isStarred)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name,  String category, @JsonKey(name: 'patch_data')  String patchData, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred)  $default,) {final _that = this;
 switch (_that) {
 case _SavedPatch():
 return $default(_that.id,_that.userId,_that.name,_that.category,_that.patchData,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred);case _:
@@ -205,7 +205,7 @@ return $default(_that.id,_that.userId,_that.name,_that.category,_that.patchData,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String userId,  String name,  String category, @JsonKey(name: 'patch_data')  String patchData, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic,  String username, @JsonKey(name: 'star_count')  int starCount, @JsonKey(name: 'is_starred')  bool isStarred)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String userId,  String name,  String category, @JsonKey(name: 'patch_data')  String patchData, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedPatch() when $default != null:
 return $default(_that.id,_that.userId,_that.name,_that.category,_that.patchData,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred);case _:
@@ -220,7 +220,7 @@ return $default(_that.id,_that.userId,_that.name,_that.category,_that.patchData,
 @JsonSerializable()
 
 class _SavedPatch implements SavedPatch {
-  const _SavedPatch({required this.id, @JsonKey(name: 'user_id') required this.userId, required this.name, required this.category, @JsonKey(name: 'patch_data') required this.patchData, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, this.description = '', @JsonKey(name: 'is_public') this.isPublic = false, this.username = '', @JsonKey(name: 'star_count') this.starCount = 0, @JsonKey(name: 'is_starred') this.isStarred = false});
+  const _SavedPatch({required this.id, @JsonKey(name: 'user_id') required this.userId, required this.name, required this.category, @JsonKey(name: 'patch_data') required this.patchData, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, this.description = '', @JsonKey(name: 'is_public') this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(name: 'star_count', readValue: _readStarCount) this.starCount = 0, @JsonKey(name: 'is_starred') this.isStarred = false});
   factory _SavedPatch.fromJson(Map<String, dynamic> json) => _$SavedPatchFromJson(json);
 
 @override final  String id;
@@ -232,8 +232,8 @@ class _SavedPatch implements SavedPatch {
 @override@JsonKey(name: 'updated_at') final  DateTime updatedAt;
 @override@JsonKey() final  String description;
 @override@JsonKey(name: 'is_public') final  bool isPublic;
-@override@JsonKey() final  String username;
-@override@JsonKey(name: 'star_count') final  int starCount;
+@override@JsonKey(readValue: _readUsername) final  String username;
+@override@JsonKey(name: 'star_count', readValue: _readStarCount) final  int starCount;
 @override@JsonKey(name: 'is_starred') final  bool isStarred;
 
 /// Create a copy of SavedPatch
@@ -269,7 +269,7 @@ abstract mixin class _$SavedPatchCopyWith<$Res> implements $SavedPatchCopyWith<$
   factory _$SavedPatchCopyWith(_SavedPatch value, $Res Function(_SavedPatch) _then) = __$SavedPatchCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId, String name, String category,@JsonKey(name: 'patch_data') String patchData,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic, String username,@JsonKey(name: 'star_count') int starCount,@JsonKey(name: 'is_starred') bool isStarred
+ String id,@JsonKey(name: 'user_id') String userId, String name, String category,@JsonKey(name: 'patch_data') String patchData,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(name: 'star_count', readValue: _readStarCount) int starCount,@JsonKey(name: 'is_starred') bool isStarred
 });
 
 

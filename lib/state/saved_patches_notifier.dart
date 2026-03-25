@@ -43,15 +43,8 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
 
     return response.map((row) {
       final map = row as Map<String, dynamic>;
-      final profile = map['profiles'] as Map<String, dynamic>?;
-      final starCountList = map['patch_stars'] as List<dynamic>?;
-      final firstStar = starCountList?.isNotEmpty == true
-          ? starCountList!.first as Map<String, dynamic>
-          : null;
       return SavedPatch.fromJson({
         ...map,
-        'username': profile?['username'] ?? '',
-        'star_count': firstStar?['count'] as int? ?? 0,
         'is_starred': starredPatchIds.contains(map['id']),
       });
     }).toList();

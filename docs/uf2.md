@@ -29,6 +29,69 @@ in the Presets file as a `SampleInfo` structure. Without this metadata, Plinky w
 the sample and it will not have a waveform. For audio not recorded on Plinky, you must generate the
 `SampleInfo` data yourself and place it correctly in the Presets file.
 
+### Audio Format
+
+Plinky expects raw PCM with no file headers (no WAV/RIFF container):
+
+| Property    | Value                          |
+| ----------- | ------------------------------ |
+| Sample rate | 31,250 Hz                      |
+| Bit depth   | 16-bit                         |
+| Encoding    | Signed integer (s16)           |
+| Channels    | Mono                           |
+| Endianness  | Little-endian                  |
+
+The codec (WM8758) is configured for the closest standard rate (32 kHz), but the actual rate
+derived from the MCU clock dividers is 31,250 Hz.
+
+### Flash Storage
+
+Plinky has two external SPI flash chips (16 MB each, 32 MB total) for sample storage. Each of
+the 8 sample slots holds up to 2,097,152 samples (`MAX_SAMPLE_LEN`), which is 4 MB of raw data.
+The UF2 address space allocates 8 MB per slot because UF2 blocks carry 256 bytes of payload in
+512-byte blocks, effectively doubling the address range.
+
+The `0x40000000` bit in the UF2 target address flags the data as destined for the external SPI
+flash rather than the MCU's internal flash.
+
+### SampleInfo Metadata
+
+Each sample has a `SampleInfo` struct stored in the Presets file:
+
+```c
+typedef struct SampleInfo {
+    u8 waveform4_b[1024];   // 4-bit waveform display (2048 points)
+    int splitpoints[8];      // absolute sample positions for 8 slices
+    int samplelen;           // total sample length (splitpoints[8] reads this)
+    s8 notes[8];             // root note per slice (0-96, add 12 for MIDI)
+    u8 pitched;              // 0 = tape mode, 1 = pitched/multisample mode
+    u8 loop;                 // bit 0: loop on/off, bit 1: slice vs all
+    u8 paddy[2];
+} SampleInfo;
+```
+
+**Splitpoints** are absolute sample offsets (not fractions). Adjacent points must be at least 1024
+samples apart. `splitpoints[8]` is implicitly `samplelen` (placed right after the array).
+
+**Playback modes:**
+
+- **Tape mode** (`pitched=0`): Each of Plinky's 8 columns plays the corresponding slice directly
+  (column 0 → slice 0, etc.). The Y-axis scrubs within the slice region.
+- **Pitched mode** (`pitched=1`): Each slice has a root note in `notes[8]`. Plinky picks the slice
+  whose root note is closest to the played pitch, with round-robin for ties.
+
+**Note values** use Plinky's scheme (0-96) where `value + 12` gives the MIDI note number. For
+example, value 48 = MIDI 60 = C4.
+
+**Loop modes** (2-bit field):
+
+| Value | Behaviour        |
+| ----- | ---------------- |
+| 0     | One-shot, slice  |
+| 1     | Loop, slice      |
+| 2     | One-shot, all    |
+| 3     | Loop, all        |
+
 ## Presets
 
 The Presets file contains presets, sequences, and `SampleInfo` structures. The pages inside the

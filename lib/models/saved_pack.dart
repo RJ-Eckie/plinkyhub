@@ -14,9 +14,20 @@ abstract class SavedPack with _$SavedPack {
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
     @Default('') String description,
     @Default(false) @JsonKey(name: 'is_public') bool isPublic,
+    @Default('')
+    @JsonKey(readValue: _readUsername)
+    String username,
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
   }) = _SavedPack;
 
   factory SavedPack.fromJson(Map<String, dynamic> json) =>
       _$SavedPackFromJson(json);
+}
+
+Object? _readUsername(Map<dynamic, dynamic> json, String key) {
+  final profiles = json['profiles'];
+  if (profiles is Map<String, dynamic>) {
+    return profiles['username'];
+  }
+  return json[key];
 }

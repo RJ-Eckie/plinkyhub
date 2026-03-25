@@ -3,9 +3,11 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
+import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -113,7 +115,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
   }
 }
 
-class _SampleList extends ConsumerWidget {
+class _SampleList extends ConsumerStatefulWidget {
   const _SampleList({
     required this.samples,
     required this.isLoading,
@@ -127,21 +129,59 @@ class _SampleList extends ConsumerWidget {
   final VoidCallback onRefresh;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (isLoading && samples.isEmpty) {
+  ConsumerState<_SampleList> createState() => _SampleListState();
+}
+
+class _SampleListState extends ConsumerState<_SampleList> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<SavedSample> get _filteredSamples {
+    final samples = widget.samples;
+    if (_query.isEmpty) {
+      return samples;
+    }
+    final lower = _query.toLowerCase();
+    final filtered = samples
+        .where(
+          (sample) =>
+              sample.name.toLowerCase().contains(lower) ||
+              sample.username.toLowerCase().contains(lower) ||
+              sample.description.toLowerCase().contains(lower),
+        )
+        .toList();
+    filtered.sort((a, b) {
+      final aExact = a.name.toLowerCase() == lower ? 0 : 1;
+      final bExact = b.name.toLowerCase() == lower ? 0 : 1;
+      return aExact.compareTo(bExact);
+    });
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.isLoading && widget.samples.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (samples.isEmpty) {
+    if (widget.samples.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isOwned ? 'No saved samples yet' : 'No community samples yet',
+              widget.isOwned
+                  ? 'No saved samples yet'
+                  : 'No community samples yet',
             ),
             const SizedBox(height: 8),
-            if (isOwned) ...[
+            if (widget.isOwned) ...[
               PlinkyButton(
                 onPressed: () => _showUploadDialog(context),
                 icon: Icons.upload_file,
@@ -150,7 +190,7 @@ class _SampleList extends ConsumerWidget {
               const SizedBox(height: 8),
             ],
             PlinkyButton(
-              onPressed: onRefresh,
+              onPressed: widget.onRefresh,
               icon: Icons.refresh,
               label: 'Refresh',
             ),
@@ -159,45 +199,68 @@ class _SampleList extends ConsumerWidget {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => onRefresh(),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: samples.length + 1,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Text(
-                    '${samples.length} sample${samples.length == 1 ? '' : 's'}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const Spacer(),
-                  if (isOwned)
-                    IconButton(
-                      icon: const Icon(Icons.upload_file, size: 20),
-                      onPressed: () => _showUploadDialog(context),
-                      tooltip: 'Upload sample',
-                    ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, size: 20),
-                    onPressed: onRefresh,
-                    tooltip: 'Refresh',
-                  ),
-                ],
-              ),
-            );
-          }
+    final filtered = _filteredSamples;
 
-          final sample = samples[index - 1];
-          return _SampleCard(
-            sample: sample,
-            isOwned: isOwned,
-          );
-        },
-      ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              hintText: 'Search samples...',
+              prefixIcon: Icon(Icons.search, size: 20),
+              border: OutlineInputBorder(),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(vertical: 8),
+            ),
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async => widget.onRefresh(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: filtered.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${filtered.length} '
+                          'sample${filtered.length == 1 ? '' : 's'}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const Spacer(),
+                        if (widget.isOwned)
+                          IconButton(
+                            icon: const Icon(Icons.upload_file, size: 20),
+                            onPressed: () => _showUploadDialog(context),
+                            tooltip: 'Upload sample',
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, size: 20),
+                          onPressed: widget.onRefresh,
+                          tooltip: 'Refresh',
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final sample = filtered[index - 1];
+                return _SampleCard(
+                  sample: sample,
+                  isOwned: widget.isOwned,
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -209,7 +272,7 @@ class _SampleList extends ConsumerWidget {
   }
 }
 
-class _SampleCard extends ConsumerWidget {
+class _SampleCard extends ConsumerStatefulWidget {
   const _SampleCard({
     required this.sample,
     required this.isOwned,
@@ -219,8 +282,86 @@ class _SampleCard extends ConsumerWidget {
   final bool isOwned;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SampleCard> createState() => _SampleCardState();
+}
+
+class _SampleCardState extends ConsumerState<_SampleCard> {
+  bool _expanded = false;
+  Uint8List? _wavBytes;
+  bool _loadingWav = false;
+  late List<double> _slicePoints;
+  late bool _pitched;
+  late List<int> _sliceNotes;
+
+  @override
+  void initState() {
+    super.initState();
+    _slicePoints = List.of(widget.sample.slicePoints);
+    _pitched = widget.sample.pitched;
+    _sliceNotes = List.of(widget.sample.sliceNotes);
+  }
+
+  @override
+  void didUpdateWidget(_SampleCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sample.id != widget.sample.id) {
+      _slicePoints = List.of(widget.sample.slicePoints);
+      _pitched = widget.sample.pitched;
+      _sliceNotes = List.of(widget.sample.sliceNotes);
+      _wavBytes = null;
+      _expanded = false;
+    }
+  }
+
+  Future<void> _loadWav() async {
+    if (_wavBytes != null || _loadingWav) {
+      return;
+    }
+    setState(() => _loadingWav = true);
+    try {
+      final bytes = await ref
+          .read(savedSamplesProvider.notifier)
+          .downloadWav(widget.sample.filePath);
+      if (mounted) {
+        setState(() {
+          _wavBytes = bytes;
+          _loadingWav = false;
+        });
+      }
+    } on Exception {
+      if (mounted) {
+        setState(() => _loadingWav = false);
+      }
+    }
+  }
+
+  void _toggleExpanded() {
+    setState(() => _expanded = !_expanded);
+    if (_expanded) {
+      _loadWav();
+    }
+  }
+
+  void _saveSampleSettings() {
+    ref.read(savedSamplesProvider.notifier).updateSample(
+      widget.sample.copyWith(
+        slicePoints: _slicePoints,
+        pitched: _pitched,
+        sliceNotes: _sliceNotes,
+      ),
+    );
+  }
+
+  bool get _hasUnsavedChanges =>
+      _slicePoints != widget.sample.slicePoints ||
+      _pitched != widget.sample.pitched ||
+      _sliceNotes != widget.sample.sliceNotes;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final sample = widget.sample;
+    final isOwned = widget.isOwned;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -263,6 +404,16 @@ class _SampleCard extends ConsumerWidget {
             const SizedBox(height: 8),
             Row(
               children: [
+                IconButton(
+                  icon: Icon(
+                    _expanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 20,
+                  ),
+                  tooltip: _expanded ? 'Hide slices' : 'Show slices',
+                  onPressed: _toggleExpanded,
+                ),
                 const Spacer(),
                 if (isOwned) ...[
                   IconButton(
@@ -270,39 +421,77 @@ class _SampleCard extends ConsumerWidget {
                       sample.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
-                    tooltip: sample.isPublic ? 'Make private' : 'Make public',
+                    tooltip:
+                        sample.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
                       ref
                           .read(savedSamplesProvider.notifier)
                           .updateSample(
-                            sample.copyWith(
-                              isPublic: !sample.isPublic,
-                            ),
+                            sample.copyWith(isPublic: !sample.isPublic),
                           );
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20),
                     tooltip: 'Delete sample',
-                    onPressed: () => _confirmDelete(context, ref),
+                    onPressed: () => _confirmDelete(context),
                   ),
                 ],
               ],
             ),
+            if (_expanded) ...[
+              const SizedBox(height: 8),
+              _SampleModeSelector(
+                pitched: _pitched,
+                enabled: isOwned,
+                onChanged: (value) => setState(() => _pitched = value),
+              ),
+              const SizedBox(height: 8),
+              if (_loadingWav)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else
+                _SlicePointsEditor(
+                  slicePoints: _slicePoints,
+                  wavBytes: _wavBytes,
+                  enabled: isOwned,
+                  onChanged: (points) {
+                    setState(() => _slicePoints = points);
+                  },
+                  pitched: _pitched,
+                  sliceNotes: _sliceNotes,
+                  onSliceNotesChanged: (notes) {
+                    setState(() => _sliceNotes = notes);
+                  },
+                ),
+              if (isOwned && _hasUnsavedChanges)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: PlinkyButton(
+                    onPressed: _saveSampleSettings,
+                    icon: Icons.save,
+                    label: 'Save changes',
+                  ),
+                ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
+  void _confirmDelete(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete sample?'),
         content: Text(
           'Are you sure you want to delete '
-          '"${sample.name.isEmpty ? '(unnamed)' : sample.name}"?',
+          '"${widget.sample.name.isEmpty ? '(unnamed)' : widget.sample.name}"?',
         ),
         actions: [
           PlinkyButton(
@@ -313,7 +502,9 @@ class _SampleCard extends ConsumerWidget {
           PlinkyButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ref.read(savedSamplesProvider.notifier).deleteSample(sample.id);
+              ref
+                  .read(savedSamplesProvider.notifier)
+                  .deleteSample(widget.sample.id);
             },
             icon: Icons.delete,
             label: 'Delete',
@@ -323,7 +514,7 @@ class _SampleCard extends ConsumerWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  static String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
   }
@@ -343,7 +534,7 @@ class _SampleCard extends ConsumerWidget {
     'B',
   ];
 
-  String _noteNameFromMidi(int midiNote, int fineTune) {
+  static String _noteNameFromMidi(int midiNote, int fineTune) {
     final noteName = _noteNames[midiNote % 12];
     final octave = (midiNote ~/ 12) - 1;
     if (fineTune == 0) {
@@ -369,9 +560,13 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
   Uint8List? _fileBytes;
   String? _fileName;
   bool _isUploading = false;
+  bool _isConverting = false;
   int _baseNote = 60;
   int _fineTune = 0;
+  bool _pitched = false;
   List<double> _slicePoints = List.of(defaultSlicePoints);
+  List<int> _sliceNotes = List.of(defaultSliceNotes);
+  String? _sampleTooLongWarning;
 
   @override
   void dispose() {
@@ -382,18 +577,48 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.audio,
+      type: FileType.custom,
+      allowedExtensions: ['wav'],
       withData: true,
     );
 
     if (result != null && result.files.single.bytes != null) {
+      final bytes = result.files.single.bytes!;
+      final name = result.files.single.name;
+
       setState(() {
-        _fileBytes = result.files.single.bytes;
-        _fileName = result.files.single.name;
+        _fileName = name;
+        _isConverting = true;
+        _sampleTooLongWarning = null;
         if (_nameController.text.isEmpty) {
-          _nameController.text = result.files.single.name;
+          _nameController.text = name;
         }
       });
+
+      // Run conversion off the main isolate tick to let the UI update.
+      await Future<void>.delayed(Duration.zero);
+
+      String? warning;
+      try {
+        final pcm = wavToPlinkyPcm(bytes);
+        if (pcm.length > maxPcmBytes) {
+          final durationSeconds = pcm.length ~/ 2 / plinkySampleRate;
+          const maxSeconds = maxPcmBytes ~/ 2 / plinkySampleRate;
+          warning = 'Sample is too long (~${durationSeconds}s). '
+              'Plinky supports up to ~${maxSeconds}s per slot '
+              'at 31,250 Hz.';
+        }
+      } on FormatException catch (e) {
+        warning = e.message;
+      }
+
+      if (mounted) {
+        setState(() {
+          _fileBytes = bytes;
+          _isConverting = false;
+          _sampleTooLongWarning = warning;
+        });
+      }
     }
   }
 
@@ -405,32 +630,49 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
 
     setState(() => _isUploading = true);
 
-    final sample = SavedSample(
-      id: '',
-      userId: userId,
-      name: _nameController.text.trim(),
-      filePath: '$userId/$_fileName',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      description: _descriptionController.text.trim(),
-      isPublic: _isPublic,
-      slicePoints: _slicePoints,
-      baseNote: _baseNote,
-      fineTune: _fineTune,
-    );
+    try {
+      final pcmBytes = wavToPlinkyPcm(_fileBytes!);
+      final pcmFileName =
+          '${_fileName!.substring(0, _fileName!.lastIndexOf('.'))}.pcm';
 
-    await ref
-        .read(savedSamplesProvider.notifier)
-        .saveSample(
-          sample,
-          _fileBytes!,
-        );
-
-    if (mounted) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sample uploaded')),
+      final sample = SavedSample(
+        id: '',
+        userId: userId,
+        name: _nameController.text.trim(),
+        filePath: '$userId/$_fileName',
+        pcmFilePath: '$userId/$pcmFileName',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        description: _descriptionController.text.trim(),
+        isPublic: _isPublic,
+        slicePoints: _slicePoints,
+        baseNote: _baseNote,
+        fineTune: _fineTune,
+        pitched: _pitched,
+        sliceNotes: _sliceNotes,
       );
+
+      await ref
+          .read(savedSamplesProvider.notifier)
+          .saveSample(
+            sample,
+            wavBytes: _fileBytes!,
+            pcmBytes: pcmBytes,
+          );
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sample uploaded')),
+        );
+      }
+    } on FormatException catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
     }
   }
 
@@ -445,10 +687,36 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               PlinkyButton(
-                onPressed: _isUploading ? null : _pickFile,
+                onPressed: _isUploading || _isConverting
+                    ? null
+                    : _pickFile,
                 icon: Icons.audio_file,
                 label: _fileName ?? 'Choose file',
               ),
+              if (_isConverting) ...[
+                const SizedBox(height: 8),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 8),
+                    Text('Validating sample...'),
+                  ],
+                ),
+              ],
+              if (_sampleTooLongWarning != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _sampleTooLongWarning!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _nameController,
@@ -467,18 +735,32 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-              _BaseNoteSelector(
-                baseNote: _baseNote,
-                fineTune: _fineTune,
+              _SampleModeSelector(
+                pitched: _pitched,
                 enabled: !_isUploading,
-                onBaseNoteChanged: (value) => setState(() => _baseNote = value),
-                onFineTuneChanged: (value) => setState(() => _fineTune = value),
+                onChanged: (value) => setState(() => _pitched = value),
               ),
               const SizedBox(height: 16),
+              if (!_pitched)
+                _BaseNoteSelector(
+                  baseNote: _baseNote,
+                  fineTune: _fineTune,
+                  enabled: !_isUploading,
+                  onBaseNoteChanged: (value) =>
+                      setState(() => _baseNote = value),
+                  onFineTuneChanged: (value) =>
+                      setState(() => _fineTune = value),
+                ),
+              if (!_pitched) const SizedBox(height: 16),
               _SlicePointsEditor(
                 slicePoints: _slicePoints,
+                wavBytes: _fileBytes,
                 enabled: !_isUploading,
                 onChanged: (points) => setState(() => _slicePoints = points),
+                pitched: _pitched,
+                sliceNotes: _sliceNotes,
+                onSliceNotesChanged: (notes) =>
+                    setState(() => _sliceNotes = notes),
               ),
               const SizedBox(height: 8),
               SwitchListTile(
@@ -487,6 +769,15 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
                 onChanged: _isUploading
                     ? null
                     : (value) => setState(() => _isPublic = value),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'By uploading, you confirm that you own this sample or '
+                'have the right to use and distribute it (e.g. under a '
+                'Creative Commons licence or similar terms).',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -499,7 +790,12 @@ class _UploadSampleDialogState extends ConsumerState<_UploadSampleDialog> {
           label: 'Cancel',
         ),
         PlinkyButton(
-          onPressed: _isUploading || _fileBytes == null ? null : _upload,
+          onPressed:
+              _isUploading ||
+                  _fileBytes == null ||
+                  _sampleTooLongWarning != null
+              ? null
+              : _upload,
           icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
           label: _isUploading ? 'Uploading...' : 'Upload',
         ),
@@ -622,16 +918,117 @@ class _BaseNoteSelector extends StatelessWidget {
   }
 }
 
-class _SlicePointsEditor extends StatelessWidget {
+class _SlicePointsEditor extends StatefulWidget {
   const _SlicePointsEditor({
     required this.slicePoints,
+    required this.wavBytes,
     required this.enabled,
     required this.onChanged,
+    this.pitched = false,
+    this.sliceNotes = defaultSliceNotes,
+    this.onSliceNotesChanged,
   });
 
   final List<double> slicePoints;
+  final Uint8List? wavBytes;
   final bool enabled;
   final ValueChanged<List<double>> onChanged;
+  final bool pitched;
+  final List<int> sliceNotes;
+  final ValueChanged<List<int>>? onSliceNotesChanged;
+
+  @override
+  State<_SlicePointsEditor> createState() => _SlicePointsEditorState();
+}
+
+class _SlicePointsEditorState extends State<_SlicePointsEditor> {
+  AudioSource? _audioSource;
+  SoundHandle? _activeHandle;
+  int _playingSlice = -1;
+  bool _loadingAudio = false;
+
+  @override
+  void didUpdateWidget(_SlicePointsEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.wavBytes != widget.wavBytes) {
+      _disposeAudio();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposeAudio();
+    super.dispose();
+  }
+
+  void _disposeAudio() {
+    final source = _audioSource;
+    if (source != null) {
+      SoLoud.instance.disposeSource(source);
+    }
+    _audioSource = null;
+    _activeHandle = null;
+    _playingSlice = -1;
+  }
+
+  Future<void> _playSlice(int sliceIndex) async {
+    final wavBytes = widget.wavBytes;
+    if (wavBytes == null || _loadingAudio) {
+      return;
+    }
+
+    final soloud = SoLoud.instance;
+
+    // Stop any currently playing slice
+    if (_activeHandle != null) {
+      await soloud.stop(_activeHandle!);
+      _activeHandle = null;
+    }
+
+    // Initialize engine and load audio if needed
+    if (_audioSource == null) {
+      setState(() => _loadingAudio = true);
+      if (!soloud.isInitialized) {
+        await soloud.init();
+      }
+      _audioSource = await soloud.loadMem('sample.wav', wavBytes);
+      if (mounted) {
+        setState(() => _loadingAudio = false);
+      } else {
+        return;
+      }
+    }
+
+    final source = _audioSource!;
+    final totalDuration = soloud.getLength(source);
+
+    final startFraction = widget.slicePoints[sliceIndex];
+    final endFraction = sliceIndex < 7
+        ? widget.slicePoints[sliceIndex + 1]
+        : 1.0;
+
+    final startTime = totalDuration * startFraction;
+    final sliceDuration = totalDuration * (endFraction - startFraction);
+
+    final handle = await soloud.play(source, paused: true);
+    soloud.seek(handle, startTime);
+    soloud.setPause(handle, false);
+    soloud.scheduleStop(handle, sliceDuration);
+
+    setState(() {
+      _activeHandle = handle;
+      _playingSlice = sliceIndex;
+    });
+
+    // Reset playing state when the slice finishes
+    await Future<void>.delayed(sliceDuration);
+    if (mounted && _playingSlice == sliceIndex) {
+      setState(() {
+        _activeHandle = null;
+        _playingSlice = -1;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -646,8 +1043,8 @@ class _SlicePointsEditor extends StatelessWidget {
             ),
             const Spacer(),
             TextButton(
-              onPressed: enabled
-                  ? () => onChanged(List.of(defaultSlicePoints))
+              onPressed: widget.enabled
+                  ? () => widget.onChanged(List.of(defaultSlicePoints))
                   : null,
               child: const Text('Reset'),
             ),
@@ -658,7 +1055,7 @@ class _SlicePointsEditor extends StatelessWidget {
           height: 60,
           child: CustomPaint(
             painter: _SlicePointsPainter(
-              slicePoints: slicePoints,
+              slicePoints: widget.slicePoints,
               color: Theme.of(context).colorScheme.primary,
               backgroundColor: Theme.of(
                 context,
@@ -668,13 +1065,47 @@ class _SlicePointsEditor extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
+        if (_loadingAudio)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8),
+                Text('Loading audio...'),
+              ],
+            ),
+          ),
         for (var i = 0; i < 8; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
+                IconButton(
+                  icon: Icon(
+                    _playingSlice == i
+                        ? Icons.stop
+                        : Icons.play_arrow,
+                    size: 18,
+                  ),
+                  onPressed: widget.wavBytes != null && !_loadingAudio
+                      ? () => _playSlice(i)
+                      : null,
+                  tooltip: 'Preview slice ${i + 1}',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
                 SizedBox(
-                  width: 60,
+                  width: 48,
                   child: Text(
                     'Slice ${i + 1}',
                     style: Theme.of(context).textTheme.bodySmall,
@@ -682,14 +1113,15 @@ class _SlicePointsEditor extends StatelessWidget {
                 ),
                 Expanded(
                   child: Slider(
-                    value: slicePoints[i],
-                    onChanged: enabled
+                    value: widget.slicePoints[i],
+                    onChanged: widget.enabled
                         ? (value) {
-                            final updated = List<double>.from(slicePoints);
+                            final updated =
+                                List<double>.from(widget.slicePoints);
                             updated[i] = double.parse(
                               value.toStringAsFixed(3),
                             );
-                            onChanged(updated);
+                            widget.onChanged(updated);
                           }
                         : null,
                   ),
@@ -697,10 +1129,20 @@ class _SlicePointsEditor extends StatelessWidget {
                 SizedBox(
                   width: 48,
                   child: Text(
-                    '${(slicePoints[i] * 100).toStringAsFixed(1)}%',
+                    '${(widget.slicePoints[i] * 100).toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
+                if (widget.pitched)
+                  _SliceNoteDropdown(
+                    note: widget.sliceNotes[i],
+                    enabled: widget.enabled,
+                    onChanged: (value) {
+                      final updated = List<int>.from(widget.sliceNotes);
+                      updated[i] = value;
+                      widget.onSliceNotesChanged?.call(updated);
+                    },
+                  ),
               ],
             ),
           ),
@@ -746,4 +1188,93 @@ class _SlicePointsPainter extends CustomPainter {
       slicePoints != oldDelegate.slicePoints ||
       color != oldDelegate.color ||
       backgroundColor != oldDelegate.backgroundColor;
+}
+
+class _SampleModeSelector extends StatelessWidget {
+  const _SampleModeSelector({
+    required this.pitched,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool pitched;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text('Mode', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(width: 16),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: false, label: Text('Tape')),
+            ButtonSegment(value: true, label: Text('Pitched')),
+          ],
+          selected: {pitched},
+          onSelectionChanged: enabled
+              ? (selection) => onChanged(selection.first)
+              : null,
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact note selector for a single slice in pitched mode.
+///
+/// Plinky uses note values 0-96 where value + 12 gives the MIDI note number.
+class _SliceNoteDropdown extends StatelessWidget {
+  const _SliceNoteDropdown({
+    required this.note,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  /// Plinky note value (0-96).
+  final int note;
+  final bool enabled;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final noteName = _noteNames[note % 12];
+    final octave = (note + 12) ~/ 12 - 1;
+
+    return SizedBox(
+      width: 72,
+      child: DropdownButton<int>(
+        value: note,
+        isExpanded: true,
+        isDense: true,
+        onChanged: enabled
+            ? (value) {
+                if (value != null) {
+                  onChanged(value);
+                }
+              }
+            : null,
+        items: List.generate(97, (index) {
+          final itemNoteName = _noteNames[index % 12];
+          final itemOctave = (index + 12) ~/ 12 - 1;
+          return DropdownMenuItem(
+            value: index,
+            child: Text('$itemNoteName$itemOctave'),
+          );
+        }),
+        selectedItemBuilder: (context) {
+          return List.generate(97, (_) {
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '$noteName$octave',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            );
+          });
+        },
+      ),
+    );
+  }
 }

@@ -31,7 +31,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     try {
       final response = await _supabase
           .from('packs')
-          .select('*, pack_slots(*)')
+          .select('*, pack_slots(*), profiles(username)')
           .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
@@ -54,7 +54,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       final userId = ref.read(authenticationProvider).user?.id;
       var query = _supabase
           .from('packs')
-          .select('*, pack_slots(*)')
+          .select('*, pack_slots(*), profiles(username)')
           .eq('is_public', true);
 
       if (userId != null) {

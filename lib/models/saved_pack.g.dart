@@ -14,6 +14,7 @@ _SavedPack _$SavedPackFromJson(Map<String, dynamic> json) => _SavedPack(
   updatedAt: DateTime.parse(json['updated_at'] as String),
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
+  username: _readUsername(json, 'username') as String? ?? '',
   slots:
       (json['pack_slots'] as List<dynamic>?)
           ?.map((e) => PackSlot.fromJson(e as Map<String, dynamic>))
@@ -30,5 +31,6 @@ Map<String, dynamic> _$SavedPackToJson(_SavedPack instance) =>
       'updated_at': instance.updatedAt.toIso8601String(),
       'description': instance.description,
       'is_public': instance.isPublic,
+      'username': instance.username,
       'pack_slots': instance.slots,
     };

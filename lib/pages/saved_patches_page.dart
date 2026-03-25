@@ -111,7 +111,7 @@ class _SavedPatchesPageState extends ConsumerState<SavedPatchesPage>
   }
 }
 
-class _PatchList extends ConsumerWidget {
+class _PatchList extends ConsumerStatefulWidget {
   const _PatchList({
     required this.patches,
     required this.isLoading,
@@ -125,22 +125,64 @@ class _PatchList extends ConsumerWidget {
   final VoidCallback onRefresh;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (isLoading && patches.isEmpty) {
+  ConsumerState<_PatchList> createState() => _PatchListState();
+}
+
+class _PatchListState extends ConsumerState<_PatchList> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<SavedPatch> get _filteredPatches {
+    final patches = widget.patches;
+    if (_query.isEmpty) {
+      return patches;
+    }
+    final lower = _query.toLowerCase();
+    final filtered = patches
+        .where(
+          (patch) =>
+              patch.name.toLowerCase().contains(lower) ||
+              patch.username.toLowerCase().contains(lower) ||
+              patch.description.toLowerCase().contains(lower),
+        )
+        .toList();
+    filtered.sort((a, b) {
+      final aExact = a.name.toLowerCase() == lower ? 0 : 1;
+      final bExact = b.name.toLowerCase() == lower ? 0 : 1;
+      final exactCmp = aExact.compareTo(bExact);
+      if (exactCmp != 0) {
+        return exactCmp;
+      }
+      return b.starCount.compareTo(a.starCount);
+    });
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.isLoading && widget.patches.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (patches.isEmpty) {
+    if (widget.patches.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isOwned ? 'No saved patches yet' : 'No community patches yet',
+              widget.isOwned
+                  ? 'No saved patches yet'
+                  : 'No community patches yet',
             ),
             const SizedBox(height: 8),
             PlinkyButton(
-              onPressed: onRefresh,
+              onPressed: widget.onRefresh,
               icon: Icons.refresh,
               label: 'Refresh',
             ),
@@ -149,39 +191,62 @@ class _PatchList extends ConsumerWidget {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => onRefresh(),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: patches.length + 1,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Text(
-                    '${patches.length} patch${patches.length == 1 ? '' : 'es'}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, size: 20),
-                    onPressed: onRefresh,
-                    tooltip: 'Refresh',
-                  ),
-                ],
-              ),
-            );
-          }
+    final filtered = _filteredPatches;
 
-          final patch = patches[index - 1];
-          return _PatchCard(
-            patch: patch,
-            isOwned: isOwned,
-          );
-        },
-      ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              hintText: 'Search patches...',
+              prefixIcon: Icon(Icons.search, size: 20),
+              border: OutlineInputBorder(),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(vertical: 8),
+            ),
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async => widget.onRefresh(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: filtered.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${filtered.length} '
+                          'patch${filtered.length == 1 ? '' : 'es'}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, size: 20),
+                          onPressed: widget.onRefresh,
+                          tooltip: 'Refresh',
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final patch = filtered[index - 1];
+                return _PatchCard(
+                  patch: patch,
+                  isOwned: widget.isOwned,
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

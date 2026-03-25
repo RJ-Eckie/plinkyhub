@@ -33,7 +33,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     try {
       final response = await _supabase
           .from('samples')
-          .select()
+          .select('*, profiles(username)')
           .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
@@ -54,7 +54,10 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final userId = ref.read(authenticationProvider).user?.id;
-      var query = _supabase.from('samples').select().eq('is_public', true);
+      var query = _supabase
+          .from('samples')
+          .select('*, profiles(username)')
+          .eq('is_public', true);
 
       if (userId != null) {
         query = query.neq('user_id', userId);
@@ -76,9 +79,10 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   }
 
   Future<void> saveSample(
-    SavedSample sample,
-    Uint8List fileBytes,
-  ) async {
+    SavedSample sample, {
+    required Uint8List wavBytes,
+    required Uint8List pcmBytes,
+  }) async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
@@ -88,10 +92,10 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     try {
       await _supabase.storage
           .from('samples')
-          .uploadBinary(
-            sample.filePath,
-            fileBytes,
-          );
+          .uploadBinary(sample.filePath, wavBytes);
+      await _supabase.storage
+          .from('samples')
+          .uploadBinary(sample.pcmFilePath, pcmBytes);
 
       final json = sample.toJson()
         ..remove('id')
@@ -129,12 +133,19 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     }
   }
 
+  Future<Uint8List> downloadWav(String filePath) async {
+    return _supabase.storage.from('samples').download(filePath);
+  }
+
   Future<void> deleteSample(String id) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final sample = state.userSamples.where((s) => s.id == id).firstOrNull;
       if (sample != null) {
-        await _supabase.storage.from('samples').remove([sample.filePath]);
+        await _supabase.storage.from('samples').remove([
+          sample.filePath,
+          if (sample.pcmFilePath.isNotEmpty) sample.pcmFilePath,
+        ]);
       }
       await _supabase.from('samples').delete().eq('id', id);
       await fetchUserSamples();
