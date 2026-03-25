@@ -99,6 +99,8 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       final chunks = <Uint8List>[];
       var processedBytes = 0;
       while (processedBytes < bytesToProcess) {
+        // Yield to let the UI thread render between chunks.
+        await Future<void>.delayed(Duration.zero);
         final chunkData = await _waitForData();
         final chunk = Uint8List(chunkData.lengthInBytes);
         for (var index = 0; index < chunkData.lengthInBytes; index++) {

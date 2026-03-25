@@ -32,7 +32,9 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
   void _updatePatchNumber() {
     final parsed = int.tryParse(_patchNumberController.text);
     if (parsed != null) {
-      ref.read(plinkyProvider.notifier).patchNumber = parsed - 1;
+      final clamped = parsed.clamp(1, 32);
+      _patchNumberController.text = clamped.toString();
+      ref.read(plinkyProvider.notifier).patchNumber = clamped - 1;
     }
   }
 
