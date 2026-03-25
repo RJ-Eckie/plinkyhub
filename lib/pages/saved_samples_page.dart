@@ -181,18 +181,25 @@ class _SampleListState extends ConsumerState<_SampleList> {
                   : 'No community samples yet',
             ),
             const SizedBox(height: 8),
-            if (widget.isOwned) ...[
-              PlinkyButton(
-                onPressed: () => _showUploadDialog(context),
-                icon: Icons.upload_file,
-                label: 'Upload sample',
+            IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.isOwned) ...[
+                    PlinkyButton(
+                      onPressed: () => _showUploadDialog(context),
+                      icon: Icons.upload_file,
+                      label: 'Upload sample',
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  PlinkyButton(
+                    onPressed: widget.onRefresh,
+                    icon: Icons.refresh,
+                    label: 'Refresh',
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-            ],
-            PlinkyButton(
-              onPressed: widget.onRefresh,
-              icon: Icons.refresh,
-              label: 'Refresh',
             ),
           ],
         ),
@@ -267,6 +274,7 @@ class _SampleListState extends ConsumerState<_SampleList> {
   void _showUploadDialog(BuildContext context) {
     showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const _UploadSampleDialog(),
     );
   }
@@ -1086,7 +1094,15 @@ class _SlicePointsEditorState extends State<_SlicePointsEditor> {
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                IconButton(
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    'Slice ${i + 1}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                IconButton.filled(
                   icon: Icon(
                     _playingSlice == i
                         ? Icons.stop
@@ -1104,22 +1120,22 @@ class _SlicePointsEditorState extends State<_SlicePointsEditor> {
                     minHeight: 32,
                   ),
                 ),
-                SizedBox(
-                  width: 48,
-                  child: Text(
-                    'Slice ${i + 1}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
                 Expanded(
                   child: Slider(
                     value: widget.slicePoints[i],
                     onChanged: widget.enabled
                         ? (value) {
+                            final min = i > 0
+                                ? widget.slicePoints[i - 1]
+                                : 0.0;
+                            final max = i < 7
+                                ? widget.slicePoints[i + 1]
+                                : 1.0;
+                            final clamped = value.clamp(min, max);
                             final updated =
                                 List<double>.from(widget.slicePoints);
                             updated[i] = double.parse(
-                              value.toStringAsFixed(3),
+                              clamped.toStringAsFixed(3),
                             );
                             widget.onChanged(updated);
                           }
