@@ -9,8 +9,8 @@ max_rows = 1000
 port = 54322
 major_version = 15
 
-[auth.email]
-template = "./templates/confirmation.html"
+[auth.email.template.confirmation]
+template_path = "./templates/confirmation.html"
 subject = "Confirm your PlinkyHub account"
 
 [studio]
