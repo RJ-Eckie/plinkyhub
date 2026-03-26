@@ -5,6 +5,7 @@ import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/samples/slice_note_dropdown.dart';
 import 'package:plinkyhub/pages/samples/slice_points_painter.dart';
+import 'package:plinkyhub/utils/wav.dart';
 
 class SlicePointsEditor extends StatefulWidget {
   const SlicePointsEditor({
@@ -12,6 +13,7 @@ class SlicePointsEditor extends StatefulWidget {
     required this.wavBytes,
     required this.enabled,
     required this.onChanged,
+    this.pcmFrameCount,
     this.pitched = false,
     this.sliceNotes = defaultSliceNotes,
     this.onSliceNotesChanged,
@@ -22,6 +24,11 @@ class SlicePointsEditor extends StatefulWidget {
   final Uint8List? wavBytes;
   final bool enabled;
   final ValueChanged<List<double>> onChanged;
+
+  /// Total number of PCM frames after conversion to Plinky format.
+  /// When provided, the editor enforces a minimum gap of [minSliceSamples]
+  /// between adjacent slice points.
+  final int? pcmFrameCount;
   final bool pitched;
   final List<int> sliceNotes;
   final ValueChanged<List<int>>? onSliceNotesChanged;
@@ -213,12 +220,16 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                     value: widget.slicePoints[i],
                     onChanged: widget.enabled
                         ? (value) {
+                            final gap = widget.pcmFrameCount != null
+                                ? minSliceSamples /
+                                    widget.pcmFrameCount!
+                                : 0.0;
                             final min = i > 0
-                                ? widget.slicePoints[i - 1]
+                                ? widget.slicePoints[i - 1] + gap
                                 : 0.0;
                             final max = i < 7
-                                ? widget.slicePoints[i + 1]
-                                : 1.0;
+                                ? widget.slicePoints[i + 1] - gap
+                                : 1.0 - gap;
                             final clamped =
                                 value.clamp(min, max);
                             final updated = List<double>.from(

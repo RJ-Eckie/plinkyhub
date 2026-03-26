@@ -10,6 +10,10 @@ const maxPcmFrames = 2097152;
 /// Maximum raw PCM size in bytes for one Plinky sample slot.
 const maxPcmBytes = maxPcmFrames * 2;
 
+/// Minimum number of samples between adjacent slice points (firmware
+/// constraint).
+const minSliceSamples = 1024;
+
 /// Parses a WAV file and converts the audio to Plinky's native format:
 /// 16-bit signed, mono, little-endian, 31,250 Hz.
 ///

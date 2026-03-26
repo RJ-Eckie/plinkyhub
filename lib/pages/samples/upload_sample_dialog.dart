@@ -34,6 +34,7 @@ class _UploadSampleDialogState
   bool _pitched = false;
   List<double> _slicePoints = List.of(defaultSlicePoints);
   List<int> _sliceNotes = List.of(defaultSliceNotes);
+  int? _pcmFrameCount;
   String? _sampleTooLongWarning;
 
   @override
@@ -68,8 +69,10 @@ class _UploadSampleDialogState
       await Future<void>.delayed(Duration.zero);
 
       String? warning;
+      int? frameCount;
       try {
         final pcm = wavToPlinkyPcm(bytes);
+        frameCount = pcm.length ~/ 2;
         if (pcm.length > maxPcmBytes) {
           final durationSeconds =
               pcm.length ~/ 2 / plinkySampleRate;
@@ -86,6 +89,7 @@ class _UploadSampleDialogState
       if (mounted) {
         setState(() {
           _fileBytes = bytes;
+          _pcmFrameCount = frameCount;
           _isConverting = false;
           _sampleTooLongWarning = warning;
         });
@@ -234,6 +238,7 @@ class _UploadSampleDialogState
               SlicePointsEditor(
                 slicePoints: _slicePoints,
                 wavBytes: _fileBytes,
+                pcmFrameCount: _pcmFrameCount,
                 enabled: !_isUploading,
                 onChanged: (points) =>
                     setState(() => _slicePoints = points),

@@ -7,6 +7,7 @@ import 'package:plinkyhub/pages/samples/sample_mode_selector.dart';
 import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
+import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class SampleCard extends ConsumerStatefulWidget {
@@ -26,6 +27,7 @@ class SampleCard extends ConsumerStatefulWidget {
 class _SampleCardState extends ConsumerState<SampleCard> {
   bool _expanded = false;
   Uint8List? _wavBytes;
+  int? _pcmFrameCount;
   bool _loadingWav = false;
   late List<double> _slicePoints;
   late bool _pitched;
@@ -60,9 +62,17 @@ class _SampleCardState extends ConsumerState<SampleCard> {
       final bytes = await ref
           .read(savedSamplesProvider.notifier)
           .downloadWav(widget.sample.filePath);
+      int? frameCount;
+      try {
+        final pcm = wavToPlinkyPcm(bytes);
+        frameCount = pcm.length ~/ 2;
+      } on FormatException {
+        // Ignore – preview still works without the constraint.
+      }
       if (mounted) {
         setState(() {
           _wavBytes = bytes;
+          _pcmFrameCount = frameCount;
           _loadingWav = false;
         });
       }
@@ -211,6 +221,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                 SlicePointsEditor(
                   slicePoints: _slicePoints,
                   wavBytes: _wavBytes,
+                  pcmFrameCount: _pcmFrameCount,
                   enabled: isOwned,
                   onChanged: (points) {
                     setState(() => _slicePoints = points);
