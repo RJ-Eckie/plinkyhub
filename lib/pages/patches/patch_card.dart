@@ -73,7 +73,7 @@ class PatchCard extends ConsumerWidget {
                         .read(savedPatchesProvider.notifier)
                         .loadPatchIntoEditor(patch);
                     ref.read(selectedPageProvider.notifier).selected =
-                        0;
+                        1;
                   },
                   icon: Icons.download,
                   label: 'Load into editor',
