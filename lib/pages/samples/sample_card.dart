@@ -66,8 +66,9 @@ class _SampleCardState extends ConsumerState<SampleCard> {
       try {
         final pcm = wavToPlinkyPcm(bytes);
         frameCount = pcm.length ~/ 2;
-      } on FormatException {
-        // Ignore – preview still works without the constraint.
+      } on FormatException catch (e) {
+        // Preview still works without the constraint.
+        debugPrint('Failed to compute PCM frame count: $e');
       }
       if (mounted) {
         setState(() {
@@ -76,7 +77,8 @@ class _SampleCardState extends ConsumerState<SampleCard> {
           _loadingWav = false;
         });
       }
-    } on Exception {
+    } on Exception catch (e) {
+      debugPrint('Failed to load WAV for preview: $e');
       if (mounted) {
         setState(() => _loadingWav = false);
       }
