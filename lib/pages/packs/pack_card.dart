@@ -4,6 +4,7 @@ import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/star_button.dart';
 
 class PackCard extends ConsumerWidget {
   const PackCard({
@@ -53,16 +54,27 @@ class PackCard extends ConsumerWidget {
             ],
             const SizedBox(height: 4),
             Text(
-              formatDate(pack.updatedAt),
+              [
+                if (pack.username.isNotEmpty)
+                  'by ${pack.username}',
+                formatDate(pack.updatedAt),
+              ].join(' · '),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (isOwned) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Spacer(),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                StarButton(
+                  isStarred: pack.isStarred,
+                  starCount: pack.starCount,
+                  onToggle: () => ref
+                      .read(savedPacksProvider.notifier)
+                      .toggleStar(pack),
+                ),
+                const Spacer(),
+                if (isOwned) ...[
                   IconButton(
                     icon: Icon(
                       pack.isPublic
@@ -90,8 +102,8 @@ class PackCard extends ConsumerWidget {
                         _confirmDelete(context, ref),
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),

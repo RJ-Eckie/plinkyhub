@@ -22,6 +22,32 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     return const SavedPacksState();
   }
 
+  Future<Set<String>> _fetchStarredPackIds() async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) return {};
+    final stars = await _supabase
+        .from('pack_stars')
+        .select('pack_id')
+        .eq('user_id', userId);
+    return {
+      for (final row in stars as List)
+        (row as Map<String, dynamic>)['pack_id'] as String,
+    };
+  }
+
+  List<SavedPack> _applyStarred(
+    List<dynamic> response,
+    Set<String> starredIds,
+  ) {
+    return response.map((row) {
+      final map = row as Map<String, dynamic>;
+      return SavedPack.fromJson({
+        ...map,
+        'is_starred': starredIds.contains(map['id']),
+      });
+    }).toList();
+  }
+
   Future<void> fetchUserPacks() async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
@@ -32,13 +58,12 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     try {
       final response = await _supabase
           .from('packs')
-          .select('*, pack_slots(*), profiles(username)')
+          .select('*, pack_slots(*), profiles(username), pack_stars(count)')
           .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
-      final packs = (response as List).map((row) {
-        return SavedPack.fromJson(row as Map<String, dynamic>);
-      }).toList();
+      final starredIds = await _fetchStarredPackIds();
+      final packs = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(userPacks: packs, isLoading: false);
     } on Exception catch (error) {
@@ -53,21 +78,14 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
   Future<void> fetchPublicPacks() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final userId = ref.read(authenticationProvider).user?.id;
-      var query = _supabase
+      final response = await _supabase
           .from('packs')
-          .select('*, pack_slots(*), profiles(username)')
-          .eq('is_public', true);
+          .select('*, pack_slots(*), profiles(username), pack_stars(count)')
+          .eq('is_public', true)
+          .order('updated_at', ascending: false);
 
-      if (userId != null) {
-        query = query.neq('user_id', userId);
-      }
-
-      final response = await query.order('updated_at', ascending: false);
-
-      final packs = (response as List).map((row) {
-        return SavedPack.fromJson(row as Map<String, dynamic>);
-      }).toList();
+      final starredIds = await _fetchStarredPackIds();
+      final packs = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(publicPacks: packs, isLoading: false);
     } on Exception catch (error) {
@@ -175,5 +193,55 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         errorMessage: error.toString(),
       );
     }
+  }
+
+  Future<void> toggleStar(SavedPack pack) async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) return;
+
+    try {
+      if (pack.isStarred) {
+        await _supabase
+            .from('pack_stars')
+            .delete()
+            .eq('pack_id', pack.id)
+            .eq('user_id', userId);
+      } else {
+        await _supabase.from('pack_stars').insert({
+          'pack_id': pack.id,
+          'user_id': userId,
+        });
+      }
+
+      final delta = pack.isStarred ? -1 : 1;
+      state = state.copyWith(
+        userPacks: _updateStarInList(
+          state.userPacks, pack.id, !pack.isStarred, delta,
+        ),
+        publicPacks: _updateStarInList(
+          state.publicPacks, pack.id, !pack.isStarred, delta,
+        ),
+      );
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
+    }
+  }
+
+  List<SavedPack> _updateStarInList(
+    List<SavedPack> packs,
+    String packId,
+    bool isStarred,
+    int delta,
+  ) {
+    return packs.map((p) {
+      if (p.id == packId) {
+        return p.copyWith(
+          isStarred: isStarred,
+          starCount: p.starCount + delta,
+        );
+      }
+      return p;
+    }).toList();
   }
 }

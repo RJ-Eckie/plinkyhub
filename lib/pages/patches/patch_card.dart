@@ -79,7 +79,7 @@ class PatchCard extends ConsumerWidget {
                   label: 'Load into editor',
                 ),
                 const SizedBox(width: 8),
-                StarButton(patch: patch),
+                PatchStarButton(patch: patch),
                 const Spacer(),
                 if (isOwned) ...[
                   IconButton(

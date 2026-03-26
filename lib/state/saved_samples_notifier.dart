@@ -24,6 +24,32 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     return const SavedSamplesState();
   }
 
+  Future<Set<String>> _fetchStarredSampleIds() async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) return {};
+    final stars = await _supabase
+        .from('sample_stars')
+        .select('sample_id')
+        .eq('user_id', userId);
+    return {
+      for (final row in stars as List)
+        (row as Map<String, dynamic>)['sample_id'] as String,
+    };
+  }
+
+  List<SavedSample> _applyStarred(
+    List<dynamic> response,
+    Set<String> starredIds,
+  ) {
+    return (response).map((row) {
+      final map = row as Map<String, dynamic>;
+      return SavedSample.fromJson({
+        ...map,
+        'is_starred': starredIds.contains(map['id']),
+      });
+    }).toList();
+  }
+
   Future<void> fetchUserSamples() async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
@@ -34,13 +60,12 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     try {
       final response = await _supabase
           .from('samples')
-          .select('*, profiles(username)')
+          .select('*, profiles(username), sample_stars(count)')
           .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
-      final samples = (response as List).map((row) {
-        return SavedSample.fromJson(row as Map<String, dynamic>);
-      }).toList();
+      final starredIds = await _fetchStarredSampleIds();
+      final samples = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(userSamples: samples, isLoading: false);
     } on Exception catch (error) {
@@ -55,21 +80,14 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   Future<void> fetchPublicSamples() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final userId = ref.read(authenticationProvider).user?.id;
-      var query = _supabase
+      final response = await _supabase
           .from('samples')
-          .select('*, profiles(username)')
-          .eq('is_public', true);
+          .select('*, profiles(username), sample_stars(count)')
+          .eq('is_public', true)
+          .order('updated_at', ascending: false);
 
-      if (userId != null) {
-        query = query.neq('user_id', userId);
-      }
-
-      final response = await query.order('updated_at', ascending: false);
-
-      final samples = (response as List).map((row) {
-        return SavedSample.fromJson(row as Map<String, dynamic>);
-      }).toList();
+      final starredIds = await _fetchStarredSampleIds();
+      final samples = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(publicSamples: samples, isLoading: false);
     } on Exception catch (error) {
@@ -104,7 +122,9 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
         ..remove('id')
         ..remove('created_at')
         ..remove('updated_at')
-        ..remove('username');
+        ..remove('username')
+        ..remove('star_count')
+        ..remove('is_starred');
       await _supabase.from('samples').insert(json);
 
       await fetchUserSamples();
@@ -128,7 +148,10 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
               )
               .toJson()
             ..remove('id')
-            ..remove('created_at');
+            ..remove('created_at')
+            ..remove('username')
+            ..remove('star_count')
+            ..remove('is_starred');
       await _supabase.from('samples').update(json).eq('id', sample.id);
       await fetchUserSamples();
     } on Exception catch (error) {
@@ -163,5 +186,55 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
         errorMessage: error.toString(),
       );
     }
+  }
+
+  Future<void> toggleStar(SavedSample sample) async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) return;
+
+    try {
+      if (sample.isStarred) {
+        await _supabase
+            .from('sample_stars')
+            .delete()
+            .eq('sample_id', sample.id)
+            .eq('user_id', userId);
+      } else {
+        await _supabase.from('sample_stars').insert({
+          'sample_id': sample.id,
+          'user_id': userId,
+        });
+      }
+
+      final delta = sample.isStarred ? -1 : 1;
+      state = state.copyWith(
+        userSamples: _updateStarInList(
+          state.userSamples, sample.id, !sample.isStarred, delta,
+        ),
+        publicSamples: _updateStarInList(
+          state.publicSamples, sample.id, !sample.isStarred, delta,
+        ),
+      );
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
+    }
+  }
+
+  List<SavedSample> _updateStarInList(
+    List<SavedSample> samples,
+    String sampleId,
+    bool isStarred,
+    int delta,
+  ) {
+    return samples.map((s) {
+      if (s.id == sampleId) {
+        return s.copyWith(
+          isStarred: isStarred,
+          starCount: s.starCount + delta,
+        );
+      }
+      return s;
+    }).toList();
   }
 }

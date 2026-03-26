@@ -17,6 +17,10 @@ abstract class SavedPack with _$SavedPack {
     @Default('')
     @JsonKey(readValue: _readUsername)
     String username,
+    @Default(0)
+    @JsonKey(name: 'star_count', readValue: _readStarCount)
+    int starCount,
+    @Default(false) @JsonKey(name: 'is_starred') bool isStarred,
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
   }) = _SavedPack;
 
@@ -28,6 +32,17 @@ Object? _readUsername(Map<dynamic, dynamic> json, String key) {
   final profiles = json['profiles'];
   if (profiles is Map<String, dynamic>) {
     return profiles['username'];
+  }
+  return json[key];
+}
+
+Object? _readStarCount(Map<dynamic, dynamic> json, String key) {
+  final starsList = json['pack_stars'];
+  if (starsList is List && starsList.isNotEmpty) {
+    final first = starsList.first;
+    if (first is Map<String, dynamic>) {
+      return first['count'];
+    }
   }
   return json[key];
 }

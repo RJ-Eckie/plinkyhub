@@ -79,18 +79,11 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
   Future<void> fetchPublicPatches() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final userId = ref.read(authenticationProvider).user?.id;
-      var query = _supabase
+      final response = await _supabase
           .from('patches')
           .select('*, profiles(username), patch_stars(count)')
-          .eq('is_public', true);
-
-      // Exclude own patches from community list.
-      if (userId != null) {
-        query = query.neq('user_id', userId);
-      }
-
-      final response = await query.order('updated_at', ascending: false);
+          .eq('is_public', true)
+          .order('updated_at', ascending: false);
 
       final patches = await _parsePatchRows(response as List);
       state = state.copyWith(publicPatches: patches, isLoading: false);

@@ -9,6 +9,7 @@ import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/star_button.dart';
 
 class SampleCard extends ConsumerStatefulWidget {
   const SampleCard({
@@ -151,7 +152,11 @@ class _SampleCardState extends ConsumerState<SampleCard> {
             ],
             const SizedBox(height: 4),
             Text(
-              formatDate(sample.updatedAt),
+              [
+                if (sample.username.isNotEmpty)
+                  'by ${sample.username}',
+                formatDate(sample.updatedAt),
+              ].join(' · '),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -169,6 +174,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                   tooltip:
                       _expanded ? 'Hide slices' : 'Show slices',
                   onPressed: _toggleExpanded,
+                ),
+                const SizedBox(width: 8),
+                StarButton(
+                  isStarred: sample.isStarred,
+                  starCount: sample.starCount,
+                  onToggle: () => ref
+                      .read(savedSamplesProvider.notifier)
+                      .toggleStar(sample),
                 ),
                 const Spacer(),
                 if (isOwned) ...[

@@ -15,6 +15,8 @@ _SavedPack _$SavedPackFromJson(Map<String, dynamic> json) => _SavedPack(
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
   username: _readUsername(json, 'username') as String? ?? '',
+  starCount: (_readStarCount(json, 'star_count') as num?)?.toInt() ?? 0,
+  isStarred: json['is_starred'] as bool? ?? false,
   slots:
       (json['pack_slots'] as List<dynamic>?)
           ?.map((e) => PackSlot.fromJson(e as Map<String, dynamic>))
@@ -32,5 +34,7 @@ Map<String, dynamic> _$SavedPackToJson(_SavedPack instance) =>
       'description': instance.description,
       'is_public': instance.isPublic,
       'username': instance.username,
+      'star_count': instance.starCount,
+      'is_starred': instance.isStarred,
       'pack_slots': instance.slots,
     };

@@ -17,6 +17,8 @@ _SavedSample _$SavedSampleFromJson(Map<String, dynamic> json) => _SavedSample(
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
   username: _readUsername(json, 'username') as String? ?? '',
+  starCount: (_readStarCount(json, 'star_count') as num?)?.toInt() ?? 0,
+  isStarred: json['is_starred'] as bool? ?? false,
   slicePoints:
       (json['slice_points'] as List<dynamic>?)
           ?.map((e) => (e as num).toDouble())
@@ -44,6 +46,8 @@ Map<String, dynamic> _$SavedSampleToJson(_SavedSample instance) =>
       'description': instance.description,
       'is_public': instance.isPublic,
       'username': instance.username,
+      'star_count': instance.starCount,
+      'is_starred': instance.isStarred,
       'slice_points': instance.slicePoints,
       'base_note': instance.baseNote,
       'fine_tune': instance.fineTune,
