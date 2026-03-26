@@ -109,15 +109,19 @@ class _UploadSampleDialogState
 
     try {
       final pcmBytes = wavToPlinkyPcm(_fileBytes!);
-      final pcmFileName =
-          '${_fileName!.substring(0, _fileName!.lastIndexOf('.'))}.pcm';
+      final baseName =
+          _fileName!.substring(0, _fileName!.lastIndexOf('.'));
+      final timestamp =
+          DateTime.now().millisecondsSinceEpoch;
+      final wavStorageName = '${baseName}_$timestamp.wav';
+      final pcmStorageName = '${baseName}_$timestamp.pcm';
 
       final sample = SavedSample(
         id: '',
         userId: userId,
         name: _nameController.text.trim(),
-        filePath: '$userId/$_fileName',
-        pcmFilePath: '$userId/$pcmFileName',
+        filePath: '$userId/$wavStorageName',
+        pcmFilePath: '$userId/$pcmStorageName',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         description: _descriptionController.text.trim(),
