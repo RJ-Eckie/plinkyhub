@@ -248,6 +248,12 @@ class WebUsbService {
         if (!_connected) {
           break;
         }
+        if (error.toString().contains('disconnected')) {
+          _connected = false;
+          _device = null;
+          onError?.call(error);
+          break;
+        }
         await Future<void>.delayed(const Duration(milliseconds: 100));
       }
     }
