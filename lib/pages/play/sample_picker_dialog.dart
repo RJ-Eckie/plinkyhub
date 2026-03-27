@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/play_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -36,25 +37,32 @@ class _SamplePickerDialogState
     }
   }
 
-  Future<void> _loadSaved(String name, String filePath, int baseMidi) async {
+  Future<void> _loadSaved(SavedSample sample) async {
     setState(() => _loading = true);
     try {
+      debugPrint('Downloading WAV: ${sample.filePath}');
       final bytes = await ref
           .read(savedSamplesProvider.notifier)
-          .downloadWav(filePath);
+          .downloadWav(sample.filePath);
+      debugPrint('Downloaded ${bytes.length} bytes, loading into player...');
       await ref.read(playProvider.notifier).loadSample(
-            name,
+            sample.name,
             bytes,
-            baseMidi: baseMidi,
+            baseMidi: sample.baseNote,
+            slicePoints: sample.slicePoints,
+            sliceNotes: sample.sliceNotes,
+            pitched: sample.pitched,
           );
+      debugPrint('Sample loaded into player');
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } on Exception {
+    } on Exception catch (e) {
+      debugPrint('Failed to load saved sample: $e');
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load sample')),
+          SnackBar(content: Text('Failed to load sample: $e')),
         );
       }
     }
@@ -106,11 +114,7 @@ class _SamplePickerDialogState
                             : sample.name,
                       ),
                       dense: true,
-                      onTap: () => _loadSaved(
-                        sample.name,
-                        sample.filePath,
-                        sample.baseNote,
-                      ),
+                      onTap: () => _loadSaved(sample),
                     );
                   },
                 ),

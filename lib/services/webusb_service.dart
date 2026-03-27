@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 
 const _usbBufferSize = 64;
 
@@ -199,6 +200,37 @@ class WebUsbService {
     }
   }
 
+  /// Resets the USB interface to clear any stale state, then
+  /// restarts the read loop. Call before each load/save operation
+  /// to ensure the connection is responsive.
+  Future<void> resetInterface() async {
+    if (_device == null || !_connected) {
+      return;
+    }
+
+    // Stop the current read loop so it exits cleanly.
+    _connected = false;
+    // Give the read loop time to exit.
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    try {
+      // Re-signal readiness to the device.
+      final controlSetup = USBControlTransferParameters(
+        requestType: 'class',
+        recipient: 'interface',
+        request: 0x22,
+        value: 0x01,
+        index: _interfaceNumber,
+      );
+      await _device!.controlTransferOut(controlSetup).toDart;
+    } on Object catch (error) {
+      debugPrint('USB interface reset error: $error');
+    }
+
+    _connected = true;
+    unawaited(_readLoop());
+  }
+
   Future<void> _readLoop() async {
     while (_connected) {
       try {
@@ -212,10 +244,11 @@ class WebUsbService {
           onDataReceived?.call(byteData);
         }
       } on Object catch (error) {
-        if (_connected) {
-          onError?.call(error);
+        debugPrint('USB read error: $error');
+        if (!_connected) {
+          break;
         }
-        break;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
       }
     }
   }

@@ -1,12 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
-import 'package:plinkyhub/models/parameter.dart';
-import 'package:plinkyhub/models/patch.dart';
+import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/play_state.dart';
-import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 
 final playProvider = NotifierProvider<PlayNotifier, PlayState>(
@@ -22,17 +18,22 @@ class PlayNotifier extends Notifier<PlayState> {
   @override
   PlayState build() => const PlayState();
 
-  /// Load a WAV sample for playback.
+  /// Load a WAV sample for playback with its slice configuration.
   Future<void> loadSample(
     String name,
     Uint8List wavBytes, {
     int baseMidi = 60,
+    List<double> slicePoints = defaultSlicePoints,
+    List<int> sliceNotes = defaultSliceNotes,
+    bool pitched = false,
   }) async {
     state = state.copyWith(isLoadingSample: true);
     try {
       final soloud = SoLoud.instance;
       if (!soloud.isInitialized) {
+        debugPrint('Initializing SoLoud...');
         await soloud.init();
+        debugPrint('SoLoud initialized');
       }
 
       // Dispose previous source if any.
@@ -42,11 +43,16 @@ class PlayNotifier extends Notifier<PlayState> {
         soloud.disposeSource(oldSource);
       }
 
+      debugPrint('Loading sample (${wavBytes.length} bytes)...');
       _audioSource = await soloud.loadMem('sample.wav', wavBytes);
+      debugPrint('Sample loaded');
       state = state.copyWith(
         sampleWavBytes: wavBytes,
         sampleName: name,
         sampleBaseMidi: baseMidi,
+        slicePoints: slicePoints,
+        sliceNotes: sliceNotes,
+        pitched: pitched,
         isLoadingSample: false,
       );
     } on Exception catch (error) {
@@ -55,10 +61,16 @@ class PlayNotifier extends Notifier<PlayState> {
     }
   }
 
-  /// Start playing the note for the pad at [row], [col].
+  /// Start playing the slice for the pad at [row], [col].
+  ///
+  /// Each row (0-7) corresponds to a slice of the sample.
+  /// Row 0 (top) = slice 0, row 7 (bottom) = slice 7.
+  /// Columns provide polyphony — one voice per column.
   Future<void> playPad(int row, int col) async {
     final source = _audioSource;
-    if (source == null) return;
+    if (source == null) {
+      return;
+    }
 
     final soloud = SoLoud.instance;
     final padIndex = row * 8 + col;
@@ -68,68 +80,58 @@ class PlayNotifier extends Notifier<PlayState> {
     if (existing != null) {
       try {
         soloud.stop(existing);
-      } on Exception catch (_) {
-        // Handle may have already finished.
-      }
+      } on Exception catch (_) {}
     }
 
-    // Read pitch config from current patch.
-    final patch = ref.read(plinkyProvider).patch;
-    int scaleIndex = 26; // chromatic default
-    int stride = 7; // fifths default
-    int octaveOffset = 0;
-    double pitchOffset = 0;
+    // Determine slice boundaries.
+    final sliceIndex = row.clamp(0, 7);
+    final slicePoints = state.slicePoints;
+    final startFraction = slicePoints[sliceIndex];
+    final endFraction =
+        sliceIndex < 7 ? slicePoints[sliceIndex + 1] : 1.0;
 
-    if (patch != null) {
-      final scaleParam = _findParam(patch, 'P_SCALE');
-      if (scaleParam != null) {
-        // Scale value is 0-1024 mapped to enum indices.
-        final options = scaleParam.getSelectOptions();
-        if (options != null && options.isNotEmpty) {
-          final width = 1024 / options.length;
-          scaleIndex = (scaleParam.value / width)
-              .floor()
-              .clamp(0, options.length - 1);
-        }
-      }
+    final totalDuration = soloud.getLength(source);
+    final startTime = totalDuration * startFraction;
+    final sliceDuration =
+        totalDuration * (endFraction - startFraction);
 
-      final strideParam = _findParam(patch, 'P_STRIDE');
-      if (strideParam != null) {
-        // P_STRIDE range is 0-127, representing semitones.
-        stride = strideParam.value.clamp(0, 127);
-      }
-
-      final octParam = _findParam(patch, 'P_OCT');
-      if (octParam != null) {
-        // P_OCT range is -1024 to 1024, map to octaves (-4 to +4).
-        octaveOffset = (octParam.value / 256).round();
-      }
-
-      final pitchParam = _findParam(patch, 'P_PITCH');
-      if (pitchParam != null) {
-        // P_PITCH range is -1024 to 1024, map to -12..+12 semitones.
-        pitchOffset = pitchParam.value / 1024 * 12;
-      }
-    }
-
-    final targetMidi = midiNoteForPad(
-      row: row,
-      col: col,
-      scaleIndex: scaleIndex,
-      stride: stride,
-      octaveOffset: octaveOffset,
-      pitchOffset: pitchOffset,
-    );
-
-    final speed = playbackSpeedForMidi(targetMidi, state.sampleBaseMidi);
+    // Calculate pitch shift.
+    // The slice note is the intended pitch for this slice.
+    // Speed = 1.0 means play at the sample's original pitch.
+    final sliceNote = state.sliceNotes.length > sliceIndex
+        ? state.sliceNotes[sliceIndex]
+        : 60;
+    // On Plinky, slice notes are in Plinky note format (48 = C4).
+    // Convert to MIDI: plinkyNote + 12 = midiNote.
+    final sliceMidi = sliceNote + 12;
+    final speed = playbackSpeedForMidi(sliceMidi, state.sampleBaseMidi);
 
     try {
-      final handle = await soloud.play(source);
+      final handle = await soloud.play(source, paused: true);
+      soloud.seek(handle, startTime);
       soloud.setRelativePlaySpeed(handle, speed);
+      soloud.setPause(handle, false);
+
+      // Schedule stop at the end of the slice (adjusted for speed).
+      if (sliceDuration > Duration.zero) {
+        final adjustedDuration = sliceDuration * (1.0 / speed);
+        soloud.scheduleStop(handle, adjustedDuration);
+      }
+
       _activeHandles[col] = handle;
       state = state.copyWith(
         activePads: {...state.activePads, padIndex},
       );
+
+      // Clear active state when the slice finishes.
+      final waitDuration = sliceDuration * (1.0 / speed);
+      await Future<void>.delayed(waitDuration);
+      if (state.activePads.contains(padIndex)) {
+        _activeHandles.remove(col);
+        state = state.copyWith(
+          activePads: {...state.activePads}..remove(padIndex),
+        );
+      }
     } on Exception catch (error) {
       debugPrint('Failed to play pad: $error');
     }
@@ -142,20 +144,11 @@ class PlayNotifier extends Notifier<PlayState> {
     if (handle != null) {
       try {
         SoLoud.instance.stop(handle);
-      } on Exception catch (_) {
-        // May already be stopped.
-      }
+      } on Exception catch (_) {}
     }
     state = state.copyWith(
       activePads: {...state.activePads}..remove(padIndex),
     );
-  }
-
-  static Parameter? _findParam(Patch patch, String id) {
-    for (final p in patch.parameters) {
-      if (p.id == id) return p;
-    }
-    return null;
   }
 
   void _stopAll() {

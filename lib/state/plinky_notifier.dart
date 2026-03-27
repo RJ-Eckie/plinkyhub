@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +17,12 @@ final plinkyProvider = NotifierProvider<PlinkyNotifier, PlinkyState>(
 
 class PlinkyNotifier extends Notifier<PlinkyState> {
   final WebUsbService _webUsbService = WebUsbService();
-  Completer<ByteData>? _dataCompleter;
+
+  /// Incoming data buffer. Data from the read loop is pushed here
+  /// so that nothing is lost if it arrives before _waitForData is
+  /// called.
+  final _receivedData = <ByteData>[];
+  Completer<void>? _dataSignal;
 
   @override
   PlinkyState build() => const PlinkyState();
@@ -52,8 +56,10 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
   }
 
   void _onDataReceived(ByteData data) {
-    _dataCompleter?.complete(data);
-    _dataCompleter = null;
+    _receivedData.add(data);
+    if (_dataSignal != null && !_dataSignal!.isCompleted) {
+      _dataSignal!.complete();
+    }
   }
 
   void _onError(Object error) {
@@ -63,9 +69,16 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     );
   }
 
-  Future<ByteData> _waitForData() {
-    _dataCompleter = Completer<ByteData>();
-    return _dataCompleter!.future;
+  Future<ByteData> _waitForData() async {
+    if (_receivedData.isEmpty) {
+      _dataSignal = Completer<void>();
+      await _dataSignal!.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () =>
+            throw TimeoutException('No response from Plinky'),
+      );
+    }
+    return _receivedData.removeAt(0);
   }
 
   Future<void> loadPatch() async {
@@ -76,6 +89,10 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     );
 
     try {
+      // Reset the USB interface to ensure the connection is fresh.
+      await _webUsbService.resetInterface();
+      _receivedData.clear();
+
       final requestBuffer = Uint8List.fromList([
         ..._magicHeader,
         0, // get
@@ -85,7 +102,8 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
         0,
         0,
       ]);
-      await _webUsbService.send(requestBuffer);
+      // Fire-and-forget, matching the original editor behavior.
+      _webUsbService.send(requestBuffer);
 
       ByteData headerData;
       while (true) {
@@ -101,8 +119,6 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       final chunks = <Uint8List>[];
       var processedBytes = 0;
       while (processedBytes < bytesToProcess) {
-        // Yield to let the UI thread render between chunks.
-        await Future<void>.delayed(Duration.zero);
         final chunkData = await _waitForData();
         final chunk = Uint8List(chunkData.lengthInBytes);
         for (var index = 0; index < chunkData.lengthInBytes; index++) {

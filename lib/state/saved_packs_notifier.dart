@@ -24,7 +24,9 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
   Future<Set<String>> _fetchStarredPackIds() async {
     final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) return {};
+    if (userId == null) {
+      return {};
+    }
     final stars = await _supabase
         .from('pack_stars')
         .select('pack_id')
@@ -197,7 +199,9 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
   Future<void> toggleStar(SavedPack pack) async {
     final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      return;
+    }
 
     try {
       if (pack.isStarred) {

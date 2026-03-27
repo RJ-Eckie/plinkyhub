@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/pages/play/patch_picker_dialog.dart';
 import 'package:plinkyhub/pages/play/play_pad.dart';
 import 'package:plinkyhub/pages/play/sample_picker_dialog.dart';
 import 'package:plinkyhub/state/play_notifier.dart';
@@ -11,21 +12,50 @@ import 'package:plinkyhub/widgets/plinky_button.dart';
 /// Each row corresponds to a functional parameter group.
 const _padIcons = <List<String>>[
   // Row 0 — Sound
-  ['blank', 'shape', 'distortion--resonance', 'pitch', 'octave--scale', 'glide--microtone', 'osc-interval--column', 'mod-src--sample'],
+  [
+    'blank', 'shape', 'distortion--resonance', 'pitch',
+    'octave--scale', 'glide--microtone',
+    'osc-interval--column', 'mod-src--sample',
+  ],
   // Row 1 — Envelope 1
-  ['blank', 'sensitivity--env-2-level', 'attack', 'decay', 'sustain', 'release', 'blank', 'mod-src--base'],
+  [
+    'blank', 'sensitivity--env-2-level', 'attack', 'decay',
+    'sustain', 'release', 'blank', 'mod-src--base',
+  ],
   // Row 2 — Effects
-  ['blank', 'delay--reverb', 'time', 'pingpong--shimmer', 'wobble', 'feedback', 'tempo--swing', 'mod-src--sensitivity'],
+  [
+    'blank', 'delay--reverb', 'time',
+    'pingpong--shimmer', 'wobble', 'feedback',
+    'tempo--swing', 'mod-src--sensitivity',
+  ],
   // Row 3 — Arp / Seq
-  ['blank', 'arp--latch', 'order', 'clock-div', 'chance', 'euclid-len', 'arp-octaves', 'mod-src--a'],
+  [
+    'blank', 'arp--latch', 'order', 'clock-div',
+    'chance', 'euclid-len', 'arp-octaves', 'mod-src--a',
+  ],
   // Row 4 — Sampler
-  ['blank', 'scrub--jitter', 'grain-size--jitter', 'play-speed--jitter', 'time', 'sample', 'pattern--step-offset', 'mod-src--b'],
+  [
+    'blank', 'scrub--jitter', 'grain-size--jitter',
+    'play-speed--jitter', 'time', 'sample',
+    'pattern--step-offset', 'mod-src--b',
+  ],
   // Row 5 — Mod A / B
-  ['blank', 'a-b-cv-level', 'offset', 'lfo--depth', 'lfo--rate', 'lfo--shape', 'lfo--symmetry', 'mod-src--x'],
+  [
+    'blank', 'a-b-cv-level', 'offset', 'lfo--depth',
+    'lfo--rate', 'lfo--shape', 'lfo--symmetry',
+    'mod-src--x',
+  ],
   // Row 6 — Mod X / Y
-  ['blank', 'x-y-cv-level', 'offset', 'lfo--depth', 'lfo--rate', 'lfo--shape', 'lfo--symmetry', 'mod-src--y'],
+  [
+    'blank', 'x-y-cv-level', 'offset', 'lfo--depth',
+    'lfo--rate', 'lfo--shape', 'lfo--symmetry',
+    'mod-src--y',
+  ],
   // Row 7 — Mix / System
-  ['blank', 'synth', 'wet-dry', 'hpf', 'blank', 'cv-quantize', 'volume', 'mod-src--random'],
+  [
+    'blank', 'synth', 'wet-dry', 'hpf', 'blank',
+    'cv-quantize', 'volume', 'mod-src--random',
+  ],
 ];
 
 class PlayPage extends ConsumerWidget {
@@ -36,7 +66,6 @@ class PlayPage extends ConsumerWidget {
     final playState = ref.watch(playProvider);
     final plinkyState = ref.watch(plinkyProvider);
     final patchName = plinkyState.patch?.name ?? '';
-    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -45,30 +74,15 @@ class PlayPage extends ConsumerWidget {
           // Header
           Row(
             children: [
-              Icon(
-                Icons.piano,
-                size: 20,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                patchName.isEmpty
-                    ? 'No patch loaded'
+              PlinkyButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => const PatchPickerDialog(),
+                ),
+                icon: Icons.piano,
+                label: patchName.isEmpty
+                    ? 'Load Patch'
                     : patchName,
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(width: 16),
-              Icon(
-                Icons.audio_file,
-                size: 20,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                playState.sampleName.isEmpty
-                    ? 'No sample loaded'
-                    : playState.sampleName,
-                style: theme.textTheme.titleMedium,
               ),
               const SizedBox(width: 16),
               PlinkyButton(
@@ -81,8 +95,10 @@ class PlayPage extends ConsumerWidget {
                         ),
                 icon: playState.isLoadingSample
                     ? Icons.hourglass_empty
-                    : Icons.library_music,
-                label: 'Load Sample',
+                    : Icons.audio_file,
+                label: playState.sampleName.isEmpty
+                    ? 'Load Sample'
+                    : playState.sampleName,
               ),
             ],
           ),

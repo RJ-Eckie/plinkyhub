@@ -38,6 +38,13 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
     }
   }
 
+  void _stepPatchNumber(int delta) {
+    final current = int.tryParse(_patchNumberController.text) ?? 1;
+    final next = (current + delta).clamp(1, 32);
+    _patchNumberController.text = next.toString();
+    ref.read(plinkyProvider.notifier).patchNumber = next - 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(plinkyProvider);
@@ -53,18 +60,52 @@ class _PatchControlsState extends ConsumerState<PatchControls> {
             const Text('Patch number'),
             const SizedBox(width: 8),
             SizedBox(
-              width: 64,
+              width: 75,
               child: TextField(
                 controller: _patchNumberController,
                 keyboardType: TextInputType.number,
                 enabled: !isLoading,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 8,
-                    vertical: 8,
+                    vertical: 4,
                   ),
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  suffixIconConstraints: const BoxConstraints(
+                    maxHeight: 32,
+                  ),
+                  suffixIcon: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 16,
+                        width: 24,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          iconSize: 14,
+                          icon: const Icon(Icons.arrow_drop_up),
+                          onPressed: isLoading
+                              ? null
+                              : () => _stepPatchNumber(1),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 16,
+                        width: 24,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          iconSize: 14,
+                          icon: const Icon(
+                            Icons.arrow_drop_down,
+                          ),
+                          onPressed: isLoading
+                              ? null
+                              : () => _stepPatchNumber(-1),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 onSubmitted: (_) => _updatePatchNumber(),
               ),

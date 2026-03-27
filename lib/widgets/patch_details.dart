@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
+import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class PatchDetailsHeader extends ConsumerWidget {
@@ -75,6 +77,14 @@ class PatchDetailsHeader extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             _SaveToCloudButton(patch: patch),
+            const SizedBox(width: 8),
+            PlinkyButton(
+              onPressed: () {
+                ref.read(selectedPageProvider.notifier).selected = 0;
+              },
+              icon: Icons.play_arrow,
+              label: 'Open in player',
+            ),
             const SizedBox(width: 8),
             PlinkyButton(
               onPressed: () => showDialog<void>(
@@ -193,63 +203,100 @@ class _SaveToCloudButton extends ConsumerWidget {
   void _showSaveDialog(BuildContext context, WidgetRef ref) {
     final descriptionController = TextEditingController();
     var isPublic = false;
+    String? selectedSampleId;
 
     showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            'Save "${patch.name.isEmpty ? '(unnamed)' : patch.name}" to cloud',
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (optional)',
-                  border: OutlineInputBorder(),
+        builder: (context, setDialogState) {
+          final samples =
+              ref.read(savedSamplesProvider).userSamples;
+          return AlertDialog(
+            title: Text(
+              'Save "${patch.name.isEmpty ? '(unnamed)' : patch.name}"'
+              ' to cloud',
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
                 ),
-                maxLines: 3,
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String?>(
+                  initialValue: selectedSampleId,
+                  decoration: const InputDecoration(
+                    labelText: 'Sample (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      child: Text('No sample'),
+                    ),
+                    ...samples.map((sample) {
+                      return DropdownMenuItem<String?>(
+                        value: sample.id,
+                        child: Text(
+                          sample.name.isEmpty
+                              ? '(unnamed)'
+                              : sample.name,
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setDialogState(
+                      () => selectedSampleId = value,
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Share publicly'),
+                  subtitle: const Text(
+                    'Allow others to find and load this patch',
+                  ),
+                  value: isPublic,
+                  onChanged: (value) {
+                    setDialogState(() => isPublic = value);
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              PlinkyButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icons.close,
+                label: 'Cancel',
               ),
-              const SizedBox(height: 12),
-              SwitchListTile(
-                title: const Text('Share publicly'),
-                subtitle: const Text(
-                  'Allow others to find and load this patch',
-                ),
-                value: isPublic,
-                onChanged: (value) {
-                  setDialogState(() => isPublic = value);
+              PlinkyButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  ref
+                      .read(savedPatchesProvider.notifier)
+                      .savePatch(
+                        patch,
+                        description: descriptionController.text,
+                        isPublic: isPublic,
+                        sampleId: selectedSampleId,
+                      );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Patch saved to cloud'),
+                    ),
+                  );
                 },
+                icon: Icons.save,
+                label: 'Save',
               ),
             ],
-          ),
-          actions: [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icons.close,
-              label: 'Cancel',
-            ),
-            PlinkyButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ref
-                    .read(savedPatchesProvider.notifier)
-                    .savePatch(
-                      patch,
-                      description: descriptionController.text,
-                      isPublic: isPublic,
-                    );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Patch saved to cloud')),
-                );
-              },
-              icon: Icons.save,
-              label: 'Save',
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

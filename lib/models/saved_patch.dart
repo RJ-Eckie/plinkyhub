@@ -22,6 +22,7 @@ abstract class SavedPatch with _$SavedPatch {
     @JsonKey(name: 'star_count', readValue: _readStarCount)
     int starCount,
     @Default(false) @JsonKey(name: 'is_starred') bool isStarred,
+    @JsonKey(name: 'sample_id') String? sampleId,
   }) = _SavedPatch;
 
   factory SavedPatch.fromJson(Map<String, dynamic> json) =>

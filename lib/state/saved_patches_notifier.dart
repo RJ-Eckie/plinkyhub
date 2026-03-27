@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,6 +99,7 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
     Patch patch, {
     String description = '',
     bool isPublic = false,
+    String? sampleId,
   }) async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
@@ -116,6 +116,7 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
         'patch_data': patchData,
         'description': description,
         'is_public': isPublic,
+        'sample_id': sampleId,
       });
 
       await fetchUserPatches();
@@ -132,6 +133,8 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
     String id, {
     String? description,
     bool? isPublic,
+    String? sampleId,
+    bool clearSample = false,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
@@ -143,6 +146,11 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
       }
       if (isPublic != null) {
         updates['is_public'] = isPublic;
+      }
+      if (sampleId != null) {
+        updates['sample_id'] = sampleId;
+      } else if (clearSample) {
+        updates['sample_id'] = null;
       }
 
       await _supabase.from('patches').update(updates).eq('id', id);

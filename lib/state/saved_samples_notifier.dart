@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
@@ -26,7 +24,9 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
 
   Future<Set<String>> _fetchStarredSampleIds() async {
     final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) return {};
+    if (userId == null) {
+      return {};
+    }
     final stars = await _supabase
         .from('sample_stars')
         .select('sample_id')
@@ -41,7 +41,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     List<dynamic> response,
     Set<String> starredIds,
   ) {
-    return (response).map((row) {
+    return response.map((row) {
       final map = row as Map<String, dynamic>;
       return SavedSample.fromJson({
         ...map,
@@ -113,10 +113,16 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     try {
       await _supabase.storage
           .from('samples')
-          .uploadBinary(sample.filePath, wavBytes, fileOptions: const FileOptions(upsert: true));
-      await _supabase.storage
-          .from('samples')
-          .uploadBinary(sample.pcmFilePath, pcmBytes, fileOptions: const FileOptions(upsert: true));
+          .uploadBinary(
+        sample.filePath,
+        wavBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
+      await _supabase.storage.from('samples').uploadBinary(
+        sample.pcmFilePath,
+        pcmBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
 
       final json = sample.toJson()
         ..remove('id')
@@ -190,7 +196,9 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
 
   Future<void> toggleStar(SavedSample sample) async {
     final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      return;
+    }
 
     try {
       if (sample.isStarred) {

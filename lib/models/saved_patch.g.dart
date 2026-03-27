@@ -19,6 +19,7 @@ _SavedPatch _$SavedPatchFromJson(Map<String, dynamic> json) => _SavedPatch(
   username: _readUsername(json, 'username') as String? ?? '',
   starCount: (_readStarCount(json, 'star_count') as num?)?.toInt() ?? 0,
   isStarred: json['is_starred'] as bool? ?? false,
+  sampleId: json['sample_id'] as String?,
 );
 
 Map<String, dynamic> _$SavedPatchToJson(_SavedPatch instance) =>
@@ -35,4 +36,5 @@ Map<String, dynamic> _$SavedPatchToJson(_SavedPatch instance) =>
       'username': instance.username,
       'star_count': instance.starCount,
       'is_starred': instance.isStarred,
+      'sample_id': instance.sampleId,
     };

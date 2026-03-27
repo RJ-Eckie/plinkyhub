@@ -30,6 +30,8 @@ class _SampleCardState extends ConsumerState<SampleCard> {
   Uint8List? _wavBytes;
   int? _pcmFrameCount;
   bool _loadingWav = false;
+  bool _saving = false;
+  bool _showSavedMessage = false;
   late List<double> _slicePoints;
   late bool _pitched;
   late List<int> _sliceNotes;
@@ -93,14 +95,26 @@ class _SampleCardState extends ConsumerState<SampleCard> {
     }
   }
 
-  void _saveSampleSettings() {
-    ref.read(savedSamplesProvider.notifier).updateSample(
+  Future<void> _saveSampleSettings() async {
+    setState(() => _saving = true);
+    await ref.read(savedSamplesProvider.notifier).updateSample(
       widget.sample.copyWith(
         slicePoints: _slicePoints,
         pitched: _pitched,
         sliceNotes: _sliceNotes,
       ),
     );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _saving = false;
+      _showSavedMessage = true;
+    });
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      setState(() => _showSavedMessage = false);
+    }
   }
 
   bool get _hasUnsavedChanges =>
@@ -247,13 +261,32 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                     setState(() => _sliceNotes = notes);
                   },
                 ),
-              if (isOwned && _hasUnsavedChanges)
+              if (isOwned &&
+                  (_hasUnsavedChanges ||
+                      _saving ||
+                      _showSavedMessage))
                 Align(
                   alignment: Alignment.centerRight,
-                  child: PlinkyButton(
-                    onPressed: _saveSampleSettings,
-                    icon: Icons.save,
-                    label: 'Save changes',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedOpacity(
+                        opacity: _showSavedMessage ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 500),
+                        child: Text(
+                          'Changes saved',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PlinkyButton(
+                        onPressed: _saving ? null : _saveSampleSettings,
+                        icon: Icons.save,
+                        label: 'Save changes',
+                      ),
+                    ],
                   ),
                 ),
             ],

@@ -93,9 +93,9 @@ class _ArcPadPainter extends CustomPainter {
       size.height - _strokeWidth,
     );
 
-    final fullSweep = pi - _gapAngle;
-    final sweepAngle = fullSweep * 0.85;
-    final offset = (fullSweep - sweepAngle) / 2;
+    const fullSweep = pi - _gapAngle;
+    const sweepAngle = fullSweep * 0.85;
+    const offset = (fullSweep - sweepAngle) / 2;
 
     // Left arc
     canvas.drawArc(
