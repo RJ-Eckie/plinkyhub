@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PackSlot {
 
- String get id;@JsonKey(name: 'pack_id') String get packId;@JsonKey(name: 'slot_number') int get slotNumber;@JsonKey(name: 'patch_id') String? get patchId;@JsonKey(name: 'sample_id') String? get sampleId;
+ String get id; String get packId; int get slotNumber; String? get patchId; String? get sampleId;
 /// Create a copy of PackSlot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $PackSlotCopyWith<$Res>  {
   factory $PackSlotCopyWith(PackSlot value, $Res Function(PackSlot) _then) = _$PackSlotCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'pack_id') String packId,@JsonKey(name: 'slot_number') int slotNumber,@JsonKey(name: 'patch_id') String? patchId,@JsonKey(name: 'sample_id') String? sampleId
+ String id, String packId, int slotNumber, String? patchId, String? sampleId
 });
 
 
@@ -157,7 +157,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'pack_id')  String packId, @JsonKey(name: 'slot_number')  int slotNumber, @JsonKey(name: 'patch_id')  String? patchId, @JsonKey(name: 'sample_id')  String? sampleId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String packId,  int slotNumber,  String? patchId,  String? sampleId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PackSlot() when $default != null:
 return $default(_that.id,_that.packId,_that.slotNumber,_that.patchId,_that.sampleId);case _:
@@ -178,7 +178,7 @@ return $default(_that.id,_that.packId,_that.slotNumber,_that.patchId,_that.sampl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'pack_id')  String packId, @JsonKey(name: 'slot_number')  int slotNumber, @JsonKey(name: 'patch_id')  String? patchId, @JsonKey(name: 'sample_id')  String? sampleId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String packId,  int slotNumber,  String? patchId,  String? sampleId)  $default,) {final _that = this;
 switch (_that) {
 case _PackSlot():
 return $default(_that.id,_that.packId,_that.slotNumber,_that.patchId,_that.sampleId);case _:
@@ -198,7 +198,7 @@ return $default(_that.id,_that.packId,_that.slotNumber,_that.patchId,_that.sampl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'pack_id')  String packId, @JsonKey(name: 'slot_number')  int slotNumber, @JsonKey(name: 'patch_id')  String? patchId, @JsonKey(name: 'sample_id')  String? sampleId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String packId,  int slotNumber,  String? patchId,  String? sampleId)?  $default,) {final _that = this;
 switch (_that) {
 case _PackSlot() when $default != null:
 return $default(_that.id,_that.packId,_that.slotNumber,_that.patchId,_that.sampleId);case _:
@@ -213,14 +213,14 @@ return $default(_that.id,_that.packId,_that.slotNumber,_that.patchId,_that.sampl
 @JsonSerializable()
 
 class _PackSlot implements PackSlot {
-  const _PackSlot({required this.id, @JsonKey(name: 'pack_id') required this.packId, @JsonKey(name: 'slot_number') required this.slotNumber, @JsonKey(name: 'patch_id') this.patchId, @JsonKey(name: 'sample_id') this.sampleId});
+  const _PackSlot({required this.id, required this.packId, required this.slotNumber, this.patchId, this.sampleId});
   factory _PackSlot.fromJson(Map<String, dynamic> json) => _$PackSlotFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'pack_id') final  String packId;
-@override@JsonKey(name: 'slot_number') final  int slotNumber;
-@override@JsonKey(name: 'patch_id') final  String? patchId;
-@override@JsonKey(name: 'sample_id') final  String? sampleId;
+@override final  String packId;
+@override final  int slotNumber;
+@override final  String? patchId;
+@override final  String? sampleId;
 
 /// Create a copy of PackSlot
 /// with the given fields replaced by the non-null parameter values.
@@ -255,7 +255,7 @@ abstract mixin class _$PackSlotCopyWith<$Res> implements $PackSlotCopyWith<$Res>
   factory _$PackSlotCopyWith(_PackSlot value, $Res Function(_PackSlot) _then) = __$PackSlotCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'pack_id') String packId,@JsonKey(name: 'slot_number') int slotNumber,@JsonKey(name: 'patch_id') String? patchId,@JsonKey(name: 'sample_id') String? sampleId
+ String id, String packId, int slotNumber, String? patchId, String? sampleId
 });
 
 

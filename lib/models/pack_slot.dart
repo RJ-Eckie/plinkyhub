@@ -7,10 +7,10 @@ part 'pack_slot.g.dart';
 abstract class PackSlot with _$PackSlot {
   const factory PackSlot({
     required String id,
-    @JsonKey(name: 'pack_id') required String packId,
-    @JsonKey(name: 'slot_number') required int slotNumber,
-    @JsonKey(name: 'patch_id') String? patchId,
-    @JsonKey(name: 'sample_id') String? sampleId,
+    required String packId,
+    required int slotNumber,
+    String? patchId,
+    String? sampleId,
   }) = _PackSlot;
 
   factory PackSlot.fromJson(Map<String, dynamic> json) =>

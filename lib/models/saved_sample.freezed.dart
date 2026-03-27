@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedSample {
 
- String get id;@JsonKey(name: 'user_id') String get userId; String get name;@JsonKey(name: 'file_path') String get filePath;@JsonKey(name: 'pcm_file_path') String get pcmFilePath;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt; String get description;@JsonKey(name: 'is_public') bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(name: 'star_count', readValue: _readStarCount) int get starCount;@JsonKey(name: 'is_starred') bool get isStarred;@JsonKey(name: 'slice_points') List<double> get slicePoints;@JsonKey(name: 'base_note') int get baseNote;@JsonKey(name: 'fine_tune') int get fineTune; bool get pitched;@JsonKey(name: 'slice_notes') List<int> get sliceNotes;
+ String get id; String get userId; String get name; String get filePath; String get pcmFilePath; DateTime get createdAt; DateTime get updatedAt; String get description; bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(readValue: _readStarCount) int get starCount; bool get isStarred; List<double> get slicePoints; int get baseNote; int get fineTune; bool get pitched; List<int> get sliceNotes;
 /// Create a copy of SavedSample
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SavedSampleCopyWith<$Res>  {
   factory $SavedSampleCopyWith(SavedSample value, $Res Function(SavedSample) _then) = _$SavedSampleCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId, String name,@JsonKey(name: 'file_path') String filePath,@JsonKey(name: 'pcm_file_path') String pcmFilePath,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(name: 'star_count', readValue: _readStarCount) int starCount,@JsonKey(name: 'is_starred') bool isStarred,@JsonKey(name: 'slice_points') List<double> slicePoints,@JsonKey(name: 'base_note') int baseNote,@JsonKey(name: 'fine_tune') int fineTune, bool pitched,@JsonKey(name: 'slice_notes') List<int> sliceNotes
+ String id, String userId, String name, String filePath, String pcmFilePath, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred, List<double> slicePoints, int baseNote, int fineTune, bool pitched, List<int> sliceNotes
 });
 
 
@@ -169,7 +169,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name, @JsonKey(name: 'file_path')  String filePath, @JsonKey(name: 'pcm_file_path')  String pcmFilePath, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred, @JsonKey(name: 'slice_points')  List<double> slicePoints, @JsonKey(name: 'base_note')  int baseNote, @JsonKey(name: 'fine_tune')  int fineTune,  bool pitched, @JsonKey(name: 'slice_notes')  List<int> sliceNotes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  String filePath,  String pcmFilePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred,  List<double> slicePoints,  int baseNote,  int fineTune,  bool pitched,  List<int> sliceNotes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedSample() when $default != null:
 return $default(_that.id,_that.userId,_that.name,_that.filePath,_that.pcmFilePath,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slicePoints,_that.baseNote,_that.fineTune,_that.pitched,_that.sliceNotes);case _:
@@ -190,7 +190,7 @@ return $default(_that.id,_that.userId,_that.name,_that.filePath,_that.pcmFilePat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name, @JsonKey(name: 'file_path')  String filePath, @JsonKey(name: 'pcm_file_path')  String pcmFilePath, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred, @JsonKey(name: 'slice_points')  List<double> slicePoints, @JsonKey(name: 'base_note')  int baseNote, @JsonKey(name: 'fine_tune')  int fineTune,  bool pitched, @JsonKey(name: 'slice_notes')  List<int> sliceNotes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  String filePath,  String pcmFilePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred,  List<double> slicePoints,  int baseNote,  int fineTune,  bool pitched,  List<int> sliceNotes)  $default,) {final _that = this;
 switch (_that) {
 case _SavedSample():
 return $default(_that.id,_that.userId,_that.name,_that.filePath,_that.pcmFilePath,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slicePoints,_that.baseNote,_that.fineTune,_that.pitched,_that.sliceNotes);case _:
@@ -210,7 +210,7 @@ return $default(_that.id,_that.userId,_that.name,_that.filePath,_that.pcmFilePat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String userId,  String name, @JsonKey(name: 'file_path')  String filePath, @JsonKey(name: 'pcm_file_path')  String pcmFilePath, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred, @JsonKey(name: 'slice_points')  List<double> slicePoints, @JsonKey(name: 'base_note')  int baseNote, @JsonKey(name: 'fine_tune')  int fineTune,  bool pitched, @JsonKey(name: 'slice_notes')  List<int> sliceNotes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String name,  String filePath,  String pcmFilePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred,  List<double> slicePoints,  int baseNote,  int fineTune,  bool pitched,  List<int> sliceNotes)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedSample() when $default != null:
 return $default(_that.id,_that.userId,_that.name,_that.filePath,_that.pcmFilePath,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slicePoints,_that.baseNote,_that.fineTune,_that.pitched,_that.sliceNotes);case _:
@@ -225,33 +225,33 @@ return $default(_that.id,_that.userId,_that.name,_that.filePath,_that.pcmFilePat
 @JsonSerializable()
 
 class _SavedSample implements SavedSample {
-  const _SavedSample({required this.id, @JsonKey(name: 'user_id') required this.userId, required this.name, @JsonKey(name: 'file_path') required this.filePath, @JsonKey(name: 'pcm_file_path') required this.pcmFilePath, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, this.description = '', @JsonKey(name: 'is_public') this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(name: 'star_count', readValue: _readStarCount) this.starCount = 0, @JsonKey(name: 'is_starred') this.isStarred = false, @JsonKey(name: 'slice_points') final  List<double> slicePoints = defaultSlicePoints, @JsonKey(name: 'base_note') this.baseNote = 60, @JsonKey(name: 'fine_tune') this.fineTune = 0, this.pitched = false, @JsonKey(name: 'slice_notes') final  List<int> sliceNotes = defaultSliceNotes}): _slicePoints = slicePoints,_sliceNotes = sliceNotes;
+  const _SavedSample({required this.id, required this.userId, required this.name, required this.filePath, required this.pcmFilePath, required this.createdAt, required this.updatedAt, this.description = '', this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(readValue: _readStarCount) this.starCount = 0, this.isStarred = false, final  List<double> slicePoints = defaultSlicePoints, this.baseNote = 60, this.fineTune = 0, this.pitched = false, final  List<int> sliceNotes = defaultSliceNotes}): _slicePoints = slicePoints,_sliceNotes = sliceNotes;
   factory _SavedSample.fromJson(Map<String, dynamic> json) => _$SavedSampleFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'user_id') final  String userId;
+@override final  String userId;
 @override final  String name;
-@override@JsonKey(name: 'file_path') final  String filePath;
-@override@JsonKey(name: 'pcm_file_path') final  String pcmFilePath;
-@override@JsonKey(name: 'created_at') final  DateTime createdAt;
-@override@JsonKey(name: 'updated_at') final  DateTime updatedAt;
+@override final  String filePath;
+@override final  String pcmFilePath;
+@override final  DateTime createdAt;
+@override final  DateTime updatedAt;
 @override@JsonKey() final  String description;
-@override@JsonKey(name: 'is_public') final  bool isPublic;
+@override@JsonKey() final  bool isPublic;
 @override@JsonKey(readValue: _readUsername) final  String username;
-@override@JsonKey(name: 'star_count', readValue: _readStarCount) final  int starCount;
-@override@JsonKey(name: 'is_starred') final  bool isStarred;
+@override@JsonKey(readValue: _readStarCount) final  int starCount;
+@override@JsonKey() final  bool isStarred;
  final  List<double> _slicePoints;
-@override@JsonKey(name: 'slice_points') List<double> get slicePoints {
+@override@JsonKey() List<double> get slicePoints {
   if (_slicePoints is EqualUnmodifiableListView) return _slicePoints;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_slicePoints);
 }
 
-@override@JsonKey(name: 'base_note') final  int baseNote;
-@override@JsonKey(name: 'fine_tune') final  int fineTune;
+@override@JsonKey() final  int baseNote;
+@override@JsonKey() final  int fineTune;
 @override@JsonKey() final  bool pitched;
  final  List<int> _sliceNotes;
-@override@JsonKey(name: 'slice_notes') List<int> get sliceNotes {
+@override@JsonKey() List<int> get sliceNotes {
   if (_sliceNotes is EqualUnmodifiableListView) return _sliceNotes;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_sliceNotes);
@@ -291,7 +291,7 @@ abstract mixin class _$SavedSampleCopyWith<$Res> implements $SavedSampleCopyWith
   factory _$SavedSampleCopyWith(_SavedSample value, $Res Function(_SavedSample) _then) = __$SavedSampleCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId, String name,@JsonKey(name: 'file_path') String filePath,@JsonKey(name: 'pcm_file_path') String pcmFilePath,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(name: 'star_count', readValue: _readStarCount) int starCount,@JsonKey(name: 'is_starred') bool isStarred,@JsonKey(name: 'slice_points') List<double> slicePoints,@JsonKey(name: 'base_note') int baseNote,@JsonKey(name: 'fine_tune') int fineTune, bool pitched,@JsonKey(name: 'slice_notes') List<int> sliceNotes
+ String id, String userId, String name, String filePath, String pcmFilePath, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred, List<double> slicePoints, int baseNote, int fineTune, bool pitched, List<int> sliceNotes
 });
 
 

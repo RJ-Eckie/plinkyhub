@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedPack {
 
- String get id;@JsonKey(name: 'user_id') String get userId; String get name;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt; String get description;@JsonKey(name: 'is_public') bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(name: 'star_count', readValue: _readStarCount) int get starCount;@JsonKey(name: 'is_starred') bool get isStarred;@JsonKey(name: 'pack_slots') List<PackSlot> get slots;
+ String get id; String get userId; String get name; DateTime get createdAt; DateTime get updatedAt; String get description; bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(readValue: _readStarCount) int get starCount; bool get isStarred;@JsonKey(name: 'pack_slots') List<PackSlot> get slots;
 /// Create a copy of SavedPack
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SavedPackCopyWith<$Res>  {
   factory $SavedPackCopyWith(SavedPack value, $Res Function(SavedPack) _then) = _$SavedPackCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId, String name,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(name: 'star_count', readValue: _readStarCount) int starCount,@JsonKey(name: 'is_starred') bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots
+ String id, String userId, String name, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots
 });
 
 
@@ -163,7 +163,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedPack() when $default != null:
 return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots);case _:
@@ -184,7 +184,7 @@ return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId,  String name, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots)  $default,) {final _that = this;
 switch (_that) {
 case _SavedPack():
 return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots);case _:
@@ -204,7 +204,7 @@ return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String userId,  String name, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt,  String description, @JsonKey(name: 'is_public')  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(name: 'star_count', readValue: _readStarCount)  int starCount, @JsonKey(name: 'is_starred')  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedPack() when $default != null:
 return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots);case _:
@@ -219,19 +219,19 @@ return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt
 @JsonSerializable()
 
 class _SavedPack implements SavedPack {
-  const _SavedPack({required this.id, @JsonKey(name: 'user_id') required this.userId, required this.name, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, this.description = '', @JsonKey(name: 'is_public') this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(name: 'star_count', readValue: _readStarCount) this.starCount = 0, @JsonKey(name: 'is_starred') this.isStarred = false, @JsonKey(name: 'pack_slots') final  List<PackSlot> slots = const []}): _slots = slots;
+  const _SavedPack({required this.id, required this.userId, required this.name, required this.createdAt, required this.updatedAt, this.description = '', this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(readValue: _readStarCount) this.starCount = 0, this.isStarred = false, @JsonKey(name: 'pack_slots') final  List<PackSlot> slots = const []}): _slots = slots;
   factory _SavedPack.fromJson(Map<String, dynamic> json) => _$SavedPackFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'user_id') final  String userId;
+@override final  String userId;
 @override final  String name;
-@override@JsonKey(name: 'created_at') final  DateTime createdAt;
-@override@JsonKey(name: 'updated_at') final  DateTime updatedAt;
+@override final  DateTime createdAt;
+@override final  DateTime updatedAt;
 @override@JsonKey() final  String description;
-@override@JsonKey(name: 'is_public') final  bool isPublic;
+@override@JsonKey() final  bool isPublic;
 @override@JsonKey(readValue: _readUsername) final  String username;
-@override@JsonKey(name: 'star_count', readValue: _readStarCount) final  int starCount;
-@override@JsonKey(name: 'is_starred') final  bool isStarred;
+@override@JsonKey(readValue: _readStarCount) final  int starCount;
+@override@JsonKey() final  bool isStarred;
  final  List<PackSlot> _slots;
 @override@JsonKey(name: 'pack_slots') List<PackSlot> get slots {
   if (_slots is EqualUnmodifiableListView) return _slots;
@@ -273,7 +273,7 @@ abstract mixin class _$SavedPackCopyWith<$Res> implements $SavedPackCopyWith<$Re
   factory _$SavedPackCopyWith(_SavedPack value, $Res Function(_SavedPack) _then) = __$SavedPackCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId, String name,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt, String description,@JsonKey(name: 'is_public') bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(name: 'star_count', readValue: _readStarCount) int starCount,@JsonKey(name: 'is_starred') bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots
+ String id, String userId, String name, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots
 });
 
 

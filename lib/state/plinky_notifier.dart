@@ -143,6 +143,7 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       state = state.copyWith(
         connectionState: PlinkyConnectionState.connected,
         patch: patch,
+        sourcePatchId: null,
       );
     } on Exception catch (error) {
       debugPrint('$error');
@@ -259,13 +260,13 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     }
   }
 
-  void loadPatchFromBytes(Uint8List data) {
+  void loadPatchFromBytes(Uint8List data, {String? sourceId}) {
     final patch = Patch(data.buffer);
-    state = state.copyWith(patch: patch);
+    state = state.copyWith(patch: patch, sourcePatchId: sourceId);
   }
 
   void clearPatch() {
-    state = state.copyWith(patch: null);
+    state = state.copyWith(patch: null, sourcePatchId: null);
   }
 
   void randomizePatch(List<RandomizeGroup> groups) {

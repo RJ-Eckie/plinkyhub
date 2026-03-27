@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/patch.dart';
+import 'package:plinkyhub/models/patch_write.dart';
 import 'package:plinkyhub/models/saved_patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
@@ -107,17 +108,53 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final patchData = base64Encode(Uint8List.view(patch.buffer));
-      await _supabase.from('patches').insert({
-        'user_id': userId,
-        'name': patch.name,
-        'category': patch.category.name,
-        'patch_data': patchData,
-        'description': description,
-        'is_public': isPublic,
-        'sample_id': sampleId,
-      });
+      final write = PatchWrite(
+        userId: userId,
+        name: patch.name,
+        category: patch.category.name,
+        patchData: base64Encode(Uint8List.view(patch.buffer)),
+        description: description,
+        isPublic: isPublic,
+        sampleId: sampleId,
+      );
+      await _supabase.from('patches').insert(write.toJson());
+      await fetchUserPatches();
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.toString(),
+      );
+    }
+  }
 
+  Future<void> overwritePatch(
+    String id,
+    Patch patch, {
+    String? description,
+    String? sampleId,
+  }) async {
+    final existing = state.userPatches
+        .where((p) => p.id == id)
+        .firstOrNull;
+    if (existing == null) {
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final write = PatchWrite(
+        userId: existing.userId,
+        name: patch.name,
+        category: patch.category.name,
+        patchData: base64Encode(Uint8List.view(patch.buffer)),
+        description: description ?? existing.description,
+        isPublic: existing.isPublic,
+        sampleId: sampleId,
+        updatedAt: DateTime.now(),
+      );
+      final json = write.toJson();
+      await _supabase.from('patches').update(json).eq('id', id);
       await fetchUserPatches();
     } on Exception catch (error) {
       debugPrint('$error');
@@ -238,8 +275,12 @@ class SavedPatchesNotifier extends Notifier<SavedPatchesState> {
 
   void loadPatchIntoEditor(SavedPatch savedPatch) {
     final bytes = base64Decode(savedPatch.patchData);
+    final userId = ref.read(authenticationProvider).user?.id;
+    // Only allow overwriting if the user owns the patch.
+    final sourceId =
+        savedPatch.userId == userId ? savedPatch.id : null;
     ref
         .read(plinkyProvider.notifier)
-        .loadPatchFromBytes(Uint8List.fromList(bytes));
+        .loadPatchFromBytes(Uint8List.fromList(bytes), sourceId: sourceId);
   }
 }

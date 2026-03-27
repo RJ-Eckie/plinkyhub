@@ -8,19 +8,19 @@ part 'saved_pack.g.dart';
 abstract class SavedPack with _$SavedPack {
   const factory SavedPack({
     required String id,
-    @JsonKey(name: 'user_id') required String userId,
+    required String userId,
     required String name,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'updated_at') required DateTime updatedAt,
+    required DateTime createdAt,
+    required DateTime updatedAt,
     @Default('') String description,
-    @Default(false) @JsonKey(name: 'is_public') bool isPublic,
+    @Default(false) bool isPublic,
     @Default('')
     @JsonKey(readValue: _readUsername)
     String username,
     @Default(0)
-    @JsonKey(name: 'star_count', readValue: _readStarCount)
+    @JsonKey(readValue: _readStarCount)
     int starCount,
-    @Default(false) @JsonKey(name: 'is_starred') bool isStarred,
+    @Default(false) bool isStarred,
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
   }) = _SavedPack;
 

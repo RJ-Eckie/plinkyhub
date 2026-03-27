@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/patch.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
+import 'package:plinkyhub/state/plinky_state.dart';
 import 'package:plinkyhub/state/saved_patches_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -191,19 +192,27 @@ class _SaveToCloudButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final plinkyState = ref.watch(plinkyProvider);
     final isSignedIn = ref.watch(authenticationProvider).user != null;
 
     return PlinkyButton(
-      onPressed: isSignedIn ? () => _showSaveDialog(context, ref) : null,
+      onPressed: isSignedIn
+          ? () => _showSaveDialog(context, ref, plinkyState)
+          : null,
       icon: Icons.cloud_upload,
       label: isSignedIn ? 'Save to cloud' : 'Sign in to save',
     );
   }
 
-  void _showSaveDialog(BuildContext context, WidgetRef ref) {
+  void _showSaveDialog(
+    BuildContext context,
+    WidgetRef ref,
+    PlinkyState plinkyState,
+  ) {
     final descriptionController = TextEditingController();
     var isPublic = false;
     String? selectedSampleId;
+    final sourcePatchId = plinkyState.sourcePatchId;
 
     showDialog<void>(
       context: context,
@@ -274,6 +283,30 @@ class _SaveToCloudButton extends ConsumerWidget {
                 icon: Icons.close,
                 label: 'Cancel',
               ),
+              if (sourcePatchId != null)
+                PlinkyButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref
+                        .read(savedPatchesProvider.notifier)
+                        .overwritePatch(
+                          sourcePatchId,
+                          patch,
+                          description:
+                              descriptionController.text.isEmpty
+                                  ? null
+                                  : descriptionController.text,
+                          sampleId: selectedSampleId,
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Patch overwritten'),
+                      ),
+                    );
+                  },
+                  icon: Icons.save,
+                  label: 'Overwrite',
+                ),
               PlinkyButton(
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -291,8 +324,8 @@ class _SaveToCloudButton extends ConsumerWidget {
                     ),
                   );
                 },
-                icon: Icons.save,
-                label: 'Save',
+                icon: Icons.add,
+                label: 'Save new',
               ),
             ],
           );

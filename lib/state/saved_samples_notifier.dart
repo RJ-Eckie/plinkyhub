@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/sample_write.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_state.dart';
@@ -122,14 +123,20 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
         fileOptions: const FileOptions(upsert: true),
       );
 
-      final json = sample.toJson()
-        ..remove('id')
-        ..remove('created_at')
-        ..remove('updated_at')
-        ..remove('username')
-        ..remove('star_count')
-        ..remove('is_starred');
-      await _supabase.from('samples').insert(json);
+      final write = SampleWrite(
+        userId: sample.userId,
+        name: sample.name,
+        filePath: sample.filePath,
+        pcmFilePath: sample.pcmFilePath,
+        description: sample.description,
+        isPublic: sample.isPublic,
+        slicePoints: sample.slicePoints,
+        baseNote: sample.baseNote,
+        fineTune: sample.fineTune,
+        pitched: sample.pitched,
+        sliceNotes: sample.sliceNotes,
+      );
+      await _supabase.from('samples').insert(write.toJson());
 
       await fetchUserSamples();
     } on Exception catch (error) {
@@ -145,18 +152,24 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   Future<void> updateSample(SavedSample sample) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final json =
-          sample
-              .copyWith(
-                updatedAt: DateTime.now(),
-              )
-              .toJson()
-            ..remove('id')
-            ..remove('created_at')
-            ..remove('username')
-            ..remove('star_count')
-            ..remove('is_starred');
-      await _supabase.from('samples').update(json).eq('id', sample.id);
+      final write = SampleWrite(
+        userId: sample.userId,
+        name: sample.name,
+        filePath: sample.filePath,
+        pcmFilePath: sample.pcmFilePath,
+        description: sample.description,
+        isPublic: sample.isPublic,
+        slicePoints: sample.slicePoints,
+        baseNote: sample.baseNote,
+        fineTune: sample.fineTune,
+        pitched: sample.pitched,
+        sliceNotes: sample.sliceNotes,
+        updatedAt: DateTime.now(),
+      );
+      await _supabase
+          .from('samples')
+          .update(write.toJson())
+          .eq('id', sample.id);
       await fetchUserSamples();
     } on Exception catch (error) {
       debugPrint('$error');

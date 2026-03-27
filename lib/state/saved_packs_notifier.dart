@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/pack_write.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_state.dart';
@@ -110,14 +111,15 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
+      final write = PackWrite(
+        userId: userId,
+        name: name,
+        description: description,
+        isPublic: isPublic,
+      );
       final packResponse = await _supabase
           .from('packs')
-          .insert({
-            'user_id': userId,
-            'name': name,
-            'description': description,
-            'is_public': isPublic,
-          })
+          .insert(write.toJson())
           .select('id')
           .single();
 
