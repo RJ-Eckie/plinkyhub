@@ -82,14 +82,13 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
   }
 
   Future<void> loadPatch() async {
-    final patchNumber = state.patchNumber.clamp(0, 31);
+    final patchNumber = _patchNumber.clamp(0, 31);
     state = state.copyWith(
       connectionState: PlinkyConnectionState.loadingPatch,
       patchNumber: patchNumber,
     );
 
     try {
-      // Reset the USB interface to ensure the connection is fresh.
       await _webUsbService.resetInterface();
       _receivedData.clear();
 
@@ -188,7 +187,7 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       return;
     }
 
-    final patchNumber = state.patchNumber.clamp(0, 31);
+    final patchNumber = _patchNumber.clamp(0, 31);
     state = state.copyWith(
       connectionState: PlinkyConnectionState.savingPatch,
       patchNumber: patchNumber,
@@ -240,8 +239,10 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
   }
 
   set patchNumber(int number) {
-    state = state.copyWith(patchNumber: number.clamp(0, 31));
+    _patchNumber = number.clamp(0, 31);
   }
+
+  int _patchNumber = 0;
 
   void parsePatchFromUrl(String encodedPatch) {
     try {

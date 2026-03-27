@@ -111,7 +111,12 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
                 },
               ),
               const VerticalDivider(thickness: 1, width: 1),
-              Expanded(child: _pages[selectedIndex]),
+              Expanded(
+                child: IndexedStack(
+                  index: selectedIndex,
+                  children: _pages,
+                ),
+              ),
             ],
           ),
           Positioned(
