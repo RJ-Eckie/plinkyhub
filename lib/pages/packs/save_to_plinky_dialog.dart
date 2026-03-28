@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'dart:html' as html;
 import 'dart:typed_data';
 
-import 'package:file_system_access_api/file_system_access_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
+import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -38,14 +37,8 @@ class _SaveToPlinkyDialogState
   SupabaseClient get _supabase => Supabase.instance.client;
 
   Future<void> _startSave() async {
-    FileSystemDirectoryHandle directory;
-    try {
-      directory = await html.window.showDirectoryPicker(
-        mode: PermissionMode.readwrite,
-      );
-    } on AbortError {
-      return;
-    } on Exception {
+    final directory = await showDirectoryPicker(readwrite: true);
+    if (directory == null) {
       return;
     }
 
@@ -205,7 +198,7 @@ class _SaveToPlinkyDialogState
 
     // Write PRESETS.UF2 to the selected directory.
     setState(() => _statusMessage = 'Writing PRESETS.UF2...');
-    await _writeFile(directory, 'PRESETS.UF2', presetsUf2);
+    await writeFileToDirectory(directory, 'PRESETS.UF2', presetsUf2);
 
     // Generate and write SAMPLE*.UF2 files for all 8 slots.
     // Slots with samples get their PCM data; unused slots are cleared
@@ -221,26 +214,44 @@ class _SaveToPlinkyDialogState
         pcmBytes,
         slotIndex: slotIndex,
       );
-      await _writeFile(
+      await writeFileToDirectory(
         directory,
         'SAMPLE$slotIndex.UF2',
         sampleUf2Bytes,
       );
     }
+
+    // Write WAVETABLE.UF2 if the pack has one.
+    if (widget.pack.wavetableId != null) {
+      setState(() {
+        _statusMessage = 'Writing WAVETABLE.UF2...';
+      });
+
+      final wavetableBytes = await _supabase.storage
+          .from('wavetables')
+          .download(
+            // Fetch the file path from the wavetables table.
+            await _fetchWavetableFilePath(
+              widget.pack.wavetableId!,
+            ),
+          );
+      await writeFileToDirectory(
+        directory,
+        'WAVETABLE.UF2',
+        wavetableBytes,
+      );
+    }
   }
 
-  Future<void> _writeFile(
-    FileSystemDirectoryHandle directory,
-    String fileName,
-    Uint8List data,
+  Future<String> _fetchWavetableFilePath(
+    String wavetableId,
   ) async {
-    final fileHandle = await directory.getFileHandle(
-      fileName,
-      create: true,
-    );
-    final writable = await fileHandle.createWritable();
-    await writable.writeAsArrayBuffer(data);
-    await writable.close();
+    final response = await _supabase
+        .from('wavetables')
+        .select('file_path')
+        .eq('id', wavetableId)
+        .single();
+    return response['file_path'] as String;
   }
 
   @override

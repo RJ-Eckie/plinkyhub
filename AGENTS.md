@@ -4,6 +4,14 @@
 
 Do not use abbreviations in variable names, function names, or comments. Always use full, descriptive names (e.g. `parameter` not `p`, `configuration` not `config`, `application` not `app`).
 
+## Flutter Widgets
+
+Never use `_build*` helper methods to construct UI subtrees. Extract them into separate widget classes instead. This improves readability, enables the framework to optimize rebuilds, and keeps widget trees explicit.
+
+## Code Quality
+
+Always run `dart analyze` after making changes. There must be zero issues (errors, warnings, or infos) in any code you write or modify. Run `dart fix --apply` first to auto-fix what it can, then resolve any remaining issues manually.
+
 ## Database
 
 All DDL and schema changes must be written as migration files under `supabase/migrations/` (named `YYYYMMDDHHMMSS_description.sql`). Never apply DDL directly via `execute_sql` or the `apply_migration` MCP tool — always create a migration file first. Migrations are applied automatically by the CI/CD pipeline and should not be applied manually.

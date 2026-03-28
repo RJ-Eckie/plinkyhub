@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/pages/packs/create_pack_tab.dart';
+import 'package:plinkyhub/pages/packs/load_pack_tab.dart';
 import 'package:plinkyhub/pages/packs/pack_list.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
@@ -22,7 +23,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,6 +51,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
             Tab(text: 'My Packs'),
             Tab(text: 'Community Packs'),
             Tab(text: 'Create Pack'),
+            Tab(text: 'Load from Plinky'),
           ],
         ),
         if (savedPacksState.errorMessage != null)
@@ -94,6 +96,15 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
               else
                 const SignInPrompt(
                   message: 'Sign in to create packs',
+                ),
+              if (isSignedIn)
+                LoadPackTab(
+                  onLoaded: () =>
+                      _tabController.animateTo(0),
+                )
+              else
+                const SignInPrompt(
+                  message: 'Sign in to load packs',
                 ),
             ],
           ),

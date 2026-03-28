@@ -329,6 +329,32 @@ List<ParsedSampleInfo?> parseSampleInfosFromFlashImage(Uint8List flashImage) {
   return results;
 }
 
+/// Extracts 32 preset byte arrays from a raw PRESETS flash image.
+///
+/// Returns a list of 32 entries. Each entry is either a 1552-byte
+/// `Uint8List` or `null` if the page is empty (all 0xFF, erased flash).
+List<Uint8List?> parsePresetsFromFlashImage(Uint8List flashImage) {
+  final results = List<Uint8List?>.filled(presetCount, null);
+  for (var i = 0; i < presetCount; i++) {
+    final pageOffset = i * flashPageSize;
+    if (pageOffset + presetSize > flashImage.length) {
+      break;
+    }
+    final presetBytes = Uint8List.sublistView(
+      flashImage,
+      pageOffset,
+      pageOffset + presetSize,
+    );
+    // Skip pages that are entirely erased (0xFF) or zeroed.
+    final isEmpty = presetBytes.every((b) => b == 0xFF) ||
+        presetBytes.every((b) => b == 0);
+    if (!isEmpty) {
+      results[i] = Uint8List.fromList(presetBytes);
+    }
+  }
+  return results;
+}
+
 /// Generates a complete PRESETS.UF2 file from presets and sample metadata.
 ///
 /// [presets] is a list of 32 entries. Each entry is either the raw 1552-byte

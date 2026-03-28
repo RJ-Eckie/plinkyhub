@@ -1,11 +1,8 @@
-import 'dart:html' as html;
-import 'dart:typed_data';
-
-import 'package:file_system_access_api/file_system_access_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 enum _DialogStep {
@@ -35,14 +32,8 @@ class _SaveWavetableToPlinkyDialogState
   String? _errorMessage;
 
   Future<void> _startSave() async {
-    FileSystemDirectoryHandle directory;
-    try {
-      directory = await html.window.showDirectoryPicker(
-        mode: PermissionMode.readwrite,
-      );
-    } on AbortError {
-      return;
-    } on Exception {
+    final directory = await showDirectoryPicker(readwrite: true);
+    if (directory == null) {
       return;
     }
 
@@ -59,7 +50,7 @@ class _SaveWavetableToPlinkyDialogState
       setState(() {
         _statusMessage = 'Writing WAVETABLE.UF2...';
       });
-      await _writeFile(directory, 'WAVETABLE.UF2', uf2Bytes);
+      await writeFileToDirectory(directory, 'WAVETABLE.UF2', uf2Bytes);
 
       setState(() => _step = _DialogStep.done);
     } on Exception catch (error) {
@@ -68,20 +59,6 @@ class _SaveWavetableToPlinkyDialogState
         _errorMessage = error.toString();
       });
     }
-  }
-
-  Future<void> _writeFile(
-    FileSystemDirectoryHandle directory,
-    String fileName,
-    Uint8List data,
-  ) async {
-    final fileHandle = await directory.getFileHandle(
-      fileName,
-      create: true,
-    );
-    final writable = await fileHandle.createWritable();
-    await writable.writeAsArrayBuffer(data);
-    await writable.close();
   }
 
   @override

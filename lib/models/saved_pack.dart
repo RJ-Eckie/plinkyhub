@@ -22,6 +22,7 @@ abstract class SavedPack with _$SavedPack {
     int starCount,
     @Default(false) bool isStarred,
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
+    String? wavetableId,
   }) = _SavedPack;
 
   factory SavedPack.fromJson(Map<String, dynamic> json) =>
