@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SamplePage extends ConsumerStatefulWidget {
@@ -98,16 +97,6 @@ class _SamplePageState extends ConsumerState<SamplePage> {
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ShareLinkButton(
-                    username: widget.username,
-                    itemType: 'sample',
-                    itemName: widget.sampleName,
-                  ),
-                ],
-              ),
               SampleCard(
                 sample: _sample!,
                 isOwned: isOwned,

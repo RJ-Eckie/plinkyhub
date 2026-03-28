@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WavetablePage extends ConsumerStatefulWidget {
@@ -98,16 +97,6 @@ class _WavetablePageState extends ConsumerState<WavetablePage> {
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ShareLinkButton(
-                    username: widget.username,
-                    itemType: 'wavetable',
-                    itemName: widget.wavetableName,
-                  ),
-                ],
-              ),
               WavetableCard(
                 wavetable: _wavetable!,
                 isOwned: isOwned,
