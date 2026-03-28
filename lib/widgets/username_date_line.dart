@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/state/user_profile_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 
 class UsernameDateLine extends ConsumerWidget {
@@ -37,7 +38,12 @@ class UsernameDateLine extends ConsumerWidget {
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
-                onTap: () => context.go('/$username'),
+                onTap: () {
+                  ref
+                      .read(userProfileProvider.notifier)
+                      .loadUserProfileByUsername(username);
+                  context.go('/profile');
+                },
                 child: Text(
                   username,
                   style: theme.textTheme.bodySmall?.copyWith(

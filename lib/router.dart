@@ -20,6 +20,7 @@ const _reservedPaths = {
   'samples',
   'wavetables',
   'patterns',
+  'profile',
   'about',
 };
 
@@ -30,6 +31,61 @@ GoRouter createRouter(ProviderContainer container) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/editor',
     routes: [
+      // Item deep links — redirect to the correct section
+      // after setting the deep link target. These must be
+      // defined before the shell route so they match first.
+      GoRoute(
+        path: '/:username/preset/:name',
+        redirect: (context, state) {
+          _setDeepLinkTarget(container, state, 'preset');
+          return '/presets';
+        },
+      ),
+      GoRoute(
+        path: '/:username/pack/:name',
+        redirect: (context, state) {
+          _setDeepLinkTarget(container, state, 'pack');
+          return '/packs';
+        },
+      ),
+      GoRoute(
+        path: '/:username/sample/:name',
+        redirect: (context, state) {
+          _setDeepLinkTarget(container, state, 'sample');
+          return '/samples';
+        },
+      ),
+      GoRoute(
+        path: '/:username/wavetable/:name',
+        redirect: (context, state) {
+          _setDeepLinkTarget(container, state, 'wavetable');
+          return '/wavetables';
+        },
+      ),
+      GoRoute(
+        path: '/:username/pattern/:name',
+        redirect: (context, state) {
+          _setDeepLinkTarget(container, state, 'pattern');
+          return '/patterns';
+        },
+      ),
+
+      // User profile deep link — redirect to /profile after
+      // triggering the profile load.
+      GoRoute(
+        path: '/:username',
+        redirect: (context, state) {
+          final username = state.pathParameters['username']!;
+          if (_reservedPaths.contains(username)) {
+            return null;
+          }
+          container
+              .read(userProfileProvider.notifier)
+              .loadUserProfileByUsername(username);
+          return '/profile';
+        },
+      ),
+
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return PlinkyHubShell(navigationShell: navigationShell);
@@ -91,66 +147,12 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 6: User Profile + Item Deep Links
+          // Branch 6: User Profile
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/:username',
-                builder: (context, state) {
-                  final username = state.pathParameters['username']!;
-                  if (_reservedPaths.contains(username)) {
-                    return const SizedBox.shrink();
-                  }
-                  container
-                      .read(userProfileProvider.notifier)
-                      .loadUserProfileByUsername(username);
-                  return const UserProfilePage();
-                },
-                routes: [
-                  GoRoute(
-                    path: 'preset/:name',
-                    redirect: (context, state) {
-                      _setDeepLinkTarget(container, state, 'preset');
-                      return '/presets';
-                    },
-                  ),
-                  GoRoute(
-                    path: 'pack/:name',
-                    redirect: (context, state) {
-                      _setDeepLinkTarget(container, state, 'pack');
-                      return '/packs';
-                    },
-                  ),
-                  GoRoute(
-                    path: 'sample/:name',
-                    redirect: (context, state) {
-                      _setDeepLinkTarget(container, state, 'sample');
-                      return '/samples';
-                    },
-                  ),
-                  GoRoute(
-                    path: 'wavetable/:name',
-                    redirect: (context, state) {
-                      _setDeepLinkTarget(
-                        container,
-                        state,
-                        'wavetable',
-                      );
-                      return '/wavetables';
-                    },
-                  ),
-                  GoRoute(
-                    path: 'pattern/:name',
-                    redirect: (context, state) {
-                      _setDeepLinkTarget(
-                        container,
-                        state,
-                        'pattern',
-                      );
-                      return '/patterns';
-                    },
-                  ),
-                ],
+                path: '/profile',
+                builder: (context, state) => const UserProfilePage(),
               ),
             ],
           ),
