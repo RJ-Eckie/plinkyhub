@@ -51,14 +51,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   final _presetNames = <int, TextEditingController>{};
   final _presetDescriptions = <int, TextEditingController>{};
   final _presetCategories = <int, PresetCategory>{};
-  final _presetIsPublic = <int, bool>{};
   final _sampleNames = <int, TextEditingController>{};
   final _sampleDescriptions = <int, TextEditingController>{};
-  final _sampleIsPublic = <int, bool>{};
   final _wavetableNameController = TextEditingController(
     text: 'Wavetable',
   );
-  bool _wavetableIsPublic = true;
+  bool _includeWavetableInPack = true;
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -109,12 +107,11 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _presetNames.clear();
       _presetDescriptions.clear();
       _presetCategories.clear();
-      _presetIsPublic.clear();
       _sampleNames.clear();
       _sampleDescriptions.clear();
-      _sampleIsPublic.clear();
       _wavetableNameController.text = 'Wavetable';
-      _wavetableIsPublic = true;
+      _includeWavetableInPack = true;
+      _includeWavetableInPack = true;
     });
   }
 
@@ -188,19 +185,20 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         }
       }
 
-      setState(() {
-        _statusMessage = 'Reading WAVETABLE.UF2...';
-      });
-      _wavetableUf2Bytes = await readFileFromDirectory(
-        directory,
-        'WAVETABLE.UF2',
-      );
+      if (_includeWavetableInPack) {
+        setState(() {
+          _statusMessage = 'Reading WAVETABLE.UF2...';
+        });
+        _wavetableUf2Bytes = await readFileFromDirectory(
+          directory,
+          'WAVETABLE.UF2',
+        );
+      }
 
       // Build editable names from parsed data.
       _presetNames.clear();
       _presetDescriptions.clear();
       _presetCategories.clear();
-      _presetIsPublic.clear();
       for (var i = 0; i < presetCount; i++) {
         final presetBytes = _presetDataList[i];
         if (presetBytes == null) {
@@ -211,23 +209,20 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         _presetNames[i] = TextEditingController(text: name);
         _presetDescriptions[i] = TextEditingController();
         _presetCategories[i] = preset.category;
-        _presetIsPublic[i] = true;
       }
 
       _sampleNames.clear();
       _sampleDescriptions.clear();
-      _sampleIsPublic.clear();
       for (final slotIndex in _samplePcmData.keys) {
         _sampleNames[slotIndex] = TextEditingController(
           text: 'Sample $slotIndex',
         );
         _sampleDescriptions[slotIndex] = TextEditingController();
-        _sampleIsPublic[slotIndex] = true;
       }
 
       if (_wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty) {
         _wavetableNameController.text = 'Wavetable';
-        _wavetableIsPublic = true;
+        _includeWavetableInPack = true;
       }
 
       setState(() {
@@ -262,7 +257,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         final slotIndex = entry.key;
         final pcmBytes = entry.value;
         final name = _sampleNames[slotIndex]?.text ?? 'Sample $slotIndex';
-        final isPublic = _sampleIsPublic[slotIndex] ?? false;
 
         setState(() {
           _statusMessage = 'Uploading sample "$name"...';
@@ -301,7 +295,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           filePath: wavPath,
           pcmFilePath: pcmPath,
           description: description,
-          isPublic: isPublic,
+          isPublic: _packIsPublic,
           slicePoints: info?.slicePoints ?? List.of(defaultSlicePoints),
           sliceNotes: info?.sliceNotes ?? List.of(defaultSliceNotes),
           pitched: info?.pitched ?? false,
@@ -337,7 +331,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           userId: userId,
           name: _wavetableNameController.text.trim(),
           filePath: wavetablePath,
-          isPublic: _wavetableIsPublic,
+          isPublic: _packIsPublic,
         );
 
         final wavetableResponse = await _supabase
@@ -358,7 +352,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         }
 
         final name = entry.value.text.trim();
-        final isPublic = _presetIsPublic[slotIndex] ?? false;
 
         setState(() {
           _statusMessage = 'Uploading preset "$name"...';
@@ -374,7 +367,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           category: category.name,
           presetData: base64Encode(presetBytes),
           description: description,
-          isPublic: isPublic,
+          isPublic: _packIsPublic,
         );
 
         final presetResponse = await _supabase
@@ -395,7 +388,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         name: _packNameController.text.trim(),
         description: _packDescriptionController.text.trim(),
         isPublic: _packIsPublic,
-        wavetableId: wavetableId,
+        wavetableId: _includeWavetableInPack ? wavetableId : null,
       );
       final packResponse = await _supabase
           .from('packs')
@@ -477,25 +470,22 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           child: switch (_step) {
             _LoadStep.select => _LoadSelectStep(
               onSelectDrive: _readFromPlinky,
+              includeWavetable: _includeWavetableInPack,
+              onIncludeWavetableChanged: (value) =>
+                  setState(() => _includeWavetableInPack = value),
             ),
             _LoadStep.review => _LoadReviewStep(
               presetNames: _presetNames,
               presetDescriptions: _presetDescriptions,
               presetCategories: _presetCategories,
-              presetIsPublic: _presetIsPublic,
               sampleNames: _sampleNames,
               sampleDescriptions: _sampleDescriptions,
-              sampleIsPublic: _sampleIsPublic,
               packNameController: _packNameController,
               packDescriptionController: _packDescriptionController,
               packIsPublic: _packIsPublic,
               onPackIsPublicChanged: (value) =>
                   setState(() => _packIsPublic = value),
               wavetableNameController: _wavetableNameController,
-              wavetableIsPublic: _wavetableIsPublic,
-              onWavetableIsPublicChanged: (value) => setState(
-                () => _wavetableIsPublic = value,
-              ),
               hasWavetable:
                   _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty,
               onBack: _reset,
@@ -520,9 +510,15 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
 }
 
 class _LoadSelectStep extends StatelessWidget {
-  const _LoadSelectStep({required this.onSelectDrive});
+  const _LoadSelectStep({
+    required this.onSelectDrive,
+    required this.includeWavetable,
+    required this.onIncludeWavetableChanged,
+  });
 
   final VoidCallback onSelectDrive;
+  final bool includeWavetable;
+  final ValueChanged<bool> onIncludeWavetableChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -551,6 +547,12 @@ class _LoadSelectStep extends StatelessWidget {
           'drive on your computer',
         ),
         const SizedBox(height: 16),
+        SwitchListTile(
+          title: const Text('Include wavetable'),
+          value: includeWavetable,
+          onChanged: onIncludeWavetableChanged,
+        ),
+        const SizedBox(height: 8),
         PlinkyButton(
           onPressed: onSelectDrive,
           icon: Icons.folder_open,
@@ -566,17 +568,13 @@ class _LoadReviewStep extends StatelessWidget {
     required this.presetNames,
     required this.presetDescriptions,
     required this.presetCategories,
-    required this.presetIsPublic,
     required this.sampleNames,
     required this.sampleDescriptions,
-    required this.sampleIsPublic,
     required this.packNameController,
     required this.packDescriptionController,
     required this.packIsPublic,
     required this.onPackIsPublicChanged,
     required this.wavetableNameController,
-    required this.wavetableIsPublic,
-    required this.onWavetableIsPublicChanged,
     required this.hasWavetable,
     required this.onBack,
     required this.onSave,
@@ -586,17 +584,13 @@ class _LoadReviewStep extends StatelessWidget {
   final Map<int, TextEditingController> presetNames;
   final Map<int, TextEditingController> presetDescriptions;
   final Map<int, PresetCategory> presetCategories;
-  final Map<int, bool> presetIsPublic;
   final Map<int, TextEditingController> sampleNames;
   final Map<int, TextEditingController> sampleDescriptions;
-  final Map<int, bool> sampleIsPublic;
   final TextEditingController packNameController;
   final TextEditingController packDescriptionController;
   final bool packIsPublic;
   final ValueChanged<bool> onPackIsPublicChanged;
   final TextEditingController wavetableNameController;
-  final bool wavetableIsPublic;
-  final ValueChanged<bool> onWavetableIsPublicChanged;
   final bool hasWavetable;
   final VoidCallback onBack;
   final VoidCallback onSave;
@@ -656,12 +650,6 @@ class _LoadReviewStep extends StatelessWidget {
             _NamedItemRow(
               controller: sampleNames[slotIndex]!,
               label: 'Sample $slotIndex',
-              isPublic: sampleIsPublic[slotIndex] ?? false,
-              onPublicToggled: () {
-                sampleIsPublic[slotIndex] =
-                    !(sampleIsPublic[slotIndex] ?? false);
-                onChanged();
-              },
               onEdit: () => _showSampleEditDialog(
                 context,
                 slotIndex,
@@ -675,12 +663,11 @@ class _LoadReviewStep extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          _NamedItemRow(
+          TextField(
             controller: wavetableNameController,
-            label: 'Wavetable name',
-            isPublic: wavetableIsPublic,
-            onPublicToggled: () => onWavetableIsPublicChanged(
-              !wavetableIsPublic,
+            decoration: const InputDecoration(
+              labelText: 'Wavetable name',
+              border: OutlineInputBorder(),
             ),
           ),
         ],
@@ -695,12 +682,6 @@ class _LoadReviewStep extends StatelessWidget {
             _NamedItemRow(
               controller: presetNames[slotIndex]!,
               label: 'Preset ${slotIndex + 1}',
-              isPublic: presetIsPublic[slotIndex] ?? false,
-              onPublicToggled: () {
-                presetIsPublic[slotIndex] =
-                    !(presetIsPublic[slotIndex] ?? false);
-                onChanged();
-              },
               onEdit: () => _showPresetEditDialog(
                 context,
                 slotIndex,
@@ -740,11 +721,6 @@ class _LoadReviewStep extends StatelessWidget {
       builder: (context) => _SampleEditDialog(
         nameController: sampleNames[slotIndex]!,
         descriptionController: sampleDescriptions[slotIndex]!,
-        isPublic: sampleIsPublic[slotIndex] ?? true,
-        onIsPublicChanged: (value) {
-          sampleIsPublic[slotIndex] = value;
-          onChanged();
-        },
       ),
     );
   }
@@ -763,11 +739,6 @@ class _LoadReviewStep extends StatelessWidget {
           presetCategories[slotIndex] = value;
           onChanged();
         },
-        isPublic: presetIsPublic[slotIndex] ?? true,
-        onIsPublicChanged: (value) {
-          presetIsPublic[slotIndex] = value;
-          onChanged();
-        },
       ),
     );
   }
@@ -777,15 +748,11 @@ class _NamedItemRow extends StatelessWidget {
   const _NamedItemRow({
     required this.controller,
     required this.label,
-    required this.isPublic,
-    required this.onPublicToggled,
     this.onEdit,
   });
 
   final TextEditingController controller;
   final String label;
-  final bool isPublic;
-  final VoidCallback onPublicToggled;
   final VoidCallback? onEdit;
 
   @override
@@ -802,16 +769,6 @@ class _NamedItemRow extends StatelessWidget {
                 border: const OutlineInputBorder(),
                 isDense: true,
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: 'Share with community',
-            child: IconButton(
-              icon: Icon(
-                isPublic ? Icons.public : Icons.public_off,
-              ),
-              onPressed: onPublicToggled,
             ),
           ),
           if (onEdit != null)
@@ -832,14 +789,10 @@ class _SampleEditDialog extends StatelessWidget {
   const _SampleEditDialog({
     required this.nameController,
     required this.descriptionController,
-    required this.isPublic,
-    required this.onIsPublicChanged,
   });
 
   final TextEditingController nameController;
   final TextEditingController descriptionController;
-  final bool isPublic;
-  final ValueChanged<bool> onIsPublicChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -866,21 +819,6 @@ class _SampleEditDialog extends StatelessWidget {
               ),
               maxLines: 3,
             ),
-            const SizedBox(height: 8),
-            StatefulBuilder(
-              builder: (context, setDialogState) {
-                return SwitchListTile(
-                  title: const Text(
-                    'Share with community',
-                  ),
-                  value: isPublic,
-                  onChanged: (value) {
-                    onIsPublicChanged(value);
-                    setDialogState(() {});
-                  },
-                );
-              },
-            ),
           ],
         ),
       ),
@@ -901,16 +839,12 @@ class _PresetEditDialog extends StatelessWidget {
     required this.descriptionController,
     required this.category,
     required this.onCategoryChanged,
-    required this.isPublic,
-    required this.onIsPublicChanged,
   });
 
   final TextEditingController nameController;
   final TextEditingController descriptionController;
   final PresetCategory category;
   final ValueChanged<PresetCategory> onCategoryChanged;
-  final bool isPublic;
-  final ValueChanged<bool> onIsPublicChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -963,17 +897,6 @@ class _PresetEditDialog extends StatelessWidget {
                       onCategoryChanged(value);
                       setDialogState(() {});
                     }
-                  },
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  title: const Text(
-                    'Share with community',
-                  ),
-                  value: isPublic,
-                  onChanged: (value) {
-                    onIsPublicChanged(value);
-                    setDialogState(() {});
                   },
                 ),
               ],

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/pages/packs/pack_slot_tile.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
+import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
+import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class CreatePackTab extends ConsumerStatefulWidget {
@@ -22,6 +24,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     (_) => (presetId: null, sampleId: null),
   );
   String? _editingPackId;
+  String? _wavetableId;
 
   @override
   void dispose() {
@@ -35,6 +38,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _nameController.text = pack.name;
     _descriptionController.text = pack.description;
     _isPublic = pack.isPublic;
+    _wavetableId = pack.wavetableId;
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null);
     }
@@ -51,6 +55,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _nameController.clear();
     _descriptionController.clear();
     _isPublic = false;
+    _wavetableId = null;
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null);
     }
@@ -171,6 +176,12 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
           const SizedBox(height: 16),
           SamplesSection(slots: _slots),
           const SizedBox(height: 16),
+          _WavetableSection(
+            wavetableId: _wavetableId,
+            onChanged: (wavetableId) =>
+                setState(() => _wavetableId = wavetableId),
+          ),
+          const SizedBox(height: 16),
           Center(
             child: PlinkyButton(
               onPressed: savedPacksState.isLoading ? null : _savePack,
@@ -203,6 +214,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         description: _descriptionController.text,
         isPublic: _isPublic,
         slots: slots,
+        wavetableId: _wavetableId,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pack updated')),
@@ -213,6 +225,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         description: _descriptionController.text,
         isPublic: _isPublic,
         slots: slots,
+        wavetableId: _wavetableId,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pack saved')),
@@ -220,5 +233,78 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     }
 
     setState(_resetForm);
+  }
+}
+
+class _WavetableSection extends ConsumerWidget {
+  const _WavetableSection({
+    required this.wavetableId,
+    required this.onChanged,
+  });
+
+  final String? wavetableId;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final wavetablesState = ref.watch(savedWavetablesProvider);
+    final wavetableName = wavetableId != null
+        ? wavetablesState.userWavetables
+                  .where((wavetable) => wavetable.id == wavetableId)
+                  .firstOrNull
+                  ?.name ??
+              wavetablesState.publicWavetables
+                  .where(
+                    (wavetable) => wavetable.id == wavetableId,
+                  )
+                  .firstOrNull
+                  ?.name
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Wavetable',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                wavetableName ?? 'None',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            if (wavetableId != null)
+              IconButton(
+                icon: const Icon(Icons.clear, size: 20),
+                tooltip: 'Remove wavetable',
+                onPressed: () => onChanged(null),
+              ),
+            PlinkyButton(
+              onPressed: () async {
+                final allWavetables = {
+                  ...wavetablesState.userWavetables,
+                  ...wavetablesState.publicWavetables,
+                }.toList();
+                final selectedId = await showDialog<String>(
+                  context: context,
+                  builder: (context) => WavetablePickerDialog(
+                    wavetables: allWavetables,
+                  ),
+                );
+                if (selectedId != null) {
+                  onChanged(selectedId);
+                }
+              },
+              icon: Icons.waves,
+              label: 'Choose',
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
