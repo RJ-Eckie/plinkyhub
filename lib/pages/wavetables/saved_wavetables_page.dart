@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/pages/wavetables/upload_wavetable_tab.dart';
-import 'package:plinkyhub/pages/wavetables/wavetable_list.dart';
+import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
-import 'package:plinkyhub/widgets/authentication_button.dart';
-import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/searchable_item_list.dart';
+import 'package:plinkyhub/widgets/sign_in_prompt.dart';
 
 class SavedWavetablesPage extends ConsumerStatefulWidget {
   const SavedWavetablesPage({super.key});
@@ -68,64 +68,44 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
             controller: _tabController,
             children: [
               if (isSignedIn)
-                WavetableList(
-                  wavetables: savedWavetablesState.userWavetables,
+                SearchableItemList(
+                  items: savedWavetablesState.userWavetables,
                   isLoading: savedWavetablesState.isLoading,
                   isOwned: true,
                   onRefresh: () => ref
                       .read(savedWavetablesProvider.notifier)
                       .fetchUserWavetables(),
+                  itemBuilder: (wavetable) => WavetableCard(
+                    wavetable: wavetable,
+                    isOwned: true,
+                  ),
+                  itemLabel: 'wavetable',
                 )
               else
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.cloud_off, size: 64),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Sign in to upload and manage your '
-                        'wavetables',
-                      ),
-                      const SizedBox(height: 16),
-                      PlinkyButton(
-                        onPressed: () => showSignInDialog(context),
-                        icon: Icons.login,
-                        label: 'Sign in',
-                      ),
-                    ],
-                  ),
+                const SignInPrompt(
+                  message:
+                      'Sign in to upload and manage your wavetables',
                 ),
-              WavetableList(
-                wavetables: savedWavetablesState.publicWavetables,
+              SearchableItemList(
+                items: savedWavetablesState.publicWavetables,
                 isLoading: savedWavetablesState.isLoading,
                 isOwned: false,
                 onRefresh: () => ref
                     .read(savedWavetablesProvider.notifier)
                     .fetchPublicWavetables(),
+                itemBuilder: (wavetable) => WavetableCard(
+                  wavetable: wavetable,
+                  isOwned: false,
+                ),
+                itemLabel: 'wavetable',
               ),
               if (isSignedIn)
                 UploadWavetableTab(
                   onUploaded: () => _tabController.animateTo(0),
                 )
               else
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.cloud_off, size: 64),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Sign in to create wavetables',
-                      ),
-                      const SizedBox(height: 16),
-                      PlinkyButton(
-                        onPressed: () => showSignInDialog(context),
-                        icon: Icons.login,
-                        label: 'Sign in',
-                      ),
-                    ],
-                  ),
+                const SignInPrompt(
+                  message: 'Sign in to create wavetables',
                 ),
             ],
           ),

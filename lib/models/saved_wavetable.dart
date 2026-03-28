@@ -1,10 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:plinkyhub/models/searchable.dart';
 
 part 'saved_wavetable.freezed.dart';
 part 'saved_wavetable.g.dart';
 
 @freezed
-abstract class SavedWavetable with _$SavedWavetable {
+abstract class SavedWavetable with _$SavedWavetable implements Searchable {
   const factory SavedWavetable({
     required String id,
     required String userId,
