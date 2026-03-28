@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'build/web/**'
 
 concurrency:
   group: build-web
@@ -35,14 +33,14 @@ jobs:
 
       - run: flutter build web --release
 
-      - name: Commit web build
+      - name: Deploy to web branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build/web/
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update web build"
-            git push
-          fi
+          cd build/web
+          git init
+          git checkout -b web
+          git add .
+          git commit -m "Update web build from ${GITHUB_SHA::7}"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git push --force origin web
