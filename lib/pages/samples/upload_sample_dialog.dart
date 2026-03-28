@@ -14,21 +14,24 @@ import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
-class UploadSampleDialog extends ConsumerStatefulWidget {
-  const UploadSampleDialog({super.key});
+class UploadSampleTab extends ConsumerStatefulWidget {
+  const UploadSampleTab({super.key});
 
   @override
-  ConsumerState<UploadSampleDialog> createState() =>
-      _UploadSampleDialogState();
+  ConsumerState<UploadSampleTab> createState() =>
+      _UploadSampleTabState();
 }
 
-class _UploadSampleDialogState
-    extends ConsumerState<UploadSampleDialog> {
+class _UploadSampleTabState
+    extends ConsumerState<UploadSampleTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isPublic = true;
   Uint8List? _wavBytes;
   String? _fileName;
+  Uint8List? _sampleUf2Bytes;
+  String? _sampleUf2FileName;
+  Uint8List? _presetsUf2Bytes;
   bool _isUploading = false;
   bool _isConverting = false;
   int _baseNote = 60;
@@ -44,6 +47,28 @@ class _UploadSampleDialogState
     _nameController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  void _resetForm() {
+    setState(() {
+      _nameController.clear();
+      _descriptionController.clear();
+      _isPublic = true;
+      _wavBytes = null;
+      _fileName = null;
+      _sampleUf2Bytes = null;
+      _sampleUf2FileName = null;
+      _presetsUf2Bytes = null;
+      _isUploading = false;
+      _isConverting = false;
+      _baseNote = 60;
+      _fineTune = 0;
+      _pitched = false;
+      _slicePoints = List.of(defaultSlicePoints);
+      _sliceNotes = List.of(defaultSliceNotes);
+      _pcmFrameCount = null;
+      _sampleTooLongWarning = null;
+    });
   }
 
   Future<void> _pickWavFile() async {
@@ -97,15 +122,82 @@ class _UploadSampleDialogState
     }
   }
 
-  Future<void> _pickUf2Files() async {
+  Future<void> _pickSampleUf2() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['uf2', 'UF2'],
       withData: true,
-      allowMultiple: true,
     );
 
-    if (result == null || result.files.isEmpty) {
+    if (result == null ||
+        result.files.single.bytes == null) {
+      return;
+    }
+
+    final file = result.files.single;
+    final upperName = file.name.toUpperCase();
+    if (!upperName.startsWith('SAMPLE') ||
+        !upperName.endsWith('.UF2')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please select a SAMPLEx.UF2 file '
+              '(e.g. SAMPLE0.UF2)',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _sampleUf2Bytes = file.bytes;
+      _sampleUf2FileName = file.name;
+    });
+
+    await _processUf2Files();
+  }
+
+  Future<void> _pickPresetsUf2() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['uf2', 'UF2'],
+      withData: true,
+    );
+
+    if (result == null ||
+        result.files.single.bytes == null) {
+      return;
+    }
+
+    final upperName =
+        result.files.single.name.toUpperCase();
+    if (upperName != 'PRESETS.UF2') {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please select a PRESETS.UF2 file',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _presetsUf2Bytes = result.files.single.bytes;
+    });
+
+    // Re-process if we already have a sample UF2 loaded.
+    if (_sampleUf2Bytes != null) {
+      await _processUf2Files();
+    }
+  }
+
+  Future<void> _processUf2Files() async {
+    if (_sampleUf2Bytes == null) {
       return;
     }
 
@@ -117,73 +209,54 @@ class _UploadSampleDialogState
     await Future<void>.delayed(Duration.zero);
 
     try {
-      // Separate sample UF2 and PRESETS.UF2 files.
-      PlatformFile? sampleFile;
-      PlatformFile? presetsFile;
-
-      for (final file in result.files) {
-        final upperName = file.name.toUpperCase();
-        if (upperName == 'PRESETS.UF2') {
-          presetsFile = file;
-        } else if (upperName.startsWith('SAMPLE') &&
-            upperName.endsWith('.UF2')) {
-          sampleFile = file;
-        }
-      }
-
-      if (sampleFile == null || sampleFile.bytes == null) {
+      final pcmBytes = uf2ToData(_sampleUf2Bytes!);
+      if (pcmBytes.isEmpty) {
         throw const FormatException(
-          'Please select a SAMPLEx.UF2 file (e.g. SAMPLE0.UF2).',
+          'The sample UF2 file contains no data.',
         );
       }
 
-      // Parse the sample UF2 to get raw PCM data.
-      final pcmBytes = uf2ToData(sampleFile.bytes!);
-      if (pcmBytes.isEmpty) {
-        throw const FormatException('The sample UF2 file contains no data.');
-      }
+      final slotIndex =
+          _parseSlotIndexFromFilename(_sampleUf2FileName!);
 
-      // Determine the sample slot index from the filename.
-      final slotIndex = _parseSlotIndexFromFilename(sampleFile.name);
-
-      // Convert PCM to WAV for storage.
       final wavBytes = plinkyPcmToWav(pcmBytes);
       final frameCount = pcmBytes.length ~/ 2;
 
       String? warning;
       if (pcmBytes.length > maxPcmBytes) {
-        final durationSeconds = pcmBytes.length ~/ 2 / plinkySampleRate;
-        const maxSeconds = maxPcmBytes ~/ 2 / plinkySampleRate;
+        final durationSeconds =
+            pcmBytes.length ~/ 2 / plinkySampleRate;
+        const maxSeconds =
+            maxPcmBytes ~/ 2 / plinkySampleRate;
         warning = 'Sample is too long (~${durationSeconds}s). '
             'Plinky supports up to ~${maxSeconds}s per slot '
             'at 31,250 Hz.';
       }
 
-      // Try to extract metadata from PRESETS.UF2 if provided.
       ParsedSampleInfo? sampleInfo;
-      if (presetsFile != null && presetsFile.bytes != null) {
+      if (_presetsUf2Bytes != null) {
         try {
-          final flashImage = uf2ToData(presetsFile.bytes!);
-          final sampleInfos = parseSampleInfosFromFlashImage(flashImage);
-          if (slotIndex >= 0 && slotIndex < sampleInfos.length) {
+          final flashImage = uf2ToData(_presetsUf2Bytes!);
+          final sampleInfos =
+              parseSampleInfosFromFlashImage(flashImage);
+          if (slotIndex >= 0 &&
+              slotIndex < sampleInfos.length) {
             sampleInfo = sampleInfos[slotIndex];
           }
         } on FormatException {
-          // Ignore PRESETS.UF2 parse errors; metadata is optional.
+          // Ignore PRESETS.UF2 parse errors.
         }
       }
 
-      final name = sampleFile.name;
-
       if (mounted) {
         setState(() {
-          _fileName = name;
+          _fileName = _sampleUf2FileName;
           _wavBytes = wavBytes;
           _pcmFrameCount = frameCount;
           _isConverting = false;
           _sampleTooLongWarning = warning;
           if (_nameController.text.isEmpty) {
-            _nameController.text = name;
+            _nameController.text = _sampleUf2FileName!;
           }
           if (sampleInfo != null) {
             _slicePoints = sampleInfo.slicePoints;
@@ -202,7 +275,6 @@ class _UploadSampleDialogState
     }
   }
 
-  /// Extracts the sample slot index (0-7) from a filename like "SAMPLE3.UF2".
   int _parseSlotIndexFromFilename(String filename) {
     final upperName = filename.toUpperCase();
     final match = RegExp(r'SAMPLE(\d)').firstMatch(upperName);
@@ -257,10 +329,10 @@ class _UploadSampleDialogState
           );
 
       if (mounted) {
-        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sample uploaded')),
         );
+        _resetForm();
       }
     } on Exception catch (e) {
       debugPrint('Failed to upload sample: $e');
@@ -275,43 +347,83 @@ class _UploadSampleDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Upload Sample'),
-      content: SizedBox(
-        width: 400,
-        child: SingleChildScrollView(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                'Upload a WAV file, or a SAMPLEx.UF2 file '
+                'from your Plinky. If you also provide the '
+                'PRESETS.UF2 file, slice points and other '
+                'metadata will be imported automatically.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              PlinkyButton(
+                onPressed: _isUploading || _isConverting
+                    ? null
+                    : _pickWavFile,
+                icon: Icons.audio_file,
+                label: _fileName != null &&
+                        _sampleUf2Bytes == null
+                    ? _fileName!
+                    : 'Choose WAV file',
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Or upload from Plinky UF2 files:',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: PlinkyButton(
-                      onPressed: _isUploading || _isConverting
-                          ? null
-                          : _pickWavFile,
-                      icon: Icons.audio_file,
-                      label: 'WAV file',
+                      onPressed:
+                          _isUploading || _isConverting
+                              ? null
+                              : _pickSampleUf2,
+                      icon: Icons.memory,
+                      label: _sampleUf2FileName ??
+                          'SAMPLEx.UF2',
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: PlinkyButton(
-                      onPressed: _isUploading || _isConverting
-                          ? null
-                          : _pickUf2Files,
-                      icon: Icons.memory,
-                      label: 'UF2 files',
+                      onPressed:
+                          _isUploading || _isConverting
+                              ? null
+                              : _pickPresetsUf2,
+                      icon: Icons.settings,
+                      label: 'PRESETS.UF2',
                     ),
                   ),
                 ],
               ),
-              if (_fileName != null) ...[
-                const SizedBox(height: 8),
+              if (_presetsUf2Bytes != null) ...[
+                const SizedBox(height: 4),
                 Text(
-                  _fileName!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis,
+                  'Metadata loaded from PRESETS.UF2',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary,
+                      ),
                 ),
               ],
               if (_isConverting) ...[
@@ -339,7 +451,8 @@ class _UploadSampleDialogState
                       .textTheme
                       .bodySmall
                       ?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                        color:
+                            Theme.of(context).colorScheme.error,
                       ),
                 ),
               ],
@@ -415,30 +528,23 @@ class _UploadSampleDialogState
                           .onSurfaceVariant,
                     ),
               ),
+              const SizedBox(height: 16),
+              PlinkyButton(
+                onPressed: _isUploading ||
+                        _wavBytes == null ||
+                        _sampleTooLongWarning != null
+                    ? null
+                    : _upload,
+                icon: _isUploading
+                    ? Icons.hourglass_empty
+                    : Icons.upload,
+                label:
+                    _isUploading ? 'Uploading...' : 'Upload',
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        PlinkyButton(
-          onPressed: _isUploading
-              ? null
-              : () => Navigator.of(context).pop(),
-          icon: Icons.close,
-          label: 'Cancel',
-        ),
-        PlinkyButton(
-          onPressed: _isUploading ||
-                  _wavBytes == null ||
-                  _sampleTooLongWarning != null
-              ? null
-              : _upload,
-          icon: _isUploading
-              ? Icons.hourglass_empty
-              : Icons.upload,
-          label: _isUploading ? 'Uploading...' : 'Upload',
-        ),
-      ],
     );
   }
 }

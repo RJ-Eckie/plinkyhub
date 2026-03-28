@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/models/sort_order.dart';
 import 'package:plinkyhub/pages/samples/sample_card.dart';
-import 'package:plinkyhub/pages/samples/upload_sample_dialog.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/sort_order_button.dart';
 
@@ -100,15 +99,6 @@ class _SampleListState extends ConsumerState<SampleList> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (widget.isOwned) ...[
-                    PlinkyButton(
-                      onPressed: () =>
-                          _showUploadDialog(context),
-                      icon: Icons.upload_file,
-                      label: 'Upload sample',
-                    ),
-                    const SizedBox(height: 8),
-                  ],
                   PlinkyButton(
                     onPressed: widget.onRefresh,
                     icon: Icons.refresh,
@@ -162,16 +152,6 @@ class _SampleListState extends ConsumerState<SampleList> {
                           onChanged: (order) =>
                               setState(() => _sortOrder = order),
                         ),
-                        if (widget.isOwned)
-                          IconButton(
-                            icon: const Icon(
-                              Icons.upload_file,
-                              size: 20,
-                            ),
-                            onPressed: () =>
-                                _showUploadDialog(context),
-                            tooltip: 'Upload sample',
-                          ),
                         IconButton(
                           icon:
                               const Icon(Icons.refresh, size: 20),
@@ -222,11 +202,4 @@ class _SampleListState extends ConsumerState<SampleList> {
     );
   }
 
-  void _showUploadDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const UploadSampleDialog(),
-    );
-  }
 }

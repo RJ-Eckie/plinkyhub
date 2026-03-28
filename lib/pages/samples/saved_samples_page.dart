@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/pages/samples/sample_list.dart';
+import 'package:plinkyhub/pages/samples/upload_sample_dialog.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
@@ -22,7 +23,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 2,
+      length: 3,
       vsync: this,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,6 +50,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
           tabs: const [
             Tab(text: 'My Samples'),
             Tab(text: 'Community Samples'),
+            Tab(text: 'Upload'),
           ],
         ),
         if (savedSamplesState.errorMessage != null)
@@ -82,7 +84,8 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                       const Icon(Icons.cloud_off, size: 64),
                       const SizedBox(height: 16),
                       const Text(
-                        'Sign in to upload and manage your samples',
+                        'Sign in to upload and manage your '
+                        'samples',
                       ),
                       const SizedBox(height: 16),
                       PlinkyButton(
@@ -102,6 +105,28 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                     .read(savedSamplesProvider.notifier)
                     .fetchPublicSamples(),
               ),
+              if (isSignedIn)
+                const UploadSampleTab()
+              else
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 64),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Sign in to upload samples',
+                      ),
+                      const SizedBox(height: 16),
+                      PlinkyButton(
+                        onPressed: () =>
+                            showSignInDialog(context),
+                        icon: Icons.login,
+                        label: 'Sign in',
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
