@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:plinkyhub/pages/about_page.dart';
 import 'package:plinkyhub/pages/editor/editor_page.dart';
 import 'package:plinkyhub/pages/packs/saved_packs_page.dart';
+import 'package:plinkyhub/pages/patterns/saved_patterns_page.dart';
 import 'package:plinkyhub/pages/presets/saved_presets_page.dart';
 import 'package:plinkyhub/pages/samples/saved_samples_page.dart';
 import 'package:plinkyhub/pages/user_profile_page.dart';
@@ -105,6 +106,7 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
     SavedPacksPage(),
     SavedSamplesPage(),
     SavedWavetablesPage(),
+    SavedPatternsPage(),
     UserProfilePage(),
     AboutPage(),
   ];
