@@ -31,8 +31,8 @@ class _PlayPadState extends State<PlayPad> {
     final arcColor = isActive
         ? primaryColor
         : _hovering
-            ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-            : theme.colorScheme.onSurface.withValues(alpha: 0.25);
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+        : theme.colorScheme.onSurface.withValues(alpha: 0.25);
     final iconColor = isActive
         ? primaryColor
         : theme.colorScheme.onSurface.withValues(alpha: 0.7);

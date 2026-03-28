@@ -37,8 +37,7 @@ int _scaleDegreeSemitones(int row, int scaleIndex) {
   // Row 0 is the top of the grid (highest pitch), row 7 is the bottom
   // (lowest pitch). Invert so that pressing higher rows gives higher notes.
   final degree = 7 - row;
-  final scale =
-      scaleIndex.clamp(0, plinkyScales.length - 1);
+  final scale = scaleIndex.clamp(0, plinkyScales.length - 1);
   final intervals = plinkyScales[scale];
   final octave = degree ~/ intervals.length;
   final step = degree % intervals.length;
@@ -62,7 +61,10 @@ int midiNoteForPad({
   const baseMidi = 48; // C3
   final colOffset = col * stride;
   final rowOffset = _scaleDegreeSemitones(row, scaleIndex);
-  return baseMidi + octaveOffset * 12 + colOffset + rowOffset +
+  return baseMidi +
+      octaveOffset * 12 +
+      colOffset +
+      rowOffset +
       pitchOffset.round();
 }
 

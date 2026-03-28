@@ -109,11 +109,13 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _supabase.storage.from('wavetables').uploadBinary(
-        wavetable.filePath,
-        uf2Bytes,
-        fileOptions: const FileOptions(upsert: true),
-      );
+      await _supabase.storage
+          .from('wavetables')
+          .uploadBinary(
+            wavetable.filePath,
+            uf2Bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
       final write = WavetableWrite(
         userId: wavetable.userId,
@@ -166,8 +168,9 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
   Future<void> deleteWavetable(String id) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final wavetable =
-          state.userWavetables.where((w) => w.id == id).firstOrNull;
+      final wavetable = state.userWavetables
+          .where((w) => w.id == id)
+          .firstOrNull;
       if (wavetable != null) {
         await _supabase.storage.from('wavetables').remove([
           wavetable.filePath,
@@ -207,10 +210,16 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       final delta = wavetable.isStarred ? -1 : 1;
       state = state.copyWith(
         userWavetables: _updateStarInList(
-          state.userWavetables, wavetable.id, !wavetable.isStarred, delta,
+          state.userWavetables,
+          wavetable.id,
+          !wavetable.isStarred,
+          delta,
         ),
         publicWavetables: _updateStarInList(
-          state.publicWavetables, wavetable.id, !wavetable.isStarred, delta,
+          state.publicWavetables,
+          wavetable.id,
+          !wavetable.isStarred,
+          delta,
         ),
       );
     } on Exception catch (error) {

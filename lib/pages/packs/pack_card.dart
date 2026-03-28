@@ -67,9 +67,8 @@ class PackCard extends ConsumerWidget {
                 StarButton(
                   isStarred: pack.isStarred,
                   starCount: pack.starCount,
-                  onToggle: () => ref
-                      .read(savedPacksProvider.notifier)
-                      .toggleStar(pack),
+                  onToggle: () =>
+                      ref.read(savedPacksProvider.notifier).toggleStar(pack),
                 ),
                 IconButton(
                   icon: const Icon(Icons.usb, size: 20),
@@ -82,22 +81,16 @@ class PackCard extends ConsumerWidget {
                     icon: const Icon(Icons.edit, size: 20),
                     tooltip: 'Edit pack',
                     onPressed: () {
-                      ref
-                          .read(savedPacksProvider.notifier)
-                          .startEditing(pack);
+                      ref.read(savedPacksProvider.notifier).startEditing(pack);
                       onEdit?.call();
                     },
                   ),
                   IconButton(
                     icon: Icon(
-                      pack.isPublic
-                          ? Icons.public
-                          : Icons.public_off,
+                      pack.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
-                    tooltip: pack.isPublic
-                        ? 'Make private'
-                        : 'Make public',
+                    tooltip: pack.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
                       ref
                           .read(savedPacksProvider.notifier)
@@ -108,11 +101,9 @@ class PackCard extends ConsumerWidget {
                     },
                   ),
                   IconButton(
-                    icon:
-                        const Icon(Icons.delete_outline, size: 20),
+                    icon: const Icon(Icons.delete_outline, size: 20),
                     tooltip: 'Delete pack',
-                    onPressed: () =>
-                        _confirmDelete(context, ref),
+                    onPressed: () => _confirmDelete(context, ref),
                   ),
                 ],
               ],
@@ -149,9 +140,7 @@ class PackCard extends ConsumerWidget {
           PlinkyButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ref
-                  .read(savedPacksProvider.notifier)
-                  .deletePack(pack.id);
+              ref.read(savedPacksProvider.notifier).deletePack(pack.id);
             },
             icon: Icons.delete,
             label: 'Delete',

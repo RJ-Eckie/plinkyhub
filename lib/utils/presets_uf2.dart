@@ -196,14 +196,17 @@ Uint8List buildSampleInfo({
 /// and packs pairs of 4-bit values into bytes.
 void _generateWaveform(ByteData info, Uint8List pcmData, int sampleLength) {
   const displayPoints = 2048;
-  final samplesPerWindow =
-      sampleLength > 0 ? sampleLength / displayPoints : 1.0;
+  final samplesPerWindow = sampleLength > 0
+      ? sampleLength / displayPoints
+      : 1.0;
   final pcmView = Int16List.view(pcmData.buffer);
 
   for (var point = 0; point < displayPoints; point++) {
     final windowStart = (point * samplesPerWindow).floor();
-    final windowEnd =
-        ((point + 1) * samplesPerWindow).floor().clamp(0, sampleLength);
+    final windowEnd = ((point + 1) * samplesPerWindow).floor().clamp(
+      0,
+      sampleLength,
+    );
 
     var peak = 0;
     for (var s = windowStart; s < windowEnd && s < pcmView.length; s++) {
@@ -280,8 +283,10 @@ ParsedSampleInfo? parseSampleInfo(Uint8List sampleInfoBytes) {
   const splitpointsOffset = 1024;
   final slicePoints = <double>[];
   for (var i = 0; i < 8; i++) {
-    final absolutePosition =
-        data.getInt32(splitpointsOffset + i * 4, Endian.little);
+    final absolutePosition = data.getInt32(
+      splitpointsOffset + i * 4,
+      Endian.little,
+    );
     slicePoints.add(
       sampleLength > 0 ? (absolutePosition / sampleLength).clamp(0.0, 1.0) : 0,
     );
@@ -322,8 +327,7 @@ List<ParsedSampleInfo?> parseSampleInfosFromFlashImage(Uint8List flashImage) {
       break;
     }
     final end = pageOffset + sampleInfoSize;
-    final sampleInfoBytes =
-        Uint8List.sublistView(flashImage, pageOffset, end);
+    final sampleInfoBytes = Uint8List.sublistView(flashImage, pageOffset, end);
     results[i] = parseSampleInfo(sampleInfoBytes);
   }
   return results;
@@ -346,8 +350,8 @@ List<Uint8List?> parsePresetsFromFlashImage(Uint8List flashImage) {
       pageOffset + presetSize,
     );
     // Skip pages that are entirely erased (0xFF) or zeroed.
-    final isEmpty = presetBytes.every((b) => b == 0xFF) ||
-        presetBytes.every((b) => b == 0);
+    final isEmpty =
+        presetBytes.every((b) => b == 0xFF) || presetBytes.every((b) => b == 0);
     if (!isEmpty) {
       results[i] = Uint8List.fromList(presetBytes);
     }
@@ -399,8 +403,13 @@ Uint8List generatePresetsUf2({
 
   // Page 40: Floating preset (copy of preset 0).
   final floatingPreset = presets[0] ?? Uint8List(presetSize);
-  _writePage(flashImage, presetCount + sampleCount, floatingPreset,
-      _floatingPresetItemId, seq++);
+  _writePage(
+    flashImage,
+    presetCount + sampleCount,
+    floatingPreset,
+    _floatingPresetItemId,
+    seq++,
+  );
 
   // Convert the flash image to UF2 format.
   return dataToUf2(flashImage, presetsBaseAddress);

@@ -28,8 +28,7 @@ class LoadPackTab extends ConsumerStatefulWidget {
   final VoidCallback? onLoaded;
 
   @override
-  ConsumerState<LoadPackTab> createState() =>
-      _LoadPackTabState();
+  ConsumerState<LoadPackTab> createState() => _LoadPackTabState();
 }
 
 class _LoadPackTabState extends ConsumerState<LoadPackTab> {
@@ -47,8 +46,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   final _packNameController = TextEditingController(
     text: '',
   );
-  final _packDescriptionController =
-      TextEditingController();
+  final _packDescriptionController = TextEditingController();
   bool _packIsPublic = true;
   final _presetNames = <int, TextEditingController>{};
   final _presetDescriptions = <int, TextEditingController>{};
@@ -133,8 +131,10 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     });
 
     try {
-      final presetsUf2Bytes =
-          await readFileFromDirectory(directory, 'PRESETS.UF2');
+      final presetsUf2Bytes = await readFileFromDirectory(
+        directory,
+        'PRESETS.UF2',
+      );
       if (presetsUf2Bytes == null) {
         throw Exception(
           'PRESETS.UF2 not found on the selected drive.',
@@ -146,24 +146,22 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       setState(() {
         _statusMessage = 'Parsing presets...';
       });
-      _presetDataList =
-          parsePresetsFromFlashImage(flashImage);
-      _sampleInfos =
-          parseSampleInfosFromFlashImage(flashImage);
+      _presetDataList = parsePresetsFromFlashImage(flashImage);
+      _sampleInfos = parseSampleInfosFromFlashImage(flashImage);
 
       _samplePcmData = {};
       for (var i = 0; i < sampleCount; i++) {
         setState(() {
           _statusMessage = 'Reading SAMPLE$i.UF2...';
         });
-        final sampleBytes =
-            await readFileFromDirectory(directory, 'SAMPLE$i.UF2');
-        if (sampleBytes != null &&
-            sampleBytes.isNotEmpty) {
+        final sampleBytes = await readFileFromDirectory(
+          directory,
+          'SAMPLE$i.UF2',
+        );
+        if (sampleBytes != null && sampleBytes.isNotEmpty) {
           try {
             final pcmData = uf2ToData(sampleBytes);
-            if (pcmData.isNotEmpty &&
-                !pcmData.every((byte) => byte == 0)) {
+            if (pcmData.isNotEmpty && !_isSilentPcm(pcmData)) {
               _samplePcmData[i] = pcmData;
             }
           } on FormatException {
@@ -175,8 +173,10 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       setState(() {
         _statusMessage = 'Reading WAVETABLE.UF2...';
       });
-      _wavetableUf2Bytes =
-          await readFileFromDirectory(directory, 'WAVETABLE.UF2');
+      _wavetableUf2Bytes = await readFileFromDirectory(
+        directory,
+        'WAVETABLE.UF2',
+      );
 
       // Build editable names from parsed data.
       _presetNames.clear();
@@ -189,13 +189,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           continue;
         }
         final preset = Preset(presetBytes.buffer);
-        final name = preset.name.isNotEmpty
-            ? preset.name
-            : 'Preset ${i + 1}';
-        _presetNames[i] =
-            TextEditingController(text: name);
-        _presetDescriptions[i] =
-            TextEditingController();
+        final name = preset.name.isNotEmpty ? preset.name : 'Preset ${i + 1}';
+        _presetNames[i] = TextEditingController(text: name);
+        _presetDescriptions[i] = TextEditingController();
         _presetCategories[i] = preset.category;
         _presetIsPublic[i] = true;
       }
@@ -207,13 +203,11 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         _sampleNames[slotIndex] = TextEditingController(
           text: 'Sample $slotIndex',
         );
-        _sampleDescriptions[slotIndex] =
-            TextEditingController();
+        _sampleDescriptions[slotIndex] = TextEditingController();
         _sampleIsPublic[slotIndex] = true;
       }
 
-      if (_wavetableUf2Bytes != null &&
-          _wavetableUf2Bytes!.isNotEmpty) {
+      if (_wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty) {
         _wavetableNameController.text = 'Wavetable';
         _wavetableIsPublic = true;
       }
@@ -233,8 +227,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   }
 
   Future<void> _uploadAll() async {
-    final userId =
-        ref.read(authenticationProvider).user?.id;
+    final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
     }
@@ -250,49 +243,39 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       for (final entry in _samplePcmData.entries) {
         final slotIndex = entry.key;
         final pcmBytes = entry.value;
-        final name = _sampleNames[slotIndex]?.text ??
-            'Sample $slotIndex';
-        final isPublic =
-            _sampleIsPublic[slotIndex] ?? false;
+        final name = _sampleNames[slotIndex]?.text ?? 'Sample $slotIndex';
+        final isPublic = _sampleIsPublic[slotIndex] ?? false;
 
         setState(() {
-          _statusMessage =
-              'Uploading sample "$name"...';
+          _statusMessage = 'Uploading sample "$name"...';
         });
 
         final wavBytes = plinkyPcmToWav(pcmBytes);
-        final timestamp =
-            DateTime.now().millisecondsSinceEpoch;
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
         final baseName = 'sample$slotIndex';
-        final wavPath =
-            '$userId/${baseName}_$timestamp.wav';
-        final pcmPath =
-            '$userId/${baseName}_$timestamp.pcm';
+        final wavPath = '$userId/${baseName}_$timestamp.wav';
+        final pcmPath = '$userId/${baseName}_$timestamp.pcm';
 
         await _supabase.storage
             .from('samples')
             .uploadBinary(
               wavPath,
               wavBytes,
-              fileOptions:
-                  const FileOptions(upsert: true),
+              fileOptions: const FileOptions(upsert: true),
             );
         await _supabase.storage
             .from('samples')
             .uploadBinary(
               pcmPath,
               pcmBytes,
-              fileOptions:
-                  const FileOptions(upsert: true),
+              fileOptions: const FileOptions(upsert: true),
             );
 
         final info = slotIndex < _sampleInfos.length
             ? _sampleInfos[slotIndex]
             : null;
 
-        final description =
-            _sampleDescriptions[slotIndex]?.text.trim() ??
-                '';
+        final description = _sampleDescriptions[slotIndex]?.text.trim() ?? '';
 
         final sampleWrite = SampleWrite(
           userId: userId,
@@ -301,10 +284,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           pcmFilePath: pcmPath,
           description: description,
           isPublic: isPublic,
-          slicePoints: info?.slicePoints ??
-              List.of(defaultSlicePoints),
-          sliceNotes: info?.sliceNotes ??
-              List.of(defaultSliceNotes),
+          slicePoints: info?.slicePoints ?? List.of(defaultSlicePoints),
+          sliceNotes: info?.sliceNotes ?? List.of(defaultSliceNotes),
           pitched: info?.pitched ?? false,
         );
 
@@ -313,36 +294,30 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             .insert(sampleWrite.toJson())
             .select('id')
             .single();
-        sampleIdBySlot[slotIndex] =
-            sampleResponse['id'] as String;
+        sampleIdBySlot[slotIndex] = sampleResponse['id'] as String;
       }
 
       // Upload wavetable.
       String? wavetableId;
-      if (_wavetableUf2Bytes != null &&
-          _wavetableUf2Bytes!.isNotEmpty) {
+      if (_wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty) {
         setState(() {
           _statusMessage = 'Uploading wavetable...';
         });
 
-        final timestamp =
-            DateTime.now().millisecondsSinceEpoch;
-        final wavetablePath =
-            '$userId/wavetable_$timestamp.uf2';
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final wavetablePath = '$userId/wavetable_$timestamp.uf2';
 
         await _supabase.storage
             .from('wavetables')
             .uploadBinary(
               wavetablePath,
               _wavetableUf2Bytes!,
-              fileOptions:
-                  const FileOptions(upsert: true),
+              fileOptions: const FileOptions(upsert: true),
             );
 
         final wavetableWrite = WavetableWrite(
           userId: userId,
-          name:
-              _wavetableNameController.text.trim(),
+          name: _wavetableNameController.text.trim(),
           filePath: wavetablePath,
           isPublic: _wavetableIsPublic,
         );
@@ -352,36 +327,28 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             .insert(wavetableWrite.toJson())
             .select('id')
             .single();
-        wavetableId =
-            wavetableResponse['id'] as String;
+        wavetableId = wavetableResponse['id'] as String;
       }
 
       // Upload presets.
       final presetIdBySlot = <int, String>{};
       for (final entry in _presetNames.entries) {
         final slotIndex = entry.key;
-        final presetBytes =
-            _presetDataList[slotIndex];
+        final presetBytes = _presetDataList[slotIndex];
         if (presetBytes == null) {
           continue;
         }
 
         final name = entry.value.text.trim();
-        final isPublic =
-            _presetIsPublic[slotIndex] ?? false;
+        final isPublic = _presetIsPublic[slotIndex] ?? false;
 
         setState(() {
-          _statusMessage =
-              'Uploading preset "$name"...';
+          _statusMessage = 'Uploading preset "$name"...';
         });
 
         final preset = Preset(presetBytes.buffer);
-        final description =
-            _presetDescriptions[slotIndex]?.text.trim() ??
-                '';
-        final category =
-            _presetCategories[slotIndex] ??
-                preset.category;
+        final description = _presetDescriptions[slotIndex]?.text.trim() ?? '';
+        final category = _presetCategories[slotIndex] ?? preset.category;
 
         final presetWrite = PresetWrite(
           userId: userId,
@@ -397,8 +364,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             .insert(presetWrite.toJson())
             .select('id')
             .single();
-        presetIdBySlot[slotIndex] =
-            presetResponse['id'] as String;
+        presetIdBySlot[slotIndex] = presetResponse['id'] as String;
       }
 
       // Create pack.
@@ -409,8 +375,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       final packWrite = PackWrite(
         userId: userId,
         name: _packNameController.text.trim(),
-        description:
-            _packDescriptionController.text.trim(),
+        description: _packDescriptionController.text.trim(),
         isPublic: _packIsPublic,
         wavetableId: wavetableId,
       );
@@ -429,18 +394,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         if (presetId != null) {
           final presetBytes = _presetDataList[i];
           if (presetBytes != null) {
-            final preset =
-                Preset(presetBytes.buffer);
+            final preset = Preset(presetBytes.buffer);
             if (preset.usesSample) {
-              for (final entry
-                  in sampleIdBySlot.entries) {
-                final raw =
-                    sampleSlotToRaw(entry.key);
-                final presetRaw = preset
-                    .parameterById('P_SAMPLE')
-                    ?.value;
-                if (presetRaw != null &&
-                    (presetRaw - raw).abs() < 2) {
+              for (final entry in sampleIdBySlot.entries) {
+                final raw = sampleSlotToRaw(entry.key);
+                final presetRaw = preset.parameterById('P_SAMPLE')?.value;
+                if (presetRaw != null && (presetRaw - raw).abs() < 2) {
                   sampleId = entry.value;
                   break;
                 }
@@ -462,14 +421,10 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       }
 
       if (slotRows.isNotEmpty) {
-        await _supabase
-            .from('pack_slots')
-            .insert(slotRows);
+        await _supabase.from('pack_slots').insert(slotRows);
       }
 
-      await ref
-          .read(savedPacksProvider.notifier)
-          .fetchUserPacks();
+      await ref.read(savedPacksProvider.notifier).fetchUserPacks();
 
       if (mounted) {
         setState(() {
@@ -503,46 +458,42 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           constraints: const BoxConstraints(maxWidth: 500),
           child: switch (_step) {
             _LoadStep.select => _LoadSelectStep(
-                onSelectDrive: _readFromPlinky,
-              ),
+              onSelectDrive: _readFromPlinky,
+            ),
             _LoadStep.review => _LoadReviewStep(
-                presetNames: _presetNames,
-                presetDescriptions: _presetDescriptions,
-                presetCategories: _presetCategories,
-                presetIsPublic: _presetIsPublic,
-                sampleNames: _sampleNames,
-                sampleDescriptions: _sampleDescriptions,
-                sampleIsPublic: _sampleIsPublic,
-                packNameController: _packNameController,
-                packDescriptionController:
-                    _packDescriptionController,
-                packIsPublic: _packIsPublic,
-                onPackIsPublicChanged: (value) =>
-                    setState(() => _packIsPublic = value),
-                wavetableNameController:
-                    _wavetableNameController,
-                wavetableIsPublic: _wavetableIsPublic,
-                onWavetableIsPublicChanged: (value) =>
-                    setState(
-                  () => _wavetableIsPublic = value,
-                ),
-                hasWavetable:
-                    _wavetableUf2Bytes != null &&
-                        _wavetableUf2Bytes!.isNotEmpty,
-                onBack: _reset,
-                onSave: _uploadAll,
-                onChanged: () => setState(() {}),
+              presetNames: _presetNames,
+              presetDescriptions: _presetDescriptions,
+              presetCategories: _presetCategories,
+              presetIsPublic: _presetIsPublic,
+              sampleNames: _sampleNames,
+              sampleDescriptions: _sampleDescriptions,
+              sampleIsPublic: _sampleIsPublic,
+              packNameController: _packNameController,
+              packDescriptionController: _packDescriptionController,
+              packIsPublic: _packIsPublic,
+              onPackIsPublicChanged: (value) =>
+                  setState(() => _packIsPublic = value),
+              wavetableNameController: _wavetableNameController,
+              wavetableIsPublic: _wavetableIsPublic,
+              onWavetableIsPublicChanged: (value) => setState(
+                () => _wavetableIsPublic = value,
               ),
+              hasWavetable:
+                  _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty,
+              onBack: _reset,
+              onSave: _uploadAll,
+              onChanged: () => setState(() {}),
+            ),
             _LoadStep.uploading => _LoadUploadingStep(
-                statusMessage: _statusMessage,
-              ),
+              statusMessage: _statusMessage,
+            ),
             _LoadStep.done => _LoadDoneStep(
-                onLoadAnother: _reset,
-              ),
+              onLoadAnother: _reset,
+            ),
             _LoadStep.error => _LoadErrorStep(
-                errorMessage: _errorMessage,
-                onTryAgain: _reset,
-              ),
+              errorMessage: _errorMessage,
+              onTryAgain: _reset,
+            ),
           },
         ),
       ),
@@ -565,14 +516,9 @@ class _LoadSelectStep extends StatelessWidget {
           'from a Plinky in Tunnel of Lights mode. '
           'This will create a new pack with all the '
           'data from the device.',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurfaceVariant,
-              ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 16),
         const Text('1. Turn off your Plinky'),
@@ -650,20 +596,14 @@ class _LoadReviewStep extends StatelessWidget {
           'on the Plinky.\n\n'
           'Review the names and sharing '
           'settings below, then save.',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurfaceVariant,
-              ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 16),
         Text(
           'Pack',
-          style:
-              Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         TextField(
@@ -691,22 +631,17 @@ class _LoadReviewStep extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Samples',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          for (final slotIndex
-              in sampleNames.keys.toList()..sort())
+          for (final slotIndex in sampleNames.keys.toList()..sort())
             _NamedItemRow(
               controller: sampleNames[slotIndex]!,
               label: 'Sample $slotIndex',
-              isPublic:
-                  sampleIsPublic[slotIndex] ?? false,
+              isPublic: sampleIsPublic[slotIndex] ?? false,
               onPublicToggled: () {
                 sampleIsPublic[slotIndex] =
-                    !(sampleIsPublic[slotIndex] ??
-                        false);
+                    !(sampleIsPublic[slotIndex] ?? false);
                 onChanged();
               },
               onEdit: () => _showSampleEditDialog(
@@ -719,17 +654,14 @@ class _LoadReviewStep extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Wavetable',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           _NamedItemRow(
             controller: wavetableNameController,
             label: 'Wavetable name',
             isPublic: wavetableIsPublic,
-            onPublicToggled: () =>
-                onWavetableIsPublicChanged(
+            onPublicToggled: () => onWavetableIsPublicChanged(
               !wavetableIsPublic,
             ),
           ),
@@ -738,25 +670,17 @@ class _LoadReviewStep extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Presets',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          for (final slotIndex
-              in presetNames.keys.toList()..sort())
+          for (final slotIndex in presetNames.keys.toList()..sort())
             _NamedItemRow(
-              controller:
-                  presetNames[slotIndex]!,
-              label:
-                  'Preset ${slotIndex + 1}',
-              isPublic:
-                  presetIsPublic[slotIndex] ??
-                      false,
+              controller: presetNames[slotIndex]!,
+              label: 'Preset ${slotIndex + 1}',
+              isPublic: presetIsPublic[slotIndex] ?? false,
               onPublicToggled: () {
                 presetIsPublic[slotIndex] =
-                    !(presetIsPublic[slotIndex] ??
-                        false);
+                    !(presetIsPublic[slotIndex] ?? false);
                 onChanged();
               },
               onEdit: () => _showPresetEditDialog(
@@ -797,8 +721,7 @@ class _LoadReviewStep extends StatelessWidget {
       context: context,
       builder: (context) => _SampleEditDialog(
         nameController: sampleNames[slotIndex]!,
-        descriptionController:
-            sampleDescriptions[slotIndex]!,
+        descriptionController: sampleDescriptions[slotIndex]!,
         isPublic: sampleIsPublic[slotIndex] ?? true,
         onIsPublicChanged: (value) {
           sampleIsPublic[slotIndex] = value;
@@ -816,10 +739,8 @@ class _LoadReviewStep extends StatelessWidget {
       context: context,
       builder: (context) => _PresetEditDialog(
         nameController: presetNames[slotIndex]!,
-        descriptionController:
-            presetDescriptions[slotIndex]!,
-        category: presetCategories[slotIndex] ??
-            PresetCategory.none,
+        descriptionController: presetDescriptions[slotIndex]!,
+        category: presetCategories[slotIndex] ?? PresetCategory.none,
         onCategoryChanged: (value) {
           presetCategories[slotIndex] = value;
           onChanged();
@@ -870,9 +791,7 @@ class _NamedItemRow extends StatelessWidget {
             message: 'Share with community',
             child: IconButton(
               icon: Icon(
-                isPublic
-                    ? Icons.public
-                    : Icons.public_off,
+                isPublic ? Icons.public : Icons.public_off,
               ),
               onPressed: onPublicToggled,
             ),
@@ -949,8 +868,7 @@ class _SampleEditDialog extends StatelessWidget {
       ),
       actions: [
         PlinkyButton(
-          onPressed: () =>
-              Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           icon: Icons.check,
           label: 'Done',
         ),
@@ -1005,8 +923,7 @@ class _PresetEditDialog extends StatelessWidget {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<
-                    PresetCategory>(
+                DropdownButtonFormField<PresetCategory>(
                   initialValue: currentCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category',
@@ -1014,13 +931,10 @@ class _PresetEditDialog extends StatelessWidget {
                   ),
                   items: PresetCategory.values
                       .map(
-                        (category) =>
-                            DropdownMenuItem(
+                        (category) => DropdownMenuItem(
                           value: category,
                           child: Text(
-                            category.label.isEmpty
-                                ? 'None'
-                                : category.label,
+                            category.label.isEmpty ? 'None' : category.label,
                           ),
                         ),
                       )
@@ -1051,8 +965,7 @@ class _PresetEditDialog extends StatelessWidget {
       ),
       actions: [
         PlinkyButton(
-          onPressed: () =>
-              Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           icon: Icons.check,
           label: 'Done',
         ),

@@ -22,15 +22,12 @@ class SamplePickerDialog extends StatelessWidget {
                   final sample = samples[index];
                   return ListTile(
                     title: Text(
-                      sample.name.isEmpty
-                          ? '(unnamed)'
-                          : sample.name,
+                      sample.name.isEmpty ? '(unnamed)' : sample.name,
                     ),
                     subtitle: sample.description.isNotEmpty
                         ? Text(sample.description)
                         : null,
-                    onTap: () =>
-                        Navigator.of(context).pop(sample.id),
+                    onTap: () => Navigator.of(context).pop(sample.id),
                   );
                 },
               ),

@@ -14,9 +14,8 @@ class PresetStarButton extends ConsumerWidget {
     return StarButton(
       isStarred: preset.isStarred,
       starCount: preset.starCount,
-      onToggle: () => ref
-          .read(savedPresetsProvider.notifier)
-          .toggleStar(preset),
+      onToggle: () =>
+          ref.read(savedPresetsProvider.notifier).toggleStar(preset),
     );
   }
 }

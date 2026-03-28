@@ -134,9 +134,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     String? description,
     String? sampleId,
   }) async {
-    final existing = state.userPresets
-        .where((p) => p.id == id)
-        .firstOrNull;
+    final existing = state.userPresets.where((p) => p.id == id).firstOrNull;
     if (existing == null) {
       return;
     }
@@ -274,8 +272,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     final bytes = base64Decode(savedPreset.presetData);
     final userId = ref.read(authenticationProvider).user?.id;
     // Only allow overwriting if the user owns the preset.
-    final sourceId =
-        savedPreset.userId == userId ? savedPreset.id : null;
+    final sourceId = savedPreset.userId == userId ? savedPreset.id : null;
     ref
         .read(plinkyProvider.notifier)
         .loadPresetFromBytes(Uint8List.fromList(bytes), sourceId: sourceId);

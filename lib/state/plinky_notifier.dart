@@ -74,8 +74,7 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       _dataSignal = Completer<void>();
       await _dataSignal!.future.timeout(
         const Duration(seconds: 10),
-        onTimeout: () =>
-            throw TimeoutException('No response from Plinky'),
+        onTimeout: () => throw TimeoutException('No response from Plinky'),
       );
     }
     return _receivedData.removeAt(0);

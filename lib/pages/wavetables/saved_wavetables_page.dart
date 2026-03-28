@@ -89,8 +89,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                       ),
                       const SizedBox(height: 16),
                       PlinkyButton(
-                        onPressed: () =>
-                            showSignInDialog(context),
+                        onPressed: () => showSignInDialog(context),
                         icon: Icons.login,
                         label: 'Sign in',
                       ),
@@ -107,8 +106,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
               ),
               if (isSignedIn)
                 UploadWavetableTab(
-                  onUploaded: () =>
-                      _tabController.animateTo(0),
+                  onUploaded: () => _tabController.animateTo(0),
                 )
               else
                 Center(
@@ -122,8 +120,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                       ),
                       const SizedBox(height: 16),
                       PlinkyButton(
-                        onPressed: () =>
-                            showSignInDialog(context),
+                        onPressed: () => showSignInDialog(context),
                         icon: Icons.login,
                         label: 'Sign in',
                       ),

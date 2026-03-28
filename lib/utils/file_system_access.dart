@@ -24,8 +24,7 @@ extension type FileSystemDirectoryHandle._(JSObject _) implements JSObject {
   Future<FileSystemFileHandle> getFileHandle(
     String name, {
     bool create = false,
-  }) =>
-      _getFileHandle(name, GetFileHandleOptions(create: create)).toDart;
+  }) => _getFileHandle(name, GetFileHandleOptions(create: create)).toDart;
 }
 
 /// A handle to a file system file.
@@ -47,8 +46,7 @@ extension type FileSystemWritableFileStream._(JSObject _) implements JSObject {
   @JS('write')
   external JSPromise<JSAny?> _write(JSAny data);
 
-  Future<void> write(Uint8List data) =>
-      _write(data.toJS).toDart;
+  Future<void> write(Uint8List data) => _write(data.toJS).toDart;
 
   @JS('close')
   external JSPromise<JSAny?> _close();

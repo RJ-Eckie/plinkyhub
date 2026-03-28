@@ -67,8 +67,7 @@ class PresetCard extends ConsumerWidget {
                     ref
                         .read(savedPresetsProvider.notifier)
                         .loadPresetIntoEditor(preset);
-                    ref.read(selectedPageProvider.notifier).selected =
-                        1;
+                    ref.read(selectedPageProvider.notifier).selected = 1;
                   },
                   icon: Icons.download,
                   label: 'Load into editor',
@@ -79,14 +78,10 @@ class PresetCard extends ConsumerWidget {
                 if (isOwned) ...[
                   IconButton(
                     icon: Icon(
-                      preset.isPublic
-                          ? Icons.public
-                          : Icons.public_off,
+                      preset.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
-                    tooltip: preset.isPublic
-                        ? 'Make private'
-                        : 'Make public',
+                    tooltip: preset.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
                       ref
                           .read(savedPresetsProvider.notifier)
@@ -97,11 +92,9 @@ class PresetCard extends ConsumerWidget {
                     },
                   ),
                   IconButton(
-                    icon:
-                        const Icon(Icons.delete_outline, size: 20),
+                    icon: const Icon(Icons.delete_outline, size: 20),
                     tooltip: 'Delete preset',
-                    onPressed: () =>
-                        _confirmDelete(context, ref),
+                    onPressed: () => _confirmDelete(context, ref),
                   ),
                 ],
               ],
@@ -130,9 +123,7 @@ class PresetCard extends ConsumerWidget {
           PlinkyButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ref
-                  .read(savedPresetsProvider.notifier)
-                  .deletePreset(preset.id);
+              ref.read(savedPresetsProvider.notifier).deletePreset(preset.id);
             },
             icon: Icons.delete,
             label: 'Delete',

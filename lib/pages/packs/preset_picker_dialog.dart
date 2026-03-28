@@ -22,15 +22,12 @@ class PresetPickerDialog extends StatelessWidget {
                   final preset = presets[index];
                   return ListTile(
                     title: Text(
-                      preset.name.isEmpty
-                          ? '(unnamed)'
-                          : preset.name,
+                      preset.name.isEmpty ? '(unnamed)' : preset.name,
                     ),
                     subtitle: preset.category.isNotEmpty
                         ? Text(preset.category)
                         : null,
-                    onTap: () =>
-                        Navigator.of(context).pop(preset.id),
+                    onTap: () => Navigator.of(context).pop(preset.id),
                   );
                 },
               ),

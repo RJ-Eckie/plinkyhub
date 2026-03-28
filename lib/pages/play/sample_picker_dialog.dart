@@ -10,12 +10,10 @@ class SamplePickerDialog extends ConsumerStatefulWidget {
   const SamplePickerDialog({super.key});
 
   @override
-  ConsumerState<SamplePickerDialog> createState() =>
-      _SamplePickerDialogState();
+  ConsumerState<SamplePickerDialog> createState() => _SamplePickerDialogState();
 }
 
-class _SamplePickerDialogState
-    extends ConsumerState<SamplePickerDialog> {
+class _SamplePickerDialogState extends ConsumerState<SamplePickerDialog> {
   bool _loading = false;
 
   Future<void> _pickFile() async {
@@ -27,7 +25,9 @@ class _SamplePickerDialogState
 
     if (result != null && result.files.single.bytes != null) {
       setState(() => _loading = true);
-      await ref.read(playProvider.notifier).loadSample(
+      await ref
+          .read(playProvider.notifier)
+          .loadSample(
             result.files.single.name,
             result.files.single.bytes!,
           );
@@ -45,7 +45,9 @@ class _SamplePickerDialogState
           .read(savedSamplesProvider.notifier)
           .downloadWav(sample.filePath);
       debugPrint('Downloaded ${bytes.length} bytes, loading into player...');
-      await ref.read(playProvider.notifier).loadSample(
+      await ref
+          .read(playProvider.notifier)
+          .loadSample(
             sample.name,
             bytes,
             baseMidi: sample.baseNote,
@@ -109,9 +111,7 @@ class _SamplePickerDialogState
                     return ListTile(
                       leading: const Icon(Icons.audio_file),
                       title: Text(
-                        sample.name.isEmpty
-                            ? '(unnamed)'
-                            : sample.name,
+                        sample.name.isEmpty ? '(unnamed)' : sample.name,
                       ),
                       dense: true,
                       onTap: () => _loadSaved(sample),

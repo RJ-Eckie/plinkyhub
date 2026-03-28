@@ -12,7 +12,6 @@ final savedPacksProvider =
       SavedPacksNotifier.new,
     );
 
-
 class SavedPacksNotifier extends Notifier<SavedPacksState> {
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -272,10 +271,16 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       final delta = pack.isStarred ? -1 : 1;
       state = state.copyWith(
         userPacks: _updateStarInList(
-          state.userPacks, pack.id, !pack.isStarred, delta,
+          state.userPacks,
+          pack.id,
+          !pack.isStarred,
+          delta,
         ),
         publicPacks: _updateStarInList(
-          state.publicPacks, pack.id, !pack.isStarred, delta,
+          state.publicPacks,
+          pack.id,
+          !pack.isStarred,
+          delta,
         ),
       );
     } on Exception catch (error) {

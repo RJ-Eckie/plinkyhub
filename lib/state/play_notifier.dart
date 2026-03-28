@@ -164,13 +164,11 @@ class PlayNotifier extends Notifier<PlayState> {
     final sliceIndex = row.clamp(0, 7);
     final slicePoints = state.slicePoints;
     final startFraction = slicePoints[sliceIndex];
-    final endFraction =
-        sliceIndex < 7 ? slicePoints[sliceIndex + 1] : 1.0;
+    final endFraction = sliceIndex < 7 ? slicePoints[sliceIndex + 1] : 1.0;
 
     final totalDuration = soloud.getLength(source);
     final startTime = totalDuration * startFraction;
-    final sliceDuration =
-        totalDuration * (endFraction - startFraction);
+    final sliceDuration = totalDuration * (endFraction - startFraction);
 
     // The slice note is the intended pitch for this slice.
     // On Plinky, slice notes are in Plinky note format (48 = C4).

@@ -20,12 +20,10 @@ class UploadSampleTab extends ConsumerStatefulWidget {
   final VoidCallback? onUploaded;
 
   @override
-  ConsumerState<UploadSampleTab> createState() =>
-      _UploadSampleTabState();
+  ConsumerState<UploadSampleTab> createState() => _UploadSampleTabState();
 }
 
-class _UploadSampleTabState
-    extends ConsumerState<UploadSampleTab> {
+class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isPublic = true;
@@ -101,11 +99,10 @@ class _UploadSampleTabState
         final pcm = wavToPlinkyPcm(bytes);
         frameCount = pcm.length ~/ 2;
         if (pcm.length > maxPcmBytes) {
-          final durationSeconds =
-              pcm.length ~/ 2 / plinkySampleRate;
-          const maxSeconds =
-              maxPcmBytes ~/ 2 / plinkySampleRate;
-          warning = 'Sample is too long (~${durationSeconds}s). '
+          final durationSeconds = pcm.length ~/ 2 / plinkySampleRate;
+          const maxSeconds = maxPcmBytes ~/ 2 / plinkySampleRate;
+          warning =
+              'Sample is too long (~${durationSeconds}s). '
               'Plinky supports up to ~${maxSeconds}s per slot '
               'at 31,250 Hz.';
         }
@@ -131,15 +128,13 @@ class _UploadSampleTabState
       withData: true,
     );
 
-    if (result == null ||
-        result.files.single.bytes == null) {
+    if (result == null || result.files.single.bytes == null) {
       return;
     }
 
     final file = result.files.single;
     final upperName = file.name.toUpperCase();
-    if (!upperName.startsWith('SAMPLE') ||
-        !upperName.endsWith('.UF2')) {
+    if (!upperName.startsWith('SAMPLE') || !upperName.endsWith('.UF2')) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -168,13 +163,11 @@ class _UploadSampleTabState
       withData: true,
     );
 
-    if (result == null ||
-        result.files.single.bytes == null) {
+    if (result == null || result.files.single.bytes == null) {
       return;
     }
 
-    final upperName =
-        result.files.single.name.toUpperCase();
+    final upperName = result.files.single.name.toUpperCase();
     if (upperName != 'PRESETS.UF2') {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -218,19 +211,17 @@ class _UploadSampleTabState
         );
       }
 
-      final slotIndex =
-          _parseSlotIndexFromFilename(_sampleUf2FileName!);
+      final slotIndex = _parseSlotIndexFromFilename(_sampleUf2FileName!);
 
       final wavBytes = plinkyPcmToWav(pcmBytes);
       final frameCount = pcmBytes.length ~/ 2;
 
       String? warning;
       if (pcmBytes.length > maxPcmBytes) {
-        final durationSeconds =
-            pcmBytes.length ~/ 2 / plinkySampleRate;
-        const maxSeconds =
-            maxPcmBytes ~/ 2 / plinkySampleRate;
-        warning = 'Sample is too long (~${durationSeconds}s). '
+        final durationSeconds = pcmBytes.length ~/ 2 / plinkySampleRate;
+        const maxSeconds = maxPcmBytes ~/ 2 / plinkySampleRate;
+        warning =
+            'Sample is too long (~${durationSeconds}s). '
             'Plinky supports up to ~${maxSeconds}s per slot '
             'at 31,250 Hz.';
       }
@@ -239,10 +230,8 @@ class _UploadSampleTabState
       if (_presetsUf2Bytes != null) {
         try {
           final flashImage = uf2ToData(_presetsUf2Bytes!);
-          final sampleInfos =
-              parseSampleInfosFromFlashImage(flashImage);
-          if (slotIndex >= 0 &&
-              slotIndex < sampleInfos.length) {
+          final sampleInfos = parseSampleInfosFromFlashImage(flashImage);
+          if (slotIndex >= 0 && slotIndex < sampleInfos.length) {
             sampleInfo = sampleInfos[slotIndex];
           }
         } on FormatException {
@@ -288,9 +277,7 @@ class _UploadSampleTabState
 
   Future<void> _upload() async {
     final userId = ref.read(authenticationProvider).user?.id;
-    if (_wavBytes == null ||
-        _fileName == null ||
-        userId == null) {
+    if (_wavBytes == null || _fileName == null || userId == null) {
       return;
     }
 
@@ -298,10 +285,8 @@ class _UploadSampleTabState
 
     try {
       final pcmBytes = wavToPlinkyPcm(_wavBytes!);
-      final baseName =
-          _fileName!.substring(0, _fileName!.lastIndexOf('.'));
-      final timestamp =
-          DateTime.now().millisecondsSinceEpoch;
+      final baseName = _fileName!.substring(0, _fileName!.lastIndexOf('.'));
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final wavStorageName = '${baseName}_$timestamp.wav';
       final pcmStorageName = '${baseName}_$timestamp.pcm';
 
@@ -363,23 +348,15 @@ class _UploadSampleTabState
                 'from your Plinky. If you also provide the '
                 'PRESETS.UF2 file, slice points and other '
                 'metadata will be imported automatically.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
-                    ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               PlinkyButton(
-                onPressed: _isUploading || _isConverting
-                    ? null
-                    : _pickWavFile,
+                onPressed: _isUploading || _isConverting ? null : _pickWavFile,
                 icon: Icons.audio_file,
-                label: _fileName != null &&
-                        _sampleUf2Bytes == null
+                label: _fileName != null && _sampleUf2Bytes == null
                     ? _fileName!
                     : 'Choose WAV file',
               ),
@@ -393,22 +370,19 @@ class _UploadSampleTabState
                 children: [
                   Expanded(
                     child: PlinkyButton(
-                      onPressed:
-                          _isUploading || _isConverting
-                              ? null
-                              : _pickSampleUf2,
+                      onPressed: _isUploading || _isConverting
+                          ? null
+                          : _pickSampleUf2,
                       icon: Icons.memory,
-                      label: _sampleUf2FileName ??
-                          'SAMPLEx.UF2',
+                      label: _sampleUf2FileName ?? 'SAMPLEx.UF2',
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: PlinkyButton(
-                      onPressed:
-                          _isUploading || _isConverting
-                              ? null
-                              : _pickPresetsUf2,
+                      onPressed: _isUploading || _isConverting
+                          ? null
+                          : _pickPresetsUf2,
                       icon: Icons.settings,
                       label: 'PRESETS.UF2',
                     ),
@@ -419,14 +393,9 @@ class _UploadSampleTabState
                 const SizedBox(height: 4),
                 Text(
                   'Metadata loaded from PRESETS.UF2',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary,
-                      ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ],
               if (_isConverting) ...[
@@ -450,13 +419,9 @@ class _UploadSampleTabState
                 const SizedBox(height: 8),
                 Text(
                   _sampleTooLongWarning!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.error,
-                      ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ],
               const SizedBox(height: 16),
@@ -480,8 +445,7 @@ class _UploadSampleTabState
               SampleModeSelector(
                 pitched: _pitched,
                 enabled: !_isUploading,
-                onChanged: (value) =>
-                    setState(() => _pitched = value),
+                onChanged: (value) => setState(() => _pitched = value),
               ),
               const SizedBox(height: 16),
               if (!_pitched)
@@ -500,8 +464,7 @@ class _UploadSampleTabState
                 wavBytes: _wavBytes,
                 pcmFrameCount: _pcmFrameCount,
                 enabled: !_isUploading,
-                onChanged: (points) =>
-                    setState(() => _slicePoints = points),
+                onChanged: (points) => setState(() => _slicePoints = points),
                 pitched: _pitched,
                 sliceNotes: _sliceNotes,
                 onSliceNotesChanged: (notes) =>
@@ -513,8 +476,7 @@ class _UploadSampleTabState
                 value: _isPublic,
                 onChanged: _isUploading
                     ? null
-                    : (value) =>
-                        setState(() => _isPublic = value),
+                    : (value) => setState(() => _isPublic = value),
               ),
               const SizedBox(height: 8),
               Text(
@@ -522,27 +484,20 @@ class _UploadSampleTabState
                 'sample or have the right to use and distribute '
                 'it (e.g. under a Creative Commons licence or '
                 'similar terms).',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
-                    ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               PlinkyButton(
-                onPressed: _isUploading ||
+                onPressed:
+                    _isUploading ||
                         _wavBytes == null ||
                         _sampleTooLongWarning != null
                     ? null
                     : _upload,
-                icon: _isUploading
-                    ? Icons.hourglass_empty
-                    : Icons.upload,
-                label:
-                    _isUploading ? 'Uploading...' : 'Upload',
+                icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
+                label: _isUploading ? 'Uploading...' : 'Upload',
               ),
             ],
           ),

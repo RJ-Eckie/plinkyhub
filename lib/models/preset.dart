@@ -121,9 +121,7 @@ class Preset {
       return 25;
     }
     final width = 1024 / options.length;
-    return (scaleParameter.value / width)
-        .floor()
-        .clamp(0, options.length - 1);
+    return (scaleParameter.value / width).floor().clamp(0, options.length - 1);
   }
 
   /// Stride in semitones between columns (default 7 = perfect fifth).

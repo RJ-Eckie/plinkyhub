@@ -25,12 +25,10 @@ class SaveToPlinkyDialog extends ConsumerStatefulWidget {
   final SavedPack pack;
 
   @override
-  ConsumerState<SaveToPlinkyDialog> createState() =>
-      _SaveToPlinkyDialogState();
+  ConsumerState<SaveToPlinkyDialog> createState() => _SaveToPlinkyDialogState();
 }
 
-class _SaveToPlinkyDialogState
-    extends ConsumerState<SaveToPlinkyDialog> {
+class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
   _DialogStep _step = _DialogStep.instructions;
   String _statusMessage = '';
   String? _errorMessage;
@@ -146,11 +144,13 @@ class _SaveToPlinkyDialogState
 
       samplePcmData[slotIndex] = pcmBytes;
 
-      final slicePoints = (metadata['slice_points'] as List?)
+      final slicePoints =
+          (metadata['slice_points'] as List?)
               ?.map((value) => (value as num).toDouble())
               .toList() ??
           List.of(defaultSlicePoints);
-      final sliceNotes = (metadata['slice_notes'] as List?)
+      final sliceNotes =
+          (metadata['slice_notes'] as List?)
               ?.map((value) => (value as num).toInt())
               .toList() ??
           List.of(defaultSliceNotes);
@@ -209,8 +209,7 @@ class _SaveToPlinkyDialogState
         _statusMessage = 'Writing SAMPLE$slotIndex.UF2...';
       });
 
-      final pcmBytes =
-          samplePcmData[slotIndex] ?? Uint8List(0);
+      final pcmBytes = samplePcmData[slotIndex] ?? Uint8List(0);
       final sampleUf2Bytes = sampleToUf2(
         pcmBytes,
         slotIndex: slotIndex,
@@ -269,37 +268,36 @@ class _SaveToPlinkyDialogState
       content: SizedBox(
         width: 400,
         child: switch (_step) {
-          _DialogStep.instructions =>
-            const TunnelOfLightsInstructions(itemType: 'pack'),
-          _DialogStep.progress =>
-            SaveProgressView(statusMessage: _statusMessage),
-          _DialogStep.done =>
-            const SaveDoneView(itemType: 'pack'),
-          _DialogStep.error =>
-            SaveErrorView(errorMessage: _errorMessage),
+          _DialogStep.instructions => const TunnelOfLightsInstructions(
+            itemType: 'pack',
+          ),
+          _DialogStep.progress => SaveProgressView(
+            statusMessage: _statusMessage,
+          ),
+          _DialogStep.done => const SaveDoneView(itemType: 'pack'),
+          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
       ),
       actions: switch (_step) {
         _DialogStep.instructions => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Cancel',
-            ),
-            PlinkyButton(
-              onPressed: _startSave,
-              icon: Icons.folder_open,
-              label: 'Select Plinky drive',
-            ),
-          ],
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Cancel',
+          ),
+          PlinkyButton(
+            onPressed: _startSave,
+            icon: Icons.folder_open,
+            label: 'Select Plinky drive',
+          ),
+        ],
         _DialogStep.progress => [],
         _DialogStep.done || _DialogStep.error => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Close',
-            ),
-          ],
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Close',
+          ),
+        ],
       },
     );
   }
-
 }

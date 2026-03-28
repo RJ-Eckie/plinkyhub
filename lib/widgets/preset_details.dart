@@ -231,8 +231,7 @@ class _SaveToCloudButton extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
-          final samples =
-              ref.read(savedSamplesProvider).userSamples;
+          final samples = ref.read(savedSamplesProvider).userSamples;
           return AlertDialog(
             title: Text(
               'Save "${preset.name.isEmpty ? '(unnamed)' : preset.name}"'
@@ -264,9 +263,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                       return DropdownMenuItem<String?>(
                         value: sample.id,
                         child: Text(
-                          sample.name.isEmpty
-                              ? '(unnamed)'
-                              : sample.name,
+                          sample.name.isEmpty ? '(unnamed)' : sample.name,
                         ),
                       );
                     }),
@@ -305,10 +302,9 @@ class _SaveToCloudButton extends ConsumerWidget {
                         .overwritePreset(
                           sourcePresetId,
                           preset,
-                          description:
-                              descriptionController.text.isEmpty
-                                  ? null
-                                  : descriptionController.text,
+                          description: descriptionController.text.isEmpty
+                              ? null
+                              : descriptionController.text,
                           sampleId: selectedSampleId,
                         );
                     ScaffoldMessenger.of(context).showSnackBar(

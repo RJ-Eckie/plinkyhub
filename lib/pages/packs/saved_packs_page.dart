@@ -11,8 +11,7 @@ class SavedPacksPage extends ConsumerStatefulWidget {
   const SavedPacksPage({super.key});
 
   @override
-  ConsumerState<SavedPacksPage> createState() =>
-      _SavedPacksPageState();
+  ConsumerState<SavedPacksPage> createState() => _SavedPacksPageState();
 }
 
 class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
@@ -73,23 +72,20 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                   packs: savedPacksState.userPacks,
                   isLoading: savedPacksState.isLoading,
                   isOwned: true,
-                  onRefresh: () => ref
-                      .read(savedPacksProvider.notifier)
-                      .fetchUserPacks(),
+                  onRefresh: () =>
+                      ref.read(savedPacksProvider.notifier).fetchUserPacks(),
                   onEdit: () => _tabController.animateTo(2),
                 )
               else
                 const SignInPrompt(
-                  message:
-                      'Sign in to save and manage your packs',
+                  message: 'Sign in to save and manage your packs',
                 ),
               PackList(
                 packs: savedPacksState.publicPacks,
                 isLoading: savedPacksState.isLoading,
                 isOwned: false,
-                onRefresh: () => ref
-                    .read(savedPacksProvider.notifier)
-                    .fetchPublicPacks(),
+                onRefresh: () =>
+                    ref.read(savedPacksProvider.notifier).fetchPublicPacks(),
               ),
               if (isSignedIn)
                 const CreatePackTab()
@@ -99,8 +95,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                 ),
               if (isSignedIn)
                 LoadPackTab(
-                  onLoaded: () =>
-                      _tabController.animateTo(0),
+                  onLoaded: () => _tabController.animateTo(0),
                 )
               else
                 const SignInPrompt(

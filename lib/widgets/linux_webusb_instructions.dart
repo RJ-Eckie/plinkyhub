@@ -70,10 +70,12 @@ class _LinuxWebusbInstructionsState extends State<LinuxWebusbInstructions> {
           ),
           _InstructionStep(
             number: '5',
-            title: 'If your browser is installed via snap, '
+            title:
+                'If your browser is installed via snap, '
                 'grant USB access:',
             code: 'sudo snap connect chromium:raw-usb',
-            detail: 'Replace "chromium" with your browser\'s '
+            detail:
+                'Replace "chromium" with your browser\'s '
                 'snap name if different.',
           ),
         ],

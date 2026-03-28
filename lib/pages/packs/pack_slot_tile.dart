@@ -34,17 +34,11 @@ class PackSlotTile extends ConsumerWidget {
     );
 
     final presetName = presetId != null
-        ? presets
-                  .where((preset) => preset.id == presetId)
-                  .firstOrNull
-                  ?.name ??
+        ? presets.where((preset) => preset.id == presetId).firstOrNull?.name ??
               '(unknown)'
         : 'Empty';
     final sampleName = sampleId != null
-        ? samples
-                  .where((sample) => sample.id == sampleId)
-                  .firstOrNull
-                  ?.name ??
+        ? samples.where((sample) => sample.id == sampleId).firstOrNull?.name ??
               '(unknown)'
         : 'None';
 
@@ -145,8 +139,7 @@ class PackSlotTile extends ConsumerWidget {
   ) {
     showDialog<String>(
       context: context,
-      builder: (context) =>
-          SamplePickerDialog(samples: samples),
+      builder: (context) => SamplePickerDialog(samples: samples),
     ).then((selectedId) {
       if (selectedId != null) {
         onSampleChanged(selectedId);

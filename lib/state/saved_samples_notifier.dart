@@ -113,15 +113,17 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       await _supabase.storage
           .from('samples')
           .uploadBinary(
-        sample.filePath,
-        wavBytes,
-        fileOptions: const FileOptions(upsert: true),
-      );
-      await _supabase.storage.from('samples').uploadBinary(
-        sample.pcmFilePath,
-        pcmBytes,
-        fileOptions: const FileOptions(upsert: true),
-      );
+            sample.filePath,
+            wavBytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
+      await _supabase.storage
+          .from('samples')
+          .uploadBinary(
+            sample.pcmFilePath,
+            pcmBytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
       final write = SampleWrite(
         userId: sample.userId,
@@ -227,10 +229,16 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       final delta = sample.isStarred ? -1 : 1;
       state = state.copyWith(
         userSamples: _updateStarInList(
-          state.userSamples, sample.id, !sample.isStarred, delta,
+          state.userSamples,
+          sample.id,
+          !sample.isStarred,
+          delta,
         ),
         publicSamples: _updateStarInList(
-          state.publicSamples, sample.id, !sample.isStarred, delta,
+          state.publicSamples,
+          sample.id,
+          !sample.isStarred,
+          delta,
         ),
       );
     } on Exception catch (error) {

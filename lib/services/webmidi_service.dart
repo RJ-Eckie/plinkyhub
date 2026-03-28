@@ -55,8 +55,7 @@ class MidiMessage {
 
   bool get isNoteOn => (command & 0xF0) == 0x90 && velocity > 0;
   bool get isNoteOff =>
-      (command & 0xF0) == 0x80 ||
-      ((command & 0xF0) == 0x90 && velocity == 0);
+      (command & 0xF0) == 0x80 || ((command & 0xF0) == 0x90 && velocity == 0);
 }
 
 typedef MidiMessageCallback = void Function(MidiMessage message);

@@ -29,9 +29,7 @@ class WavetableCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              wavetable.name.isEmpty
-                  ? '(unnamed)'
-                  : wavetable.name,
+              wavetable.name.isEmpty ? '(unnamed)' : wavetable.name,
               style: theme.textTheme.titleMedium,
             ),
             if (wavetable.description.isNotEmpty) ...[
@@ -66,9 +64,7 @@ class WavetableCard extends ConsumerWidget {
                 if (isOwned) ...[
                   IconButton(
                     icon: Icon(
-                      wavetable.isPublic
-                          ? Icons.public
-                          : Icons.public_off,
+                      wavetable.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
                     tooltip: wavetable.isPublic
@@ -105,8 +101,7 @@ class WavetableCard extends ConsumerWidget {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          SaveWavetableToPlinkyDialog(wavetable: wavetable),
+      builder: (context) => SaveWavetableToPlinkyDialog(wavetable: wavetable),
     );
   }
 

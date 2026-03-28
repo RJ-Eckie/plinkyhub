@@ -17,8 +17,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isPublic = false;
-  final List<({String? presetId, String? sampleId})> _slots =
-      List.generate(
+  final List<({String? presetId, String? sampleId})> _slots = List.generate(
     32,
     (_) => (presetId: null, sampleId: null),
   );
@@ -89,8 +88,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
                   const SizedBox(width: 8),
                   Text(
                     'Editing pack',
-                    style: Theme.of(context).textTheme.titleSmall
-                        ?.copyWith(
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
@@ -123,8 +121,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
           SwitchListTile(
             title: const Text('Share publicly'),
             value: _isPublic,
-            onChanged: (value) =>
-                setState(() => _isPublic = value),
+            onChanged: (value) => setState(() => _isPublic = value),
           ),
           const SizedBox(height: 16),
           Text(
@@ -135,8 +132,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
               mainAxisExtent: 64,
               crossAxisSpacing: 8,
@@ -177,8 +173,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
           const SizedBox(height: 16),
           Center(
             child: PlinkyButton(
-              onPressed:
-                  savedPacksState.isLoading ? null : _savePack,
+              onPressed: savedPacksState.isLoading ? null : _savePack,
               icon: Icons.save,
               label: _isEditing ? 'Update Pack' : 'Save Pack',
             ),
@@ -190,8 +185,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   }
 
   void _savePack() {
-    final slots =
-        <({int slotNumber, String? presetId, String? sampleId})>[];
+    final slots = <({int slotNumber, String? presetId, String? sampleId})>[];
     for (var i = 0; i < 32; i++) {
       slots.add((
         slotNumber: i,

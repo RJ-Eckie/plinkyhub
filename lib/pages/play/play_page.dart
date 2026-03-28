@@ -15,48 +15,91 @@ import 'package:plinkyhub/widgets/waveform_visualizer.dart';
 const _padIcons = <List<String>>[
   // Row 0 — Sound
   [
-    'blank', 'shape', 'distortion--resonance', 'pitch',
-    'octave--scale', 'glide--microtone',
-    'osc-interval--column', 'mod-src--sample',
+    'blank',
+    'shape',
+    'distortion--resonance',
+    'pitch',
+    'octave--scale',
+    'glide--microtone',
+    'osc-interval--column',
+    'mod-src--sample',
   ],
   // Row 1 — Envelope 1
   [
-    'blank', 'sensitivity--env-2-level', 'attack', 'decay',
-    'sustain', 'release', 'blank', 'mod-src--base',
+    'blank',
+    'sensitivity--env-2-level',
+    'attack',
+    'decay',
+    'sustain',
+    'release',
+    'blank',
+    'mod-src--base',
   ],
   // Row 2 — Effects
   [
-    'blank', 'delay--reverb', 'time',
-    'pingpong--shimmer', 'wobble', 'feedback',
-    'tempo--swing', 'mod-src--sensitivity',
+    'blank',
+    'delay--reverb',
+    'time',
+    'pingpong--shimmer',
+    'wobble',
+    'feedback',
+    'tempo--swing',
+    'mod-src--sensitivity',
   ],
   // Row 3 — Arp / Seq
   [
-    'blank', 'arp--latch', 'order', 'clock-div',
-    'chance', 'euclid-len', 'arp-octaves', 'mod-src--a',
+    'blank',
+    'arp--latch',
+    'order',
+    'clock-div',
+    'chance',
+    'euclid-len',
+    'arp-octaves',
+    'mod-src--a',
   ],
   // Row 4 — Sampler
   [
-    'blank', 'scrub--jitter', 'grain-size--jitter',
-    'play-speed--jitter', 'time', 'sample',
-    'pattern--step-offset', 'mod-src--b',
+    'blank',
+    'scrub--jitter',
+    'grain-size--jitter',
+    'play-speed--jitter',
+    'time',
+    'sample',
+    'pattern--step-offset',
+    'mod-src--b',
   ],
   // Row 5 — Mod A / B
   [
-    'blank', 'a-b-cv-level', 'offset', 'lfo--depth',
-    'lfo--rate', 'lfo--shape', 'lfo--symmetry',
+    'blank',
+    'a-b-cv-level',
+    'offset',
+    'lfo--depth',
+    'lfo--rate',
+    'lfo--shape',
+    'lfo--symmetry',
     'mod-src--x',
   ],
   // Row 6 — Mod X / Y
   [
-    'blank', 'x-y-cv-level', 'offset', 'lfo--depth',
-    'lfo--rate', 'lfo--shape', 'lfo--symmetry',
+    'blank',
+    'x-y-cv-level',
+    'offset',
+    'lfo--depth',
+    'lfo--rate',
+    'lfo--shape',
+    'lfo--symmetry',
     'mod-src--y',
   ],
   // Row 7 — Mix / System
   [
-    'blank', 'synth', 'wet-dry', 'hpf', 'blank',
-    'cv-quantize', 'volume', 'mod-src--random',
+    'blank',
+    'synth',
+    'wet-dry',
+    'hpf',
+    'blank',
+    'cv-quantize',
+    'volume',
+    'mod-src--random',
   ],
 ];
 
@@ -69,8 +112,8 @@ class PlayPage extends ConsumerWidget {
     final plinkyState = ref.watch(plinkyProvider);
     final midiState = ref.watch(midiProvider);
     final presetName = plinkyState.preset?.name ?? '';
-    final canPlay = plinkyState.preset != null ||
-        playState.sampleWavBytes != null;
+    final canPlay =
+        plinkyState.preset != null || playState.sampleWavBytes != null;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -85,19 +128,16 @@ class PlayPage extends ConsumerWidget {
                   builder: (_) => const PresetPickerDialog(),
                 ),
                 icon: Icons.piano,
-                label: presetName.isEmpty
-                    ? 'Load Preset'
-                    : presetName,
+                label: presetName.isEmpty ? 'Load Preset' : presetName,
               ),
               const SizedBox(width: 16),
               PlinkyButton(
                 onPressed: playState.isLoadingSample
                     ? null
                     : () => showDialog<void>(
-                          context: context,
-                          builder: (_) =>
-                              const SamplePickerDialog(),
-                        ),
+                        context: context,
+                        builder: (_) => const SamplePickerDialog(),
+                      ),
                 icon: playState.isLoadingSample
                     ? Icons.hourglass_empty
                     : Icons.audio_file,
@@ -109,9 +149,7 @@ class PlayPage extends ConsumerWidget {
               PlinkyButton(
                 onPressed: midiState.isConnected
                     ? null
-                    : () => ref
-                          .read(midiProvider.notifier)
-                          .connect(),
+                    : () => ref.read(midiProvider.notifier).connect(),
                 icon: midiState.isConnected
                     ? Icons.music_note
                     : Icons.music_off,
@@ -189,13 +227,11 @@ class _PadGrid extends ConsumerWidget {
                     iconAsset: icon,
                     isActive: activePads.contains(padIndex),
                     onPressStart: canPlay
-                        ? () => ref
-                            .read(playProvider.notifier)
-                            .playPad(row, col)
+                        ? () =>
+                              ref.read(playProvider.notifier).playPad(row, col)
                         : () {},
-                    onPressEnd: () => ref
-                        .read(playProvider.notifier)
-                        .stopPad(row, col),
+                    onPressEnd: () =>
+                        ref.read(playProvider.notifier).stopPad(row, col),
                   ),
                 ),
               );

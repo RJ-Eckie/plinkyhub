@@ -44,9 +44,7 @@ class SamplesSection extends ConsumerWidget {
                 ? uniqueSampleIds[index]
                 : null;
             final sample = sampleId != null
-                ? samples
-                      .where((sample) => sample.id == sampleId)
-                      .firstOrNull
+                ? samples.where((sample) => sample.id == sampleId).firstOrNull
                 : null;
             return Expanded(
               child: Card(

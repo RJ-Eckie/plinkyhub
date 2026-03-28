@@ -98,13 +98,15 @@ class _SampleCardState extends ConsumerState<SampleCard> {
 
   Future<void> _saveSampleSettings() async {
     setState(() => _saving = true);
-    await ref.read(savedSamplesProvider.notifier).updateSample(
-      widget.sample.copyWith(
-        slicePoints: _slicePoints,
-        pitched: _pitched,
-        sliceNotes: _sliceNotes,
-      ),
-    );
+    await ref
+        .read(savedSamplesProvider.notifier)
+        .updateSample(
+          widget.sample.copyWith(
+            slicePoints: _slicePoints,
+            pitched: _pitched,
+            sliceNotes: _sliceNotes,
+          ),
+        );
     if (!mounted) {
       return;
     }
@@ -140,9 +142,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               children: [
                 Expanded(
                   child: Text(
-                    sample.name.isEmpty
-                        ? '(unnamed)'
-                        : sample.name,
+                    sample.name.isEmpty ? '(unnamed)' : sample.name,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
@@ -176,13 +176,10 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               children: [
                 IconButton(
                   icon: Icon(
-                    _expanded
-                        ? Icons.expand_less
-                        : Icons.expand_more,
+                    _expanded ? Icons.expand_less : Icons.expand_more,
                     size: 20,
                   ),
-                  tooltip:
-                      _expanded ? 'Hide slices' : 'Show slices',
+                  tooltip: _expanded ? 'Hide slices' : 'Show slices',
                   onPressed: _toggleExpanded,
                 ),
                 const SizedBox(width: 8),
@@ -197,14 +194,10 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                 if (isOwned) ...[
                   IconButton(
                     icon: Icon(
-                      sample.isPublic
-                          ? Icons.public
-                          : Icons.public_off,
+                      sample.isPublic ? Icons.public : Icons.public_off,
                       size: 20,
                     ),
-                    tooltip: sample.isPublic
-                        ? 'Make private'
-                        : 'Make public',
+                    tooltip: sample.isPublic ? 'Make private' : 'Make public',
                     onPressed: () {
                       ref
                           .read(savedSamplesProvider.notifier)
@@ -231,8 +224,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               SampleModeSelector(
                 pitched: _pitched,
                 enabled: isOwned,
-                onChanged: (value) =>
-                    setState(() => _pitched = value),
+                onChanged: (value) => setState(() => _pitched = value),
               ),
               const SizedBox(height: 8),
               if (_loadingWav)
@@ -258,9 +250,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                   },
                 ),
               if (isOwned &&
-                  (_hasUnsavedChanges ||
-                      _saving ||
-                      _showSavedMessage))
+                  (_hasUnsavedChanges || _saving || _showSavedMessage))
                 Align(
                   alignment: Alignment.centerRight,
                   child: Row(

@@ -39,11 +39,11 @@ class UsernameDateLine extends ConsumerWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                ref
-                    .read(userProfileProvider.notifier)
-                    .loadUserProfile(userId, username);
-                ref.read(selectedPageProvider.notifier).selected = 6;
-              },
+                  ref
+                      .read(userProfileProvider.notifier)
+                      .loadUserProfile(userId, username);
+                  ref.read(selectedPageProvider.notifier).selected = 6;
+                },
                 child: Text(
                   username,
                   style: theme.textTheme.bodySmall?.copyWith(

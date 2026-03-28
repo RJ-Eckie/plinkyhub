@@ -76,37 +76,36 @@ class _SaveWavetableToPlinkyDialogState
       content: SizedBox(
         width: 400,
         child: switch (_step) {
-          _DialogStep.instructions =>
-            const TunnelOfLightsInstructions(itemType: 'wavetable'),
-          _DialogStep.progress =>
-            SaveProgressView(statusMessage: _statusMessage),
-          _DialogStep.done =>
-            const SaveDoneView(itemType: 'wavetable'),
-          _DialogStep.error =>
-            SaveErrorView(errorMessage: _errorMessage),
+          _DialogStep.instructions => const TunnelOfLightsInstructions(
+            itemType: 'wavetable',
+          ),
+          _DialogStep.progress => SaveProgressView(
+            statusMessage: _statusMessage,
+          ),
+          _DialogStep.done => const SaveDoneView(itemType: 'wavetable'),
+          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
       ),
       actions: switch (_step) {
         _DialogStep.instructions => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Cancel',
-            ),
-            PlinkyButton(
-              onPressed: _startSave,
-              icon: Icons.folder_open,
-              label: 'Select Plinky drive',
-            ),
-          ],
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Cancel',
+          ),
+          PlinkyButton(
+            onPressed: _startSave,
+            icon: Icons.folder_open,
+            label: 'Select Plinky drive',
+          ),
+        ],
         _DialogStep.progress => [],
         _DialogStep.done || _DialogStep.error => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Close',
-            ),
-          ],
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Close',
+          ),
+        ],
       },
     );
   }
-
 }

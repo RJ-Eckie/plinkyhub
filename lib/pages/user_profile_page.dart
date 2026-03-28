@@ -10,8 +10,7 @@ class UserProfilePage extends ConsumerStatefulWidget {
   const UserProfilePage({super.key});
 
   @override
-  ConsumerState<UserProfilePage> createState() =>
-      _UserProfilePageState();
+  ConsumerState<UserProfilePage> createState() => _UserProfilePageState();
 }
 
 class _UserProfilePageState extends ConsumerState<UserProfilePage>
@@ -33,8 +32,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage>
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(userProfileProvider);
-    final currentUserId =
-        ref.watch(authenticationProvider).user?.id;
+    final currentUserId = ref.watch(authenticationProvider).user?.id;
     final isOwnProfile = profileState.userId == currentUserId;
 
     if (profileState.userId.isEmpty) {

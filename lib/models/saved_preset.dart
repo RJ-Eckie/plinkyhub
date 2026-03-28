@@ -15,12 +15,8 @@ abstract class SavedPreset with _$SavedPreset {
     required DateTime updatedAt,
     @Default('') String description,
     @Default(false) bool isPublic,
-    @Default('')
-    @JsonKey(readValue: _readUsername)
-    String username,
-    @Default(0)
-    @JsonKey(readValue: _readStarCount)
-    int starCount,
+    @Default('') @JsonKey(readValue: _readUsername) String username,
+    @Default(0) @JsonKey(readValue: _readStarCount) int starCount,
     @Default(false) bool isStarred,
     String? sampleId,
   }) = _SavedPreset;

@@ -15,12 +15,10 @@ class UploadWavetableTab extends ConsumerStatefulWidget {
   final VoidCallback? onUploaded;
 
   @override
-  ConsumerState<UploadWavetableTab> createState() =>
-      _UploadWavetableTabState();
+  ConsumerState<UploadWavetableTab> createState() => _UploadWavetableTabState();
 }
 
-class _UploadWavetableTabState
-    extends ConsumerState<UploadWavetableTab> {
+class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isPublic = true;
@@ -29,8 +27,10 @@ class _UploadWavetableTabState
   String? _errorMessage;
 
   /// The 15 WAV file slots (c0–c14). Null means the slot is empty.
-  final List<_WavSlot?> _slots =
-      List<_WavSlot?>.filled(wavetableUserShapeCount, null);
+  final List<_WavSlot?> _slots = List<_WavSlot?>.filled(
+    wavetableUserShapeCount,
+    null,
+  );
 
   @override
   void dispose() {
@@ -53,8 +53,7 @@ class _UploadWavetableTabState
     });
   }
 
-  int get _filledSlotCount =>
-      _slots.where((slot) => slot != null).length;
+  int get _filledSlotCount => _slots.where((slot) => slot != null).length;
 
   bool get _allSlotsFilled => _filledSlotCount == wavetableUserShapeCount;
 
@@ -70,9 +69,7 @@ class _UploadWavetableTabState
       return;
     }
 
-    final files = result.files
-        .where((file) => file.bytes != null)
-        .toList()
+    final files = result.files.where((file) => file.bytes != null).toList()
       ..sort(
         (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       );
@@ -134,15 +131,12 @@ class _UploadWavetableTabState
   /// Tries to extract a slot index (0–14) from a filename like "c0.wav",
   /// "c14.wav", "C3.wav", etc.
   int? _parseSlotIndex(String fileName) {
-    final match =
-        RegExp(r'^[cC](\d{1,2})\b').firstMatch(fileName);
+    final match = RegExp(r'^[cC](\d{1,2})\b').firstMatch(fileName);
     if (match == null) {
       return null;
     }
     final index = int.tryParse(match.group(1)!);
-    if (index == null ||
-        index < 0 ||
-        index >= wavetableUserShapeCount) {
+    if (index == null || index < 0 || index >= wavetableUserShapeCount) {
       return null;
     }
     return index;
@@ -295,9 +289,7 @@ class _UploadWavetableTabState
                       IconButton(
                         icon: const Icon(Icons.audio_file, size: 18),
                         tooltip: 'Pick file for c$index',
-                        onPressed: isBusy
-                            ? null
-                            : () => _pickSlotFile(index),
+                        onPressed: isBusy ? null : () => _pickSlotFile(index),
                         visualDensity: VisualDensity.compact,
                       ),
                       if (slot != null)
@@ -338,8 +330,7 @@ class _UploadWavetableTabState
                 value: _isPublic,
                 onChanged: isBusy
                     ? null
-                    : (value) =>
-                        setState(() => _isPublic = value),
+                    : (value) => setState(() => _isPublic = value),
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 8),
@@ -378,16 +369,11 @@ class _UploadWavetableTabState
                 )
               else
                 PlinkyButton(
-                  onPressed:
-                      isBusy || !_allSlotsFilled
-                          ? null
-                          : _createAndUpload,
-                  icon: _isUploading
-                      ? Icons.hourglass_empty
-                      : Icons.upload,
-                  label: _isUploading
-                      ? 'Uploading...'
-                      : 'Create & Upload',
+                  onPressed: isBusy || !_allSlotsFilled
+                      ? null
+                      : _createAndUpload,
+                  icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
+                  label: _isUploading ? 'Uploading...' : 'Create & Upload',
                 ),
             ],
           ),

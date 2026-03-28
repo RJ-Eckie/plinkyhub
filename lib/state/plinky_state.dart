@@ -20,6 +20,7 @@ abstract class PlinkyState with _$PlinkyState {
     Preset? preset,
     @Default(0) int presetNumber,
     String? errorMessage,
+
     /// ID of the saved cloud preset that was loaded into the editor,
     /// used to enable overwriting instead of always saving new.
     String? sourcePresetId,

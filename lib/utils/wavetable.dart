@@ -64,8 +64,7 @@ Uint8List generateWavetableUf2(List<Uint8List> wavFiles) {
   final kernel = _buildKernel();
 
   // Filter each shape into octave variants.
-  final allSamples =
-      Int16List(wavetableShapeCount * wavetableSamplesPerShape);
+  final allSamples = Int16List(wavetableShapeCount * wavetableSamplesPerShape);
   var offset = 0;
 
   for (var shape = 0; shape < wavetableShapeCount; shape++) {
@@ -78,8 +77,10 @@ Uint8List generateWavetableUf2(List<Uint8List> wavFiles) {
           final phase = (i << (octave + 7)) + (j << (octave + 2));
           value += kernel[j.abs()] * lookup[phase & 0xFFFF];
         }
-        allSamples[offset++] =
-            (value * _outputScale).round().clamp(-32768, 32767);
+        allSamples[offset++] = (value * _outputScale).round().clamp(
+          -32768,
+          32767,
+        );
       }
     }
   }
@@ -237,11 +238,11 @@ double _readSample(ByteData data, int offset, int bitsPerSample) {
     8 => (data.getUint8(offset) - 128) / 128.0,
     16 => data.getInt16(offset, Endian.little) / 32768.0,
     24 => () {
-        final b0 = data.getUint8(offset);
-        final b1 = data.getUint8(offset + 1);
-        final b2 = data.getInt8(offset + 2);
-        return (b0 | (b1 << 8) | (b2 << 16)) / 8388608.0;
-      }(),
+      final b0 = data.getUint8(offset);
+      final b1 = data.getUint8(offset + 1);
+      final b2 = data.getInt8(offset + 2);
+      return (b0 | (b1 << 8) | (b2 << 16)) / 8388608.0;
+    }(),
     32 => data.getInt32(offset, Endian.little) / 2147483648.0,
     _ => throw FormatException('Unsupported bit depth: $bitsPerSample'),
   };

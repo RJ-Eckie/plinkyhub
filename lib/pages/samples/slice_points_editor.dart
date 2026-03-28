@@ -34,8 +34,7 @@ class SlicePointsEditor extends StatefulWidget {
   final ValueChanged<List<int>>? onSliceNotesChanged;
 
   @override
-  State<SlicePointsEditor> createState() =>
-      _SlicePointsEditorState();
+  State<SlicePointsEditor> createState() => _SlicePointsEditorState();
 }
 
 class _SlicePointsEditorState extends State<SlicePointsEditor> {
@@ -88,8 +87,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
       if (!soloud.isInitialized) {
         await soloud.init();
       }
-      _audioSource =
-          await soloud.loadMem('sample.wav', wavBytes);
+      _audioSource = await soloud.loadMem('sample.wav', wavBytes);
       if (mounted) {
         setState(() => _loadingAudio = false);
       } else {
@@ -106,8 +104,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
         : 1.0;
 
     final startTime = totalDuration * startFraction;
-    final sliceDuration =
-        totalDuration * (endFraction - startFraction);
+    final sliceDuration = totalDuration * (endFraction - startFraction);
 
     final handle = await soloud.play(source, paused: true);
     soloud.seek(handle, startTime);
@@ -143,8 +140,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
             const Spacer(),
             TextButton(
               onPressed: widget.enabled
-                  ? () => widget
-                      .onChanged(List.of(defaultSlicePoints))
+                  ? () => widget.onChanged(List.of(defaultSlicePoints))
                   : null,
               child: const Text('Reset'),
             ),
@@ -174,8 +170,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                 SizedBox(
                   width: 14,
                   height: 14,
-                  child:
-                      CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 SizedBox(width: 8),
                 Text('Loading audio...'),
@@ -191,22 +186,18 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                   width: 48,
                   child: Text(
                     'Slice ${i + 1}',
-                    style:
-                        Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
                 const SizedBox(width: 4),
                 IconButton.filled(
                   icon: Icon(
-                    _playingSlice == i
-                        ? Icons.stop
-                        : Icons.play_arrow,
+                    _playingSlice == i ? Icons.stop : Icons.play_arrow,
                     size: 18,
                   ),
-                  onPressed:
-                      widget.wavBytes != null && !_loadingAudio
-                          ? () => _playSlice(i)
-                          : null,
+                  onPressed: widget.wavBytes != null && !_loadingAudio
+                      ? () => _playSlice(i)
+                      : null,
                   tooltip: 'Preview slice ${i + 1}',
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
@@ -221,8 +212,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                     onChanged: widget.enabled
                         ? (value) {
                             final gap = widget.pcmFrameCount != null
-                                ? minSliceSamples /
-                                    widget.pcmFrameCount!
+                                ? minSliceSamples / widget.pcmFrameCount!
                                 : 0.0;
                             final min = i > 0
                                 ? widget.slicePoints[i - 1] + gap
@@ -230,8 +220,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                             final max = i < 7
                                 ? widget.slicePoints[i + 1] - gap
                                 : 1.0 - gap;
-                            final clamped =
-                                value.clamp(min, max);
+                            final clamped = value.clamp(min, max);
                             final updated = List<double>.from(
                               widget.slicePoints,
                             );
@@ -247,8 +236,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                   width: 48,
                   child: Text(
                     '${(widget.slicePoints[i] * 100).toStringAsFixed(1)}%',
-                    style:
-                        Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
                 if (widget.pitched)
@@ -256,8 +244,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                     note: widget.sliceNotes[i],
                     enabled: widget.enabled,
                     onChanged: (value) {
-                      final updated =
-                          List<int>.from(widget.sliceNotes);
+                      final updated = List<int>.from(widget.sliceNotes);
                       updated[i] = value;
                       widget.onSliceNotesChanged?.call(updated);
                     },

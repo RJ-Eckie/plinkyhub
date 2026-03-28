@@ -11,8 +11,7 @@ class SavedSamplesPage extends ConsumerStatefulWidget {
   const SavedSamplesPage({super.key});
 
   @override
-  ConsumerState<SavedSamplesPage> createState() =>
-      _SavedSamplesPageState();
+  ConsumerState<SavedSamplesPage> createState() => _SavedSamplesPageState();
 }
 
 class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
@@ -89,8 +88,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                       ),
                       const SizedBox(height: 16),
                       PlinkyButton(
-                        onPressed: () =>
-                            showSignInDialog(context),
+                        onPressed: () => showSignInDialog(context),
                         icon: Icons.login,
                         label: 'Sign in',
                       ),
@@ -107,8 +105,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
               ),
               if (isSignedIn)
                 UploadSampleTab(
-                  onUploaded: () =>
-                      _tabController.animateTo(0),
+                  onUploaded: () => _tabController.animateTo(0),
                 )
               else
                 Center(
@@ -122,8 +119,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                       ),
                       const SizedBox(height: 16),
                       PlinkyButton(
-                        onPressed: () =>
-                            showSignInDialog(context),
+                        onPressed: () => showSignInDialog(context),
                         icon: Icons.login,
                         label: 'Sign in',
                       ),

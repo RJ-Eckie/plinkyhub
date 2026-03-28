@@ -9,8 +9,7 @@ class SavedPresetsPage extends ConsumerStatefulWidget {
   const SavedPresetsPage({super.key});
 
   @override
-  ConsumerState<SavedPresetsPage> createState() =>
-      _SavedPresetsPageState();
+  ConsumerState<SavedPresetsPage> createState() => _SavedPresetsPageState();
 }
 
 class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
@@ -75,8 +74,7 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
                 )
               else
                 const SignInPrompt(
-                  message:
-                      'Sign in to save and manage your presets',
+                  message: 'Sign in to save and manage your presets',
                 ),
               PresetList(
                 presets: savedPresetsState.publicPresets,

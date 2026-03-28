@@ -62,8 +62,7 @@ class _PresetListState extends ConsumerState<PresetList> {
       }
       return switch (_sortOrder) {
         SortOrder.stars => _compareByStarsThenName(a, b),
-        SortOrder.name =>
-          a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        SortOrder.name => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
         SortOrder.newest => b.updatedAt.compareTo(a.updatedAt),
       };
     });
@@ -136,8 +135,7 @@ class _PresetListState extends ConsumerState<PresetList> {
                         Text(
                           '${filtered.length} '
                           'preset${filtered.length == 1 ? '' : 's'}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const Spacer(),
                         SortOrderButton(
@@ -146,8 +144,7 @@ class _PresetListState extends ConsumerState<PresetList> {
                               setState(() => _sortOrder = order),
                         ),
                         IconButton(
-                          icon:
-                              const Icon(Icons.refresh, size: 20),
+                          icon: const Icon(Icons.refresh, size: 20),
                           onPressed: widget.onRefresh,
                           tooltip: 'Refresh',
                         ),
@@ -156,15 +153,13 @@ class _PresetListState extends ConsumerState<PresetList> {
                   ),
                 ),
                 SliverPadding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList.builder(
                     itemCount: (filtered.length + 1) ~/ 2,
                     itemBuilder: (context, index) {
                       final itemIndex = index * 2;
                       return Row(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: PresetCard(

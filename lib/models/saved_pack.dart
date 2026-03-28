@@ -14,12 +14,8 @@ abstract class SavedPack with _$SavedPack {
     required DateTime updatedAt,
     @Default('') String description,
     @Default(false) bool isPublic,
-    @Default('')
-    @JsonKey(readValue: _readUsername)
-    String username,
-    @Default(0)
-    @JsonKey(readValue: _readStarCount)
-    int starCount,
+    @Default('') @JsonKey(readValue: _readUsername) String username,
+    @Default(0) @JsonKey(readValue: _readStarCount) int starCount,
     @Default(false) bool isStarred,
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
     String? wavetableId,

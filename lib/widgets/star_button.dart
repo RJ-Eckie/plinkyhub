@@ -17,8 +17,7 @@ class StarButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSignedIn =
-        ref.watch(authenticationProvider).user != null;
+    final isSignedIn = ref.watch(authenticationProvider).user != null;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -30,9 +29,7 @@ class StarButton extends ConsumerWidget {
             color: isStarred ? Colors.amber : null,
           ),
           tooltip: isStarred ? 'Remove star' : 'Star',
-          onPressed: () => isSignedIn
-              ? onToggle()
-              : showSignInDialog(context),
+          onPressed: () => isSignedIn ? onToggle() : showSignInDialog(context),
         ),
         if (starCount > 0)
           Text(

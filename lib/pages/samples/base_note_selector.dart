@@ -75,8 +75,7 @@ class BaseNoteSelector extends StatelessWidget {
                 children: [
                   Text(
                     'Fine tune: $fineTune cents',
-                    style:
-                        Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Slider(
                     value: fineTune.toDouble(),
@@ -85,8 +84,7 @@ class BaseNoteSelector extends StatelessWidget {
                     divisions: 100,
                     label: '$fineTune c',
                     onChanged: enabled
-                        ? (value) =>
-                            onFineTuneChanged(value.round())
+                        ? (value) => onFineTuneChanged(value.round())
                         : null,
                   ),
                 ],
@@ -98,8 +96,7 @@ class BaseNoteSelector extends StatelessWidget {
           '$noteName$octave'
           '${fineTune != 0 ? ' (${fineTune > 0 ? '+' : ''}${fineTune}c)' : ''}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color:
-                Theme.of(context).colorScheme.onSurfaceVariant,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],

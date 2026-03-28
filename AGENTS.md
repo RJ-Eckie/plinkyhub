@@ -10,7 +10,7 @@ Never use `_build*` helper methods to construct UI subtrees. Extract them into s
 
 ## Code Quality
 
-Always run `dart analyze` after making changes. There must be zero issues (errors, warnings, or infos) in any code you write or modify. Run `dart fix --apply` first to auto-fix what it can, then resolve any remaining issues manually.
+Always run `dart format .` after making changes to ensure consistent formatting. Then run `dart analyze` — there must be zero issues (errors, warnings, or infos) in any code you write or modify. Run `dart fix --apply` first to auto-fix what it can, then resolve any remaining issues manually.
 
 ## Database
 

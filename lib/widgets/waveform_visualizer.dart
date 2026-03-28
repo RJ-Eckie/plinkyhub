@@ -123,9 +123,7 @@ class _ScopePainter extends CustomPainter {
     );
 
     // Determine the lowest frequency to set the time window.
-    final lowestFreq = notes
-        .map((n) => _midiToFrequency(n.note))
-        .reduce(min);
+    final lowestFreq = notes.map((n) => _midiToFrequency(n.note)).reduce(min);
     // Generate enough samples to cover ~4 cycles for trigger detection.
     final windowSeconds = 4.0 / lowestFreq;
     final dt = windowSeconds / _sampleCount;
