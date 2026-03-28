@@ -126,13 +126,11 @@ class _PatchListState extends ConsumerState<PatchList> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => widget.onRefresh(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filtered.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+            child: CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  sliver: SliverToBoxAdapter(
                     child: Row(
                       children: [
                         Text(
@@ -155,15 +153,41 @@ class _PatchListState extends ConsumerState<PatchList> {
                         ),
                       ],
                     ),
-                  );
-                }
-
-                final patch = filtered[index - 1];
-                return PatchCard(
-                  patch: patch,
-                  isOwned: widget.isOwned,
-                );
-              },
+                  ),
+                ),
+                SliverPadding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList.builder(
+                    itemCount: (filtered.length + 1) ~/ 2,
+                    itemBuilder: (context, index) {
+                      final itemIndex = index * 2;
+                      return Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: PatchCard(
+                              patch: filtered[itemIndex],
+                              isOwned: widget.isOwned,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (itemIndex + 1 < filtered.length)
+                            Expanded(
+                              child: PatchCard(
+                                patch: filtered[itemIndex + 1],
+                                isOwned: widget.isOwned,
+                              ),
+                            )
+                          else
+                            const Expanded(child: SizedBox()),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),
