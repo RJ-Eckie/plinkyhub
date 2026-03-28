@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="web/icons/Icon-512.png" width="128" alt="PlinkyHub logo">
+</p>
+
 # PlinkyHub
 
 A site for sharing, creating and organizing your [Plinky](https://plinkysynth.com/) presets,
