@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
+import 'package:plinkyhub/pages/packs/save_to_plinky_dialog.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -10,11 +11,13 @@ class PackCard extends ConsumerWidget {
   const PackCard({
     required this.pack,
     required this.isOwned,
+    this.onEdit,
     super.key,
   });
 
   final SavedPack pack;
   final bool isOwned;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -73,8 +76,23 @@ class PackCard extends ConsumerWidget {
                       .read(savedPacksProvider.notifier)
                       .toggleStar(pack),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.usb, size: 20),
+                  tooltip: 'Save to Plinky',
+                  onPressed: () => _saveToPlinky(context),
+                ),
                 const Spacer(),
                 if (isOwned) ...[
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    tooltip: 'Edit pack',
+                    onPressed: () {
+                      ref
+                          .read(savedPacksProvider.notifier)
+                          .startEditing(pack);
+                      onEdit?.call();
+                    },
+                  ),
                   IconButton(
                     icon: Icon(
                       pack.isPublic
@@ -107,6 +125,14 @@ class PackCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _saveToPlinky(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SaveToPlinkyDialog(pack: pack),
     );
   }
 

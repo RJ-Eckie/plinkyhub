@@ -74,6 +74,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                   onRefresh: () => ref
                       .read(savedPacksProvider.notifier)
                       .fetchUserPacks(),
+                  onEdit: () => _tabController.animateTo(1),
                 )
               else
                 const SignInPrompt(

@@ -12,6 +12,7 @@ class PackList extends ConsumerStatefulWidget {
     required this.isLoading,
     required this.isOwned,
     required this.onRefresh,
+    this.onEdit,
     super.key,
   });
 
@@ -19,6 +20,7 @@ class PackList extends ConsumerStatefulWidget {
   final bool isLoading;
   final bool isOwned;
   final VoidCallback onRefresh;
+  final VoidCallback? onEdit;
 
   @override
   ConsumerState<PackList> createState() => _PackListState();
@@ -170,6 +172,7 @@ class _PackListState extends ConsumerState<PackList> {
                             child: PackCard(
                               pack: filtered[itemIndex],
                               isOwned: widget.isOwned,
+                              onEdit: widget.onEdit,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -178,6 +181,7 @@ class _PackListState extends ConsumerState<PackList> {
                               child: PackCard(
                                 pack: filtered[itemIndex + 1],
                                 isOwned: widget.isOwned,
+                                onEdit: widget.onEdit,
                               ),
                             )
                           else

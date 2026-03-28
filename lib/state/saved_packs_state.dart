@@ -10,5 +10,6 @@ abstract class SavedPacksState with _$SavedPacksState {
     @Default([]) List<SavedPack> publicPacks,
     @Default(false) bool isLoading,
     String? errorMessage,
+    SavedPack? editingPack,
   }) = _SavedPacksState;
 }

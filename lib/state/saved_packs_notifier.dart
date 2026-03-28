@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/pack_slot_write.dart';
 import 'package:plinkyhub/models/pack_write.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
@@ -10,6 +11,7 @@ final savedPacksProvider =
     NotifierProvider<SavedPacksNotifier, SavedPacksState>(
       SavedPacksNotifier.new,
     );
+
 
 class SavedPacksNotifier extends Notifier<SavedPacksState> {
   SupabaseClient get _supabase => Supabase.instance.client;
@@ -124,22 +126,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
           .single();
 
       final packId = packResponse['id'] as String;
-
-      final slotRows = slots
-          .where((slot) => slot.patchId != null || slot.sampleId != null)
-          .map(
-            (slot) => {
-              'pack_id': packId,
-              'slot_number': slot.slotNumber,
-              'patch_id': slot.patchId,
-              'sample_id': slot.sampleId,
-            },
-          )
-          .toList();
-
-      if (slotRows.isNotEmpty) {
-        await _supabase.from('pack_slots').insert(slotRows);
-      }
+      await _insertSlots(packId, slots);
 
       await fetchUserPacks();
     } on Exception catch (error) {
@@ -179,6 +166,69 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         errorMessage: error.toString(),
       );
     }
+  }
+
+  Future<void> _insertSlots(
+    String packId,
+    List<({int slotNumber, String? patchId, String? sampleId})> slots,
+  ) async {
+    final slotRows = slots
+        .where((slot) => slot.patchId != null || slot.sampleId != null)
+        .map(
+          (slot) => PackSlotWrite(
+            packId: packId,
+            slotNumber: slot.slotNumber,
+            patchId: slot.patchId,
+            sampleId: slot.sampleId,
+          ).toJson(),
+        )
+        .toList();
+
+    if (slotRows.isNotEmpty) {
+      await _supabase.from('pack_slots').insert(slotRows);
+    }
+  }
+
+  Future<void> updatePackWithSlots(
+    String id, {
+    required String name,
+    required String description,
+    required bool isPublic,
+    required List<({int slotNumber, String? patchId, String? sampleId})> slots,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final userId = ref.read(authenticationProvider).user?.id;
+      if (userId == null) {
+        return;
+      }
+
+      final write = PackWrite(
+        userId: userId,
+        name: name,
+        description: description,
+        isPublic: isPublic,
+      );
+      await _supabase.from('packs').update(write.toJson()).eq('id', id);
+      await _supabase.from('pack_slots').delete().eq('pack_id', id);
+      await _insertSlots(id, slots);
+
+      await fetchUserPacks();
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.toString(),
+      );
+    }
+  }
+
+  void startEditing(SavedPack pack) {
+    state = state.copyWith(editingPack: pack);
+  }
+
+  void stopEditing() {
+    state = state.copyWith(editingPack: null);
   }
 
   Future<void> deletePack(String id) async {
