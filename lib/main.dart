@@ -10,6 +10,7 @@ import 'package:plinkyhub/pages/samples/saved_samples_page.dart';
 import 'package:plinkyhub/pages/user_profile_page.dart';
 import 'package:plinkyhub/pages/wavetables/saved_wavetables_page.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
+import 'package:plinkyhub/widgets/terms_of_service_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -107,6 +108,16 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
     UserProfilePage(),
     AboutPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!hasAcceptedTermsOfService()) {
+        showTermsOfServiceDialog(context);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

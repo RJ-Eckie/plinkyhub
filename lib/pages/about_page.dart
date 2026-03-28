@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plinkyhub/widgets/terms_of_service_dialog.dart';
 import 'package:web/web.dart' as web;
 
 class AboutPage extends StatelessWidget {
@@ -97,6 +98,14 @@ class AboutPage extends StatelessWidget {
             ),
             icon: const Icon(Icons.piano),
             label: const Text('Original Plinky WebUSB Editor'),
+          ),
+          TextButton.icon(
+            onPressed: () => showTermsOfServiceDialog(
+              context,
+              requireAcceptance: false,
+            ),
+            icon: const Icon(Icons.description),
+            label: const Text('Terms of Service'),
           ),
         ],
       ),
