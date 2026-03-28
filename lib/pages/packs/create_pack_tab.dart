@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/pages/packs/pack_slot_tile.dart';
+import 'package:plinkyhub/pages/packs/pattern_picker_dialog.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
+import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -25,6 +27,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   );
   String? _editingPackId;
   String? _wavetableId;
+  String? _patternId;
 
   @override
   void dispose() {
@@ -39,6 +42,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _descriptionController.text = pack.description;
     _isPublic = pack.isPublic;
     _wavetableId = pack.wavetableId;
+    _patternId = pack.patternId;
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null);
     }
@@ -56,6 +60,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _descriptionController.clear();
     _isPublic = false;
     _wavetableId = null;
+    _patternId = null;
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null);
     }
@@ -182,6 +187,11 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
                 setState(() => _wavetableId = wavetableId),
           ),
           const SizedBox(height: 16),
+          _PatternSection(
+            patternId: _patternId,
+            onChanged: (patternId) => setState(() => _patternId = patternId),
+          ),
+          const SizedBox(height: 16),
           Center(
             child: PlinkyButton(
               onPressed: savedPacksState.isLoading ? null : _savePack,
@@ -215,6 +225,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         isPublic: _isPublic,
         slots: slots,
         wavetableId: _wavetableId,
+        patternId: _patternId,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pack updated')),
@@ -226,6 +237,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         isPublic: _isPublic,
         slots: slots,
         wavetableId: _wavetableId,
+        patternId: _patternId,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pack saved')),
@@ -300,6 +312,79 @@ class _WavetableSection extends ConsumerWidget {
                 }
               },
               icon: Icons.waves,
+              label: 'Choose',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PatternSection extends ConsumerWidget {
+  const _PatternSection({
+    required this.patternId,
+    required this.onChanged,
+  });
+
+  final String? patternId;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final patternsState = ref.watch(savedPatternsProvider);
+    final patternName = patternId != null
+        ? patternsState.userPatterns
+                  .where((pattern) => pattern.id == patternId)
+                  .firstOrNull
+                  ?.name ??
+              patternsState.publicPatterns
+                  .where(
+                    (pattern) => pattern.id == patternId,
+                  )
+                  .firstOrNull
+                  ?.name
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Patterns',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                patternName ?? 'None',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            if (patternId != null)
+              IconButton(
+                icon: const Icon(Icons.clear, size: 20),
+                tooltip: 'Remove patterns',
+                onPressed: () => onChanged(null),
+              ),
+            PlinkyButton(
+              onPressed: () async {
+                final allPatterns = {
+                  ...patternsState.userPatterns,
+                  ...patternsState.publicPatterns,
+                }.toList();
+                final selectedId = await showDialog<String>(
+                  context: context,
+                  builder: (context) => PatternPickerDialog(
+                    patterns: allPatterns,
+                  ),
+                );
+                if (selectedId != null) {
+                  onChanged(selectedId);
+                }
+              },
+              icon: Icons.grid_view,
               label: 'Choose',
             ),
           ],

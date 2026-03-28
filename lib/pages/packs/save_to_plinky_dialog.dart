@@ -227,29 +227,49 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         _statusMessage = 'Writing WAVETABLE.UF2...';
       });
 
+      final wavetableFilePath = await _fetchFilePath(
+        'wavetables',
+        widget.pack.wavetableId!,
+      );
       final wavetableBytes = await _supabase.storage
           .from('wavetables')
-          .download(
-            // Fetch the file path from the wavetables table.
-            await _fetchWavetableFilePath(
-              widget.pack.wavetableId!,
-            ),
-          );
+          .download(wavetableFilePath);
       await writeFileToDirectory(
         directory,
         'WAVETABLE.UF2',
         wavetableBytes,
       );
     }
+
+    // Write PATTERNS.UF2 if the pack has one.
+    if (widget.pack.patternId != null) {
+      setState(() {
+        _statusMessage = 'Writing PATTERNS.UF2...';
+      });
+
+      final patternFilePath = await _fetchFilePath(
+        'patterns',
+        widget.pack.patternId!,
+      );
+      final patternBytes = await _supabase.storage
+          .from('patterns')
+          .download(patternFilePath);
+      await writeFileToDirectory(
+        directory,
+        'PATTERNS.UF2',
+        patternBytes,
+      );
+    }
   }
 
-  Future<String> _fetchWavetableFilePath(
-    String wavetableId,
+  Future<String> _fetchFilePath(
+    String table,
+    String id,
   ) async {
     final response = await _supabase
-        .from('wavetables')
+        .from(table)
         .select('file_path')
-        .eq('id', wavetableId)
+        .eq('id', id)
         .single();
     return response['file_path'] as String;
   }

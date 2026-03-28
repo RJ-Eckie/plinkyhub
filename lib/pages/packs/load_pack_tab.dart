@@ -7,6 +7,7 @@ import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/pack_slot_write.dart';
 import 'package:plinkyhub/models/pack_write.dart';
+import 'package:plinkyhub/models/pattern_write.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/preset_write.dart';
 import 'package:plinkyhub/models/sample_write.dart';
@@ -42,6 +43,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   List<ParsedSampleInfo?> _sampleInfos = [];
   Map<int, Uint8List> _samplePcmData = {};
   Uint8List? _wavetableUf2Bytes;
+  Uint8List? _patternsUf2Bytes;
 
   // User-editable names and sharing toggles.
   final _packNameController = TextEditingController(
@@ -57,7 +59,11 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   final _wavetableNameController = TextEditingController(
     text: 'Wavetable',
   );
+  final _patternNameController = TextEditingController(
+    text: 'Patterns',
+  );
   bool _includeWavetableInPack = true;
+  bool _includePatternsInPack = true;
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -66,6 +72,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     _packNameController.dispose();
     _packDescriptionController.dispose();
     _wavetableNameController.dispose();
+    _patternNameController.dispose();
     for (final controller in _presetNames.values) {
       controller.dispose();
     }
@@ -102,6 +109,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _sampleInfos = [];
       _samplePcmData = {};
       _wavetableUf2Bytes = null;
+      _patternsUf2Bytes = null;
       _packNameController.text = '';
       _packDescriptionController.clear();
       _packIsPublic = true;
@@ -111,8 +119,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _sampleNames.clear();
       _sampleDescriptions.clear();
       _wavetableNameController.text = 'Wavetable';
+      _patternNameController.text = 'Patterns';
       _includeWavetableInPack = true;
-      _includeWavetableInPack = true;
+      _includePatternsInPack = true;
     });
   }
 
@@ -196,6 +205,16 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         );
       }
 
+      if (_includePatternsInPack) {
+        setState(() {
+          _statusMessage = 'Reading PATTERNS.UF2...';
+        });
+        _patternsUf2Bytes = await readFileFromDirectory(
+          directory,
+          'PATTERNS.UF2',
+        );
+      }
+
       // Build editable names from parsed data.
       _presetNames.clear();
       _presetDescriptions.clear();
@@ -224,6 +243,11 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       if (_wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty) {
         _wavetableNameController.text = 'Wavetable';
         _includeWavetableInPack = true;
+      }
+
+      if (_patternsUf2Bytes != null && _patternsUf2Bytes!.isNotEmpty) {
+        _patternNameController.text = 'Patterns';
+        _includePatternsInPack = true;
       }
 
       setState(() {
@@ -343,6 +367,39 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         wavetableId = wavetableResponse['id'] as String;
       }
 
+      // Upload patterns.
+      String? patternId;
+      if (_patternsUf2Bytes != null && _patternsUf2Bytes!.isNotEmpty) {
+        setState(() {
+          _statusMessage = 'Uploading patterns...';
+        });
+
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final patternPath = '$userId/patterns_$timestamp.uf2';
+
+        await _supabase.storage
+            .from('patterns')
+            .uploadBinary(
+              patternPath,
+              _patternsUf2Bytes!,
+              fileOptions: const FileOptions(upsert: true),
+            );
+
+        final patternWrite = PatternWrite(
+          userId: userId,
+          name: _patternNameController.text.trim(),
+          filePath: patternPath,
+          isPublic: _packIsPublic,
+        );
+
+        final patternResponse = await _supabase
+            .from('patterns')
+            .insert(patternWrite.toJson())
+            .select('id')
+            .single();
+        patternId = patternResponse['id'] as String;
+      }
+
       // Upload presets.
       final presetIdBySlot = <int, String>{};
       for (final entry in _presetNames.entries) {
@@ -390,6 +447,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         description: _packDescriptionController.text.trim(),
         isPublic: _packIsPublic,
         wavetableId: _includeWavetableInPack ? wavetableId : null,
+        patternId: _includePatternsInPack ? patternId : null,
       );
       final packResponse = await _supabase
           .from('packs')
@@ -474,6 +532,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               includeWavetable: _includeWavetableInPack,
               onIncludeWavetableChanged: (value) =>
                   setState(() => _includeWavetableInPack = value),
+              includePatterns: _includePatternsInPack,
+              onIncludePatternsChanged: (value) =>
+                  setState(() => _includePatternsInPack = value),
             ),
             _LoadStep.review => _LoadReviewStep(
               presetNames: _presetNames,
@@ -490,6 +551,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               wavetableNameController: _wavetableNameController,
               hasWavetable:
                   _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty,
+              patternNameController: _patternNameController,
+              hasPatterns:
+                  _patternsUf2Bytes != null && _patternsUf2Bytes!.isNotEmpty,
               onBack: _reset,
               onSave: _uploadAll,
               onChanged: () => setState(() {}),
@@ -516,11 +580,15 @@ class _LoadSelectStep extends StatelessWidget {
     required this.onSelectDrive,
     required this.includeWavetable,
     required this.onIncludeWavetableChanged,
+    required this.includePatterns,
+    required this.onIncludePatternsChanged,
   });
 
   final VoidCallback onSelectDrive;
   final bool includeWavetable;
   final ValueChanged<bool> onIncludeWavetableChanged;
+  final bool includePatterns;
+  final ValueChanged<bool> onIncludePatternsChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -528,10 +596,10 @@ class _LoadSelectStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Load all presets, samples, and wavetable '
-          'from a Plinky in Tunnel of Lights mode. '
-          'This will create a new pack with all the '
-          'data from the device.',
+          'Load all presets, samples, wavetable, and '
+          'patterns from a Plinky in Tunnel of Lights '
+          'mode. This will create a new pack with all '
+          'the data from the device.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -553,6 +621,11 @@ class _LoadSelectStep extends StatelessWidget {
           title: const Text('Include wavetable'),
           value: includeWavetable,
           onChanged: onIncludeWavetableChanged,
+        ),
+        SwitchListTile(
+          title: const Text('Include patterns'),
+          value: includePatterns,
+          onChanged: onIncludePatternsChanged,
         ),
         const SizedBox(height: 8),
         PlinkyButton(
@@ -579,6 +652,8 @@ class _LoadReviewStep extends StatelessWidget {
     required this.onPackIsPublicChanged,
     required this.wavetableNameController,
     required this.hasWavetable,
+    required this.patternNameController,
+    required this.hasPatterns,
     required this.onBack,
     required this.onSave,
     required this.onChanged,
@@ -596,6 +671,8 @@ class _LoadReviewStep extends StatelessWidget {
   final ValueChanged<bool> onPackIsPublicChanged;
   final TextEditingController wavetableNameController;
   final bool hasWavetable;
+  final TextEditingController patternNameController;
+  final bool hasPatterns;
   final VoidCallback onBack;
   final VoidCallback onSave;
   final VoidCallback onChanged;
@@ -608,7 +685,8 @@ class _LoadReviewStep extends StatelessWidget {
         Text(
           'Found ${presetNames.length} presets, '
           '${sampleNames.length} samples'
-          '${hasWavetable ? ', and a wavetable' : ''} '
+          '${hasWavetable ? ', a wavetable' : ''}'
+          '${hasPatterns ? '${hasWavetable ? ',' : ''} and patterns' : ''} '
           'on the Plinky.\n\n'
           'Review the names and sharing '
           'settings below, then save.',
@@ -672,6 +750,21 @@ class _LoadReviewStep extends StatelessWidget {
             controller: wavetableNameController,
             decoration: const InputDecoration(
               labelText: 'Wavetable name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+        if (hasPatterns) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Patterns',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: patternNameController,
+            decoration: const InputDecoration(
+              labelText: 'Patterns name',
               border: OutlineInputBorder(),
             ),
           ),

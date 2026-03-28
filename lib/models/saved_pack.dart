@@ -20,6 +20,7 @@ abstract class SavedPack with _$SavedPack implements Searchable {
     @Default(false) bool isStarred,
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
     String? wavetableId,
+    String? patternId,
   }) = _SavedPack;
 
   factory SavedPack.fromJson(Map<String, dynamic> json) =>

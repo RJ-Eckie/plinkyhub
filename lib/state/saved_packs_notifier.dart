@@ -133,6 +133,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     String description = '',
     bool isPublic = false,
     String? wavetableId,
+    String? patternId,
   }) async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
@@ -147,6 +148,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         description: description,
         isPublic: isPublic,
         wavetableId: wavetableId,
+        patternId: patternId,
       );
       final packResponse = await _supabase
           .from('packs')
@@ -225,6 +227,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     required bool isPublic,
     required List<({int slotNumber, String? presetId, String? sampleId})> slots,
     String? wavetableId,
+    String? patternId,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
@@ -239,6 +242,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         description: description,
         isPublic: isPublic,
         wavetableId: wavetableId,
+        patternId: patternId,
       );
       await _supabase.from('packs').update(write.toJson()).eq('id', id);
       await _supabase.from('pack_slots').delete().eq('pack_id', id);

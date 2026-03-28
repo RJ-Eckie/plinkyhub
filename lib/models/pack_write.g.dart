@@ -12,6 +12,7 @@ _PackWrite _$PackWriteFromJson(Map<String, dynamic> json) => _PackWrite(
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
   wavetableId: json['wavetable_id'] as String?,
+  patternId: json['pattern_id'] as String?,
 );
 
 Map<String, dynamic> _$PackWriteToJson(_PackWrite instance) =>
@@ -21,4 +22,5 @@ Map<String, dynamic> _$PackWriteToJson(_PackWrite instance) =>
       'description': instance.description,
       'is_public': instance.isPublic,
       'wavetable_id': instance.wavetableId,
+      'pattern_id': instance.patternId,
     };

@@ -11,6 +11,7 @@ abstract class PackWrite with _$PackWrite {
     @Default('') String description,
     @Default(false) bool isPublic,
     String? wavetableId,
+    String? patternId,
   }) = _PackWrite;
 
   factory PackWrite.fromJson(Map<String, dynamic> json) =>
