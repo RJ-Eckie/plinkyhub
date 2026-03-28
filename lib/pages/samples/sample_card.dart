@@ -10,6 +10,7 @@ import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
+import 'package:plinkyhub/widgets/username_date_line.dart';
 
 class SampleCard extends ConsumerStatefulWidget {
   const SampleCard({
@@ -165,15 +166,10 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               ),
             ],
             const SizedBox(height: 4),
-            Text(
-              [
-                if (sample.username.isNotEmpty)
-                  'by ${sample.username}',
-                formatDate(sample.updatedAt),
-              ].join(' · '),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            UsernameDateLine(
+              userId: sample.userId,
+              username: sample.username,
+              updatedAt: sample.updatedAt,
             ),
             const SizedBox(height: 8),
             Row(

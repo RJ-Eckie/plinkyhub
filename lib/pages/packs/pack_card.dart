@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/pages/packs/save_to_plinky_dialog.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
-import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
+import 'package:plinkyhub/widgets/username_date_line.dart';
 
 class PackCard extends ConsumerWidget {
   const PackCard({
@@ -56,15 +56,10 @@ class PackCard extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 4),
-            Text(
-              [
-                if (pack.username.isNotEmpty)
-                  'by ${pack.username}',
-                formatDate(pack.updatedAt),
-              ].join(' · '),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            UsernameDateLine(
+              userId: pack.userId,
+              username: pack.username,
+              updatedAt: pack.updatedAt,
             ),
             const SizedBox(height: 8),
             Row(

@@ -73,8 +73,8 @@ class NavigationSidebar extends StatelessWidget {
             ArcIconButton(
               icon: Icons.info,
               label: 'About',
-              isSelected: selectedIndex == 5,
-              onPressed: () => onDestinationSelected(5),
+              isSelected: selectedIndex == 6,
+              onPressed: () => onDestinationSelected(6),
             ),
             const Spacer(),
             const Padding(

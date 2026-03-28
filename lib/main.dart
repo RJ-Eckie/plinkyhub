@@ -8,6 +8,7 @@ import 'package:plinkyhub/pages/packs/saved_packs_page.dart';
 import 'package:plinkyhub/pages/play/play_page.dart';
 import 'package:plinkyhub/pages/presets/saved_presets_page.dart';
 import 'package:plinkyhub/pages/samples/saved_samples_page.dart';
+import 'package:plinkyhub/pages/user_profile_page.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -103,6 +104,7 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
     SavedPresetsPage(),
     SavedPacksPage(),
     SavedSamplesPage(),
+    UserProfilePage(),
     AboutPage(),
   ];
 

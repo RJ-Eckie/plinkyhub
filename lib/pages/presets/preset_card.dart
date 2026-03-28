@@ -4,8 +4,8 @@ import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/pages/presets/star_button.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
-import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/username_date_line.dart';
 
 class PresetCard extends ConsumerWidget {
   const PresetCard({
@@ -54,15 +54,10 @@ class PresetCard extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 4),
-            Text(
-              [
-                if (preset.username.isNotEmpty)
-                  'by ${preset.username}',
-                formatDate(preset.updatedAt),
-              ].join(' · '),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            UsernameDateLine(
+              userId: preset.userId,
+              username: preset.username,
+              updatedAt: preset.updatedAt,
             ),
             const SizedBox(height: 8),
             Row(
