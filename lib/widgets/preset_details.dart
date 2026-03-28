@@ -37,6 +37,7 @@ class PresetDetailsHeader extends ConsumerWidget {
                 decoration: const InputDecoration(
                   isDense: true,
                   counterText: '',
+                  hintText: 'Name',
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 8,
