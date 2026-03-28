@@ -118,6 +118,24 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     });
   }
 
+  /// Returns true if the PCM data is silent (all zeros, all 0xFF,
+  /// or every 16-bit sample is the same value).
+  bool _isSilentPcm(Uint8List pcmData) {
+    if (pcmData.every((byte) => byte == 0) ||
+        pcmData.every((byte) => byte == 0xFF)) {
+      return true;
+    }
+    // Check as 16-bit samples — silent if every frame is identical.
+    if (pcmData.length >= 2) {
+      final view = Int16List.view(pcmData.buffer);
+      final firstSample = view[0];
+      if (view.every((sample) => sample == firstSample)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<void> _readFromPlinky() async {
     final directory = await showDirectoryPicker();
     if (directory == null) {
