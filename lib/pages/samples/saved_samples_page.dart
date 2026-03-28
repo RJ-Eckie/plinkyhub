@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/pages/samples/sample_list.dart';
-import 'package:plinkyhub/pages/samples/upload_sample_dialog.dart';
+import 'package:plinkyhub/pages/samples/upload_sample_tab.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/authentication_button.dart';
