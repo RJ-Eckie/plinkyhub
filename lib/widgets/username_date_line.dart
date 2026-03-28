@@ -35,18 +35,21 @@ class UsernameDateLine extends ConsumerWidget {
           WidgetSpan(
             alignment: PlaceholderAlignment.baseline,
             baseline: TextBaseline.alphabetic,
-            child: GestureDetector(
-              onTap: () {
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
                 ref
                     .read(userProfileProvider.notifier)
                     .loadUserProfile(userId, username);
                 ref.read(selectedPageProvider.notifier).selected = 5;
               },
-              child: Text(
-                username,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  decoration: TextDecoration.underline,
+                child: Text(
+                  username,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
             ),
