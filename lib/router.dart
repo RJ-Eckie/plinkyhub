@@ -13,6 +13,7 @@ import 'package:plinkyhub/pages/presets/saved_presets_page.dart';
 import 'package:plinkyhub/pages/samples/sample_page.dart';
 import 'package:plinkyhub/pages/samples/saved_samples_page.dart';
 import 'package:plinkyhub/pages/user_profile_page.dart';
+import 'package:plinkyhub/pages/users/users_page.dart';
 import 'package:plinkyhub/pages/wavetables/saved_wavetables_page.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_page.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
@@ -85,7 +86,16 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 6: User Profile
+          // Branch 6: Users
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/users',
+                builder: (context, state) => const UsersPage(),
+              ),
+            ],
+          ),
+          // Branch 7: User Profile
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -94,7 +104,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 7: About
+          // Branch 8: About
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -202,6 +212,7 @@ class _ItemPageShell extends ConsumerWidget {
                     '/samples',
                     '/wavetables',
                     '/patterns',
+                    '/users',
                     '/profile',
                     '/about',
                   ];

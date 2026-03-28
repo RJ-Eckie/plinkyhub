@@ -11,6 +11,7 @@ const reservedUsernames = {
   'samples',
   'wavetables',
   'patterns',
+  'users',
   'profile',
   'about',
 };

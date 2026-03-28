@@ -7,6 +7,7 @@ alter table profiles
     'samples',
     'wavetables',
     'patterns',
+    'users',
     'profile',
     'about'
   ));
