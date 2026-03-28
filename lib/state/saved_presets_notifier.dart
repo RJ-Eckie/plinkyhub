@@ -44,10 +44,9 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
 
     return response.map((row) {
       final map = row as Map<String, dynamic>;
-      return SavedPreset.fromJson({
-        ...map,
-        'is_starred': starredPresetIds.contains(map['id']),
-      });
+      return SavedPreset.fromJson(map).copyWith(
+        isStarred: starredPresetIds.contains(map['id']),
+      );
     }).toList();
   }
 
@@ -67,12 +66,53 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
 
       final presets = await _parsePresetRows(response as List);
       state = state.copyWith(userPresets: presets, isLoading: false);
+      await fetchStarredPresets();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.toString(),
       );
+    }
+  }
+
+  Future<void> fetchStarredPresets() async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
+      return;
+    }
+
+    try {
+      final stars = await _supabase
+          .from('preset_stars')
+          .select('preset_id')
+          .eq('user_id', userId);
+      final starredIds = [
+        for (final row in stars as List)
+          (row as Map<String, dynamic>)['preset_id'] as String,
+      ];
+
+      if (starredIds.isEmpty) {
+        state = state.copyWith(starredPresets: []);
+        return;
+      }
+
+      final response = await _supabase
+          .from('presets')
+          .select('*, profiles(username), preset_stars(count)')
+          .inFilter('id', starredIds)
+          .neq('user_id', userId);
+
+      final presets = (response as List)
+          .map(
+            (row) => SavedPreset.fromJson(
+              row as Map<String, dynamic>,
+            ).copyWith(isStarred: true),
+          )
+          .toList();
+      state = state.copyWith(starredPresets: presets);
+    } on Exception catch (error) {
+      debugPrint('$error');
     }
   }
 
@@ -229,19 +269,31 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
         });
       }
 
-      // Optimistically update both lists.
+      // Optimistically update all lists.
       final delta = preset.isStarred ? -1 : 1;
+      final newIsStarred = !preset.isStarred;
+      final updatedStarred = newIsStarred
+          ? [
+              ...state.starredPresets,
+              if (preset.userId != userId)
+                preset.copyWith(
+                  isStarred: true,
+                  starCount: preset.starCount + delta,
+                ),
+            ]
+          : state.starredPresets.where((p) => p.id != preset.id).toList();
       state = state.copyWith(
         userPresets: _updateStarInList(
           state.userPresets,
           preset.id,
-          !preset.isStarred,
+          newIsStarred,
           delta,
         ),
+        starredPresets: updatedStarred,
         publicPresets: _updateStarInList(
           state.publicPresets,
           preset.id,
-          !preset.isStarred,
+          newIsStarred,
           delta,
         ),
       );

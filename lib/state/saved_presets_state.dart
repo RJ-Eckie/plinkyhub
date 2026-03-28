@@ -7,6 +7,7 @@ part 'saved_presets_state.freezed.dart';
 abstract class SavedPresetsState with _$SavedPresetsState {
   const factory SavedPresetsState({
     @Default([]) List<SavedPreset> userPresets,
+    @Default([]) List<SavedPreset> starredPresets,
     @Default([]) List<SavedPreset> publicPresets,
     @Default(false) bool isLoading,
     String? errorMessage,

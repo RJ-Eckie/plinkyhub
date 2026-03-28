@@ -70,6 +70,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
               if (isSignedIn)
                 SearchableItemList(
                   items: savedWavetablesState.userWavetables,
+                  starredItems: savedWavetablesState.starredWavetables,
                   isLoading: savedWavetablesState.isLoading,
                   isOwned: true,
                   onRefresh: () => ref
@@ -77,14 +78,13 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                       .fetchUserWavetables(),
                   itemBuilder: (wavetable) => WavetableCard(
                     wavetable: wavetable,
-                    isOwned: true,
+                    isOwned: wavetable.userId == authenticationState.user?.id,
                   ),
                   itemLabel: 'wavetable',
                 )
               else
                 const SignInPrompt(
-                  message:
-                      'Sign in to upload and manage your wavetables',
+                  message: 'Sign in to upload and manage your wavetables',
                 ),
               SearchableItemList(
                 items: savedWavetablesState.publicWavetables,

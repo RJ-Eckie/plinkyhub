@@ -69,6 +69,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
               if (isSignedIn)
                 SearchableItemList(
                   items: savedSamplesState.userSamples,
+                  starredItems: savedSamplesState.starredSamples,
                   isLoading: savedSamplesState.isLoading,
                   isOwned: true,
                   onRefresh: () => ref
@@ -76,7 +77,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                       .fetchUserSamples(),
                   itemBuilder: (sample) => SampleCard(
                     sample: sample,
-                    isOwned: true,
+                    isOwned: sample.userId == authenticationState.user?.id,
                   ),
                   itemLabel: 'sample',
                 )

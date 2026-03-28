@@ -13,10 +13,12 @@ class SearchableItemList<T extends Searchable> extends ConsumerStatefulWidget {
     required this.onRefresh,
     required this.itemBuilder,
     required this.itemLabel,
+    this.starredItems = const [],
     super.key,
   });
 
   final List<T> items;
+  final List<T> starredItems;
   final bool isLoading;
   final bool isOwned;
   final VoidCallback onRefresh;
@@ -33,6 +35,7 @@ class _SearchableItemListState<T extends Searchable>
   final _searchController = TextEditingController();
   String _query = '';
   SortOrder _sortOrder = SortOrder.stars;
+  bool _includeStarred = true;
 
   @override
   void dispose() {
@@ -40,8 +43,17 @@ class _SearchableItemListState<T extends Searchable>
     super.dispose();
   }
 
+  bool get _hasStarredItems => widget.starredItems.isNotEmpty;
+
+  List<T> get _combinedItems {
+    if (!_includeStarred || !_hasStarredItems) {
+      return widget.items;
+    }
+    return [...widget.items, ...widget.starredItems];
+  }
+
   List<T> get _filteredItems {
-    var items = widget.items.toList();
+    var items = _combinedItems.toList();
 
     if (_query.isNotEmpty) {
       final lower = _query.toLowerCase();
@@ -88,7 +100,7 @@ class _SearchableItemListState<T extends Searchable>
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (widget.items.isEmpty) {
+    if (widget.items.isEmpty && widget.starredItems.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -144,6 +156,28 @@ class _SearchableItemListState<T extends Searchable>
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const Spacer(),
+                        if (_hasStarredItems)
+                          Tooltip(
+                            message: 'Include starred',
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: _includeStarred ? Colors.amber : null,
+                                ),
+                                SizedBox(
+                                  height: 24,
+                                  child: Switch(
+                                    value: _includeStarred,
+                                    onChanged: (value) =>
+                                        setState(() => _includeStarred = value),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         SortOrderButton(
                           value: _sortOrder,
                           onChanged: (order) =>
@@ -168,7 +202,9 @@ class _SearchableItemListState<T extends Searchable>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: widget.itemBuilder(filtered[itemIndex]),
+                            child: widget.itemBuilder(
+                              filtered[itemIndex],
+                            ),
                           ),
                           const SizedBox(width: 8),
                           if (itemIndex + 1 < filtered.length)

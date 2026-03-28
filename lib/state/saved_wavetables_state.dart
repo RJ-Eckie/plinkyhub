@@ -7,6 +7,7 @@ part 'saved_wavetables_state.freezed.dart';
 abstract class SavedWavetablesState with _$SavedWavetablesState {
   const factory SavedWavetablesState({
     @Default([]) List<SavedWavetable> userWavetables,
+    @Default([]) List<SavedWavetable> starredWavetables,
     @Default([]) List<SavedWavetable> publicWavetables,
     @Default(false) bool isLoading,
     String? errorMessage,

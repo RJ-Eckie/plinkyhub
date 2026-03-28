@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedSamplesState {
 
- List<SavedSample> get userSamples; List<SavedSample> get publicSamples; bool get isLoading; String? get errorMessage;
+ List<SavedSample> get userSamples; List<SavedSample> get starredSamples; List<SavedSample> get publicSamples; bool get isLoading; String? get errorMessage;
 /// Create a copy of SavedSamplesState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SavedSamplesStateCopyWith<SavedSamplesState> get copyWith => _$SavedSamplesStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedSamplesState&&const DeepCollectionEquality().equals(other.userSamples, userSamples)&&const DeepCollectionEquality().equals(other.publicSamples, publicSamples)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedSamplesState&&const DeepCollectionEquality().equals(other.userSamples, userSamples)&&const DeepCollectionEquality().equals(other.starredSamples, starredSamples)&&const DeepCollectionEquality().equals(other.publicSamples, publicSamples)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userSamples),const DeepCollectionEquality().hash(publicSamples),isLoading,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userSamples),const DeepCollectionEquality().hash(starredSamples),const DeepCollectionEquality().hash(publicSamples),isLoading,errorMessage);
 
 @override
 String toString() {
-  return 'SavedSamplesState(userSamples: $userSamples, publicSamples: $publicSamples, isLoading: $isLoading, errorMessage: $errorMessage)';
+  return 'SavedSamplesState(userSamples: $userSamples, starredSamples: $starredSamples, publicSamples: $publicSamples, isLoading: $isLoading, errorMessage: $errorMessage)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SavedSamplesStateCopyWith<$Res>  {
   factory $SavedSamplesStateCopyWith(SavedSamplesState value, $Res Function(SavedSamplesState) _then) = _$SavedSamplesStateCopyWithImpl;
 @useResult
 $Res call({
- List<SavedSample> userSamples, List<SavedSample> publicSamples, bool isLoading, String? errorMessage
+ List<SavedSample> userSamples, List<SavedSample> starredSamples, List<SavedSample> publicSamples, bool isLoading, String? errorMessage
 });
 
 
@@ -62,9 +62,10 @@ class _$SavedSamplesStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedSamplesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userSamples = null,Object? publicSamples = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userSamples = null,Object? starredSamples = null,Object? publicSamples = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
   return _then(_self.copyWith(
 userSamples: null == userSamples ? _self.userSamples : userSamples // ignore: cast_nullable_to_non_nullable
+as List<SavedSample>,starredSamples: null == starredSamples ? _self.starredSamples : starredSamples // ignore: cast_nullable_to_non_nullable
 as List<SavedSample>,publicSamples: null == publicSamples ? _self.publicSamples : publicSamples // ignore: cast_nullable_to_non_nullable
 as List<SavedSample>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -153,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedSample> userSamples,  List<SavedSample> publicSamples,  bool isLoading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedSample> userSamples,  List<SavedSample> starredSamples,  List<SavedSample> publicSamples,  bool isLoading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedSamplesState() when $default != null:
-return $default(_that.userSamples,_that.publicSamples,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userSamples,_that.starredSamples,_that.publicSamples,_that.isLoading,_that.errorMessage);case _:
   return orElse();
 
 }
@@ -174,10 +175,10 @@ return $default(_that.userSamples,_that.publicSamples,_that.isLoading,_that.erro
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedSample> userSamples,  List<SavedSample> publicSamples,  bool isLoading,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedSample> userSamples,  List<SavedSample> starredSamples,  List<SavedSample> publicSamples,  bool isLoading,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _SavedSamplesState():
-return $default(_that.userSamples,_that.publicSamples,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userSamples,_that.starredSamples,_that.publicSamples,_that.isLoading,_that.errorMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +195,10 @@ return $default(_that.userSamples,_that.publicSamples,_that.isLoading,_that.erro
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedSample> userSamples,  List<SavedSample> publicSamples,  bool isLoading,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedSample> userSamples,  List<SavedSample> starredSamples,  List<SavedSample> publicSamples,  bool isLoading,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedSamplesState() when $default != null:
-return $default(_that.userSamples,_that.publicSamples,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userSamples,_that.starredSamples,_that.publicSamples,_that.isLoading,_that.errorMessage);case _:
   return null;
 
 }
@@ -209,7 +210,7 @@ return $default(_that.userSamples,_that.publicSamples,_that.isLoading,_that.erro
 
 
 class _SavedSamplesState implements SavedSamplesState {
-  const _SavedSamplesState({final  List<SavedSample> userSamples = const [], final  List<SavedSample> publicSamples = const [], this.isLoading = false, this.errorMessage}): _userSamples = userSamples,_publicSamples = publicSamples;
+  const _SavedSamplesState({final  List<SavedSample> userSamples = const [], final  List<SavedSample> starredSamples = const [], final  List<SavedSample> publicSamples = const [], this.isLoading = false, this.errorMessage}): _userSamples = userSamples,_starredSamples = starredSamples,_publicSamples = publicSamples;
   
 
  final  List<SavedSample> _userSamples;
@@ -217,6 +218,13 @@ class _SavedSamplesState implements SavedSamplesState {
   if (_userSamples is EqualUnmodifiableListView) return _userSamples;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_userSamples);
+}
+
+ final  List<SavedSample> _starredSamples;
+@override@JsonKey() List<SavedSample> get starredSamples {
+  if (_starredSamples is EqualUnmodifiableListView) return _starredSamples;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_starredSamples);
 }
 
  final  List<SavedSample> _publicSamples;
@@ -239,16 +247,16 @@ _$SavedSamplesStateCopyWith<_SavedSamplesState> get copyWith => __$SavedSamplesS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedSamplesState&&const DeepCollectionEquality().equals(other._userSamples, _userSamples)&&const DeepCollectionEquality().equals(other._publicSamples, _publicSamples)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedSamplesState&&const DeepCollectionEquality().equals(other._userSamples, _userSamples)&&const DeepCollectionEquality().equals(other._starredSamples, _starredSamples)&&const DeepCollectionEquality().equals(other._publicSamples, _publicSamples)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userSamples),const DeepCollectionEquality().hash(_publicSamples),isLoading,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userSamples),const DeepCollectionEquality().hash(_starredSamples),const DeepCollectionEquality().hash(_publicSamples),isLoading,errorMessage);
 
 @override
 String toString() {
-  return 'SavedSamplesState(userSamples: $userSamples, publicSamples: $publicSamples, isLoading: $isLoading, errorMessage: $errorMessage)';
+  return 'SavedSamplesState(userSamples: $userSamples, starredSamples: $starredSamples, publicSamples: $publicSamples, isLoading: $isLoading, errorMessage: $errorMessage)';
 }
 
 
@@ -259,7 +267,7 @@ abstract mixin class _$SavedSamplesStateCopyWith<$Res> implements $SavedSamplesS
   factory _$SavedSamplesStateCopyWith(_SavedSamplesState value, $Res Function(_SavedSamplesState) _then) = __$SavedSamplesStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<SavedSample> userSamples, List<SavedSample> publicSamples, bool isLoading, String? errorMessage
+ List<SavedSample> userSamples, List<SavedSample> starredSamples, List<SavedSample> publicSamples, bool isLoading, String? errorMessage
 });
 
 
@@ -276,9 +284,10 @@ class __$SavedSamplesStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedSamplesState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userSamples = null,Object? publicSamples = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userSamples = null,Object? starredSamples = null,Object? publicSamples = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
   return _then(_SavedSamplesState(
 userSamples: null == userSamples ? _self._userSamples : userSamples // ignore: cast_nullable_to_non_nullable
+as List<SavedSample>,starredSamples: null == starredSamples ? _self._starredSamples : starredSamples // ignore: cast_nullable_to_non_nullable
 as List<SavedSample>,publicSamples: null == publicSamples ? _self._publicSamples : publicSamples // ignore: cast_nullable_to_non_nullable
 as List<SavedSample>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable

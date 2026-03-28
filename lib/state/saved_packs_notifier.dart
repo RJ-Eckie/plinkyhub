@@ -45,10 +45,9 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
   ) {
     return response.map((row) {
       final map = row as Map<String, dynamic>;
-      return SavedPack.fromJson({
-        ...map,
-        'is_starred': starredIds.contains(map['id']),
-      });
+      return SavedPack.fromJson(map).copyWith(
+        isStarred: starredIds.contains(map['id']),
+      );
     }).toList();
   }
 
@@ -70,12 +69,41 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       final packs = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(userPacks: packs, isLoading: false);
+      await fetchStarredPacks();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.toString(),
       );
+    }
+  }
+
+  Future<void> fetchStarredPacks() async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
+      return;
+    }
+
+    try {
+      final starredIds = await _fetchStarredPackIds();
+      if (starredIds.isEmpty) {
+        state = state.copyWith(starredPacks: []);
+        return;
+      }
+
+      final response = await _supabase
+          .from('packs')
+          .select(
+            '*, pack_slots(*), profiles(username), pack_stars(count)',
+          )
+          .inFilter('id', starredIds.toList())
+          .neq('user_id', userId);
+
+      final packs = _applyStarred(response as List, starredIds);
+      state = state.copyWith(starredPacks: packs);
+    } on Exception catch (error) {
+      debugPrint('$error');
     }
   }
 
@@ -269,17 +297,29 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       }
 
       final delta = pack.isStarred ? -1 : 1;
+      final newIsStarred = !pack.isStarred;
+      final updatedStarred = newIsStarred
+          ? [
+              ...state.starredPacks,
+              if (pack.userId != userId)
+                pack.copyWith(
+                  isStarred: true,
+                  starCount: pack.starCount + delta,
+                ),
+            ]
+          : state.starredPacks.where((p) => p.id != pack.id).toList();
       state = state.copyWith(
         userPacks: _updateStarInList(
           state.userPacks,
           pack.id,
-          !pack.isStarred,
+          newIsStarred,
           delta,
         ),
+        starredPacks: updatedStarred,
         publicPacks: _updateStarInList(
           state.publicPacks,
           pack.id,
-          !pack.isStarred,
+          newIsStarred,
           delta,
         ),
       );

@@ -44,10 +44,9 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
   ) {
     return response.map((row) {
       final map = row as Map<String, dynamic>;
-      return SavedWavetable.fromJson({
-        ...map,
-        'is_starred': starredIds.contains(map['id']),
-      });
+      return SavedWavetable.fromJson(map).copyWith(
+        isStarred: starredIds.contains(map['id']),
+      );
     }).toList();
   }
 
@@ -69,12 +68,41 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       final wavetables = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(userWavetables: wavetables, isLoading: false);
+      await fetchStarredWavetables();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.toString(),
       );
+    }
+  }
+
+  Future<void> fetchStarredWavetables() async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
+      return;
+    }
+
+    try {
+      final starredIds = await _fetchStarredWavetableIds();
+      if (starredIds.isEmpty) {
+        state = state.copyWith(starredWavetables: []);
+        return;
+      }
+
+      final response = await _supabase
+          .from('wavetables')
+          .select(
+            '*, profiles(username), wavetable_stars(count)',
+          )
+          .inFilter('id', starredIds.toList())
+          .neq('user_id', userId);
+
+      final wavetables = _applyStarred(response as List, starredIds);
+      state = state.copyWith(starredWavetables: wavetables);
+    } on Exception catch (error) {
+      debugPrint('$error');
     }
   }
 
@@ -208,17 +236,29 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       }
 
       final delta = wavetable.isStarred ? -1 : 1;
+      final newIsStarred = !wavetable.isStarred;
+      final updatedStarred = newIsStarred
+          ? [
+              ...state.starredWavetables,
+              if (wavetable.userId != userId)
+                wavetable.copyWith(
+                  isStarred: true,
+                  starCount: wavetable.starCount + delta,
+                ),
+            ]
+          : state.starredWavetables.where((w) => w.id != wavetable.id).toList();
       state = state.copyWith(
         userWavetables: _updateStarInList(
           state.userWavetables,
           wavetable.id,
-          !wavetable.isStarred,
+          newIsStarred,
           delta,
         ),
+        starredWavetables: updatedStarred,
         publicWavetables: _updateStarInList(
           state.publicWavetables,
           wavetable.id,
-          !wavetable.isStarred,
+          newIsStarred,
           delta,
         ),
       );

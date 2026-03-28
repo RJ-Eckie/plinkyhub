@@ -71,14 +71,17 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
               if (isSignedIn)
                 SearchableItemList(
                   items: savedPacksState.userPacks,
+                  starredItems: savedPacksState.starredPacks,
                   isLoading: savedPacksState.isLoading,
                   isOwned: true,
                   onRefresh: () =>
                       ref.read(savedPacksProvider.notifier).fetchUserPacks(),
                   itemBuilder: (pack) => PackCard(
                     pack: pack,
-                    isOwned: true,
-                    onEdit: () => _tabController.animateTo(2),
+                    isOwned: pack.userId == authenticationState.user?.id,
+                    onEdit: pack.userId == authenticationState.user?.id
+                        ? () => _tabController.animateTo(2)
+                        : null,
                   ),
                   itemLabel: 'pack',
                 )

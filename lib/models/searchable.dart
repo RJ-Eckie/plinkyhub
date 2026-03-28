@@ -1,4 +1,5 @@
 mixin Searchable {
+  String get userId;
   String get name;
   String get username;
   String get description;

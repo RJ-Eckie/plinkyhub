@@ -44,10 +44,9 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   ) {
     return response.map((row) {
       final map = row as Map<String, dynamic>;
-      return SavedSample.fromJson({
-        ...map,
-        'is_starred': starredIds.contains(map['id']),
-      });
+      return SavedSample.fromJson(map).copyWith(
+        isStarred: starredIds.contains(map['id']),
+      );
     }).toList();
   }
 
@@ -69,12 +68,39 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       final samples = _applyStarred(response as List, starredIds);
 
       state = state.copyWith(userSamples: samples, isLoading: false);
+      await fetchStarredSamples();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.toString(),
       );
+    }
+  }
+
+  Future<void> fetchStarredSamples() async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
+      return;
+    }
+
+    try {
+      final starredIds = await _fetchStarredSampleIds();
+      if (starredIds.isEmpty) {
+        state = state.copyWith(starredSamples: []);
+        return;
+      }
+
+      final response = await _supabase
+          .from('samples')
+          .select('*, profiles(username), sample_stars(count)')
+          .inFilter('id', starredIds.toList())
+          .neq('user_id', userId);
+
+      final samples = _applyStarred(response as List, starredIds);
+      state = state.copyWith(starredSamples: samples);
+    } on Exception catch (error) {
+      debugPrint('$error');
     }
   }
 
@@ -227,17 +253,29 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       }
 
       final delta = sample.isStarred ? -1 : 1;
+      final newIsStarred = !sample.isStarred;
+      final updatedStarred = newIsStarred
+          ? [
+              ...state.starredSamples,
+              if (sample.userId != userId)
+                sample.copyWith(
+                  isStarred: true,
+                  starCount: sample.starCount + delta,
+                ),
+            ]
+          : state.starredSamples.where((s) => s.id != sample.id).toList();
       state = state.copyWith(
         userSamples: _updateStarInList(
           state.userSamples,
           sample.id,
-          !sample.isStarred,
+          newIsStarred,
           delta,
         ),
+        starredSamples: updatedStarred,
         publicSamples: _updateStarInList(
           state.publicSamples,
           sample.id,
-          !sample.isStarred,
+          newIsStarred,
           delta,
         ),
       );

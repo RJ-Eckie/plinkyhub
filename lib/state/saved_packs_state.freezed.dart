@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedPacksState {
 
- List<SavedPack> get userPacks; List<SavedPack> get publicPacks; bool get isLoading; String? get errorMessage; SavedPack? get editingPack;
+ List<SavedPack> get userPacks; List<SavedPack> get starredPacks; List<SavedPack> get publicPacks; bool get isLoading; String? get errorMessage; SavedPack? get editingPack;
 /// Create a copy of SavedPacksState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SavedPacksStateCopyWith<SavedPacksState> get copyWith => _$SavedPacksStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedPacksState&&const DeepCollectionEquality().equals(other.userPacks, userPacks)&&const DeepCollectionEquality().equals(other.publicPacks, publicPacks)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.editingPack, editingPack) || other.editingPack == editingPack));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedPacksState&&const DeepCollectionEquality().equals(other.userPacks, userPacks)&&const DeepCollectionEquality().equals(other.starredPacks, starredPacks)&&const DeepCollectionEquality().equals(other.publicPacks, publicPacks)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.editingPack, editingPack) || other.editingPack == editingPack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userPacks),const DeepCollectionEquality().hash(publicPacks),isLoading,errorMessage,editingPack);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userPacks),const DeepCollectionEquality().hash(starredPacks),const DeepCollectionEquality().hash(publicPacks),isLoading,errorMessage,editingPack);
 
 @override
 String toString() {
-  return 'SavedPacksState(userPacks: $userPacks, publicPacks: $publicPacks, isLoading: $isLoading, errorMessage: $errorMessage, editingPack: $editingPack)';
+  return 'SavedPacksState(userPacks: $userPacks, starredPacks: $starredPacks, publicPacks: $publicPacks, isLoading: $isLoading, errorMessage: $errorMessage, editingPack: $editingPack)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SavedPacksStateCopyWith<$Res>  {
   factory $SavedPacksStateCopyWith(SavedPacksState value, $Res Function(SavedPacksState) _then) = _$SavedPacksStateCopyWithImpl;
 @useResult
 $Res call({
- List<SavedPack> userPacks, List<SavedPack> publicPacks, bool isLoading, String? errorMessage, SavedPack? editingPack
+ List<SavedPack> userPacks, List<SavedPack> starredPacks, List<SavedPack> publicPacks, bool isLoading, String? errorMessage, SavedPack? editingPack
 });
 
 
@@ -62,9 +62,10 @@ class _$SavedPacksStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedPacksState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userPacks = null,Object? publicPacks = null,Object? isLoading = null,Object? errorMessage = freezed,Object? editingPack = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userPacks = null,Object? starredPacks = null,Object? publicPacks = null,Object? isLoading = null,Object? errorMessage = freezed,Object? editingPack = freezed,}) {
   return _then(_self.copyWith(
 userPacks: null == userPacks ? _self.userPacks : userPacks // ignore: cast_nullable_to_non_nullable
+as List<SavedPack>,starredPacks: null == starredPacks ? _self.starredPacks : starredPacks // ignore: cast_nullable_to_non_nullable
 as List<SavedPack>,publicPacks: null == publicPacks ? _self.publicPacks : publicPacks // ignore: cast_nullable_to_non_nullable
 as List<SavedPack>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -166,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedPack> userPacks,  List<SavedPack> publicPacks,  bool isLoading,  String? errorMessage,  SavedPack? editingPack)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedPack> userPacks,  List<SavedPack> starredPacks,  List<SavedPack> publicPacks,  bool isLoading,  String? errorMessage,  SavedPack? editingPack)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedPacksState() when $default != null:
-return $default(_that.userPacks,_that.publicPacks,_that.isLoading,_that.errorMessage,_that.editingPack);case _:
+return $default(_that.userPacks,_that.starredPacks,_that.publicPacks,_that.isLoading,_that.errorMessage,_that.editingPack);case _:
   return orElse();
 
 }
@@ -187,10 +188,10 @@ return $default(_that.userPacks,_that.publicPacks,_that.isLoading,_that.errorMes
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedPack> userPacks,  List<SavedPack> publicPacks,  bool isLoading,  String? errorMessage,  SavedPack? editingPack)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedPack> userPacks,  List<SavedPack> starredPacks,  List<SavedPack> publicPacks,  bool isLoading,  String? errorMessage,  SavedPack? editingPack)  $default,) {final _that = this;
 switch (_that) {
 case _SavedPacksState():
-return $default(_that.userPacks,_that.publicPacks,_that.isLoading,_that.errorMessage,_that.editingPack);case _:
+return $default(_that.userPacks,_that.starredPacks,_that.publicPacks,_that.isLoading,_that.errorMessage,_that.editingPack);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +208,10 @@ return $default(_that.userPacks,_that.publicPacks,_that.isLoading,_that.errorMes
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedPack> userPacks,  List<SavedPack> publicPacks,  bool isLoading,  String? errorMessage,  SavedPack? editingPack)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedPack> userPacks,  List<SavedPack> starredPacks,  List<SavedPack> publicPacks,  bool isLoading,  String? errorMessage,  SavedPack? editingPack)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedPacksState() when $default != null:
-return $default(_that.userPacks,_that.publicPacks,_that.isLoading,_that.errorMessage,_that.editingPack);case _:
+return $default(_that.userPacks,_that.starredPacks,_that.publicPacks,_that.isLoading,_that.errorMessage,_that.editingPack);case _:
   return null;
 
 }
@@ -222,7 +223,7 @@ return $default(_that.userPacks,_that.publicPacks,_that.isLoading,_that.errorMes
 
 
 class _SavedPacksState implements SavedPacksState {
-  const _SavedPacksState({final  List<SavedPack> userPacks = const [], final  List<SavedPack> publicPacks = const [], this.isLoading = false, this.errorMessage, this.editingPack}): _userPacks = userPacks,_publicPacks = publicPacks;
+  const _SavedPacksState({final  List<SavedPack> userPacks = const [], final  List<SavedPack> starredPacks = const [], final  List<SavedPack> publicPacks = const [], this.isLoading = false, this.errorMessage, this.editingPack}): _userPacks = userPacks,_starredPacks = starredPacks,_publicPacks = publicPacks;
   
 
  final  List<SavedPack> _userPacks;
@@ -230,6 +231,13 @@ class _SavedPacksState implements SavedPacksState {
   if (_userPacks is EqualUnmodifiableListView) return _userPacks;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_userPacks);
+}
+
+ final  List<SavedPack> _starredPacks;
+@override@JsonKey() List<SavedPack> get starredPacks {
+  if (_starredPacks is EqualUnmodifiableListView) return _starredPacks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_starredPacks);
 }
 
  final  List<SavedPack> _publicPacks;
@@ -253,16 +261,16 @@ _$SavedPacksStateCopyWith<_SavedPacksState> get copyWith => __$SavedPacksStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedPacksState&&const DeepCollectionEquality().equals(other._userPacks, _userPacks)&&const DeepCollectionEquality().equals(other._publicPacks, _publicPacks)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.editingPack, editingPack) || other.editingPack == editingPack));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedPacksState&&const DeepCollectionEquality().equals(other._userPacks, _userPacks)&&const DeepCollectionEquality().equals(other._starredPacks, _starredPacks)&&const DeepCollectionEquality().equals(other._publicPacks, _publicPacks)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.editingPack, editingPack) || other.editingPack == editingPack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userPacks),const DeepCollectionEquality().hash(_publicPacks),isLoading,errorMessage,editingPack);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userPacks),const DeepCollectionEquality().hash(_starredPacks),const DeepCollectionEquality().hash(_publicPacks),isLoading,errorMessage,editingPack);
 
 @override
 String toString() {
-  return 'SavedPacksState(userPacks: $userPacks, publicPacks: $publicPacks, isLoading: $isLoading, errorMessage: $errorMessage, editingPack: $editingPack)';
+  return 'SavedPacksState(userPacks: $userPacks, starredPacks: $starredPacks, publicPacks: $publicPacks, isLoading: $isLoading, errorMessage: $errorMessage, editingPack: $editingPack)';
 }
 
 
@@ -273,7 +281,7 @@ abstract mixin class _$SavedPacksStateCopyWith<$Res> implements $SavedPacksState
   factory _$SavedPacksStateCopyWith(_SavedPacksState value, $Res Function(_SavedPacksState) _then) = __$SavedPacksStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<SavedPack> userPacks, List<SavedPack> publicPacks, bool isLoading, String? errorMessage, SavedPack? editingPack
+ List<SavedPack> userPacks, List<SavedPack> starredPacks, List<SavedPack> publicPacks, bool isLoading, String? errorMessage, SavedPack? editingPack
 });
 
 
@@ -290,9 +298,10 @@ class __$SavedPacksStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedPacksState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userPacks = null,Object? publicPacks = null,Object? isLoading = null,Object? errorMessage = freezed,Object? editingPack = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userPacks = null,Object? starredPacks = null,Object? publicPacks = null,Object? isLoading = null,Object? errorMessage = freezed,Object? editingPack = freezed,}) {
   return _then(_SavedPacksState(
 userPacks: null == userPacks ? _self._userPacks : userPacks // ignore: cast_nullable_to_non_nullable
+as List<SavedPack>,starredPacks: null == starredPacks ? _self._starredPacks : starredPacks // ignore: cast_nullable_to_non_nullable
 as List<SavedPack>,publicPacks: null == publicPacks ? _self._publicPacks : publicPacks // ignore: cast_nullable_to_non_nullable
 as List<SavedPack>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable

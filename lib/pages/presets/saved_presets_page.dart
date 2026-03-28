@@ -67,6 +67,7 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
               if (isSignedIn)
                 SearchableItemList(
                   items: savedPresetsState.userPresets,
+                  starredItems: savedPresetsState.starredPresets,
                   isLoading: savedPresetsState.isLoading,
                   isOwned: true,
                   onRefresh: () => ref
@@ -74,7 +75,7 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
                       .fetchUserPresets(),
                   itemBuilder: (preset) => PresetCard(
                     preset: preset,
-                    isOwned: true,
+                    isOwned: preset.userId == authenticationState.user?.id,
                   ),
                   itemLabel: 'preset',
                 )

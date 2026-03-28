@@ -7,6 +7,7 @@ part 'saved_packs_state.freezed.dart';
 abstract class SavedPacksState with _$SavedPacksState {
   const factory SavedPacksState({
     @Default([]) List<SavedPack> userPacks,
+    @Default([]) List<SavedPack> starredPacks,
     @Default([]) List<SavedPack> publicPacks,
     @Default(false) bool isLoading,
     String? errorMessage,
