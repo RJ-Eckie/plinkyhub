@@ -16,38 +16,34 @@ const sampleSlotAddresses = [
 const maxSampleSize = 8 * 1024 * 1024;
 
 /// UF2 magic numbers.
-const _magic1 = 0x0A324655;
-const _magic2 = 0x9E5D5157;
-const _magicEnd = 0x0AB16F30;
+const magic1 = 0x0A324655;
+const magic2 = 0x9E5D5157;
+const magicEnd = 0x0AB16F30;
 
 /// Bytes of payload data per UF2 block.
-const _dataPerBlock = 256;
+const dataPerBlock = 256;
 
 /// Total size of one UF2 block.
-const _blockSize = 512;
+const uf2BlockSize = 512;
 
-/// Converts raw sample [data] into a UF2 file targeting the given [slotIndex]
-/// (0-7) in Plinky's sample memory.
+/// Converts raw [data] into a UF2 file targeting [baseAddress].
 ///
-/// Returns the UF2 file as bytes ready to be saved or flashed to a Plinky.
-Uint8List sampleToUf2(Uint8List data, {int slotIndex = 0}) {
-  assert(slotIndex >= 0 && slotIndex < 8, 'slotIndex must be 0-7');
-  assert(data.length <= maxSampleSize, 'Sample exceeds 8 MB limit');
-
-  final baseAddress = sampleSlotAddresses[slotIndex];
-  final totalBlocks = (data.length + _dataPerBlock - 1) ~/ _dataPerBlock;
-  final output = ByteData(totalBlocks * _blockSize);
+/// Each UF2 block carries [dataPerBlock] bytes of payload at incrementing
+/// addresses starting from [baseAddress].
+Uint8List dataToUf2(Uint8List data, int baseAddress) {
+  final totalBlocks = (data.length + dataPerBlock - 1) ~/ dataPerBlock;
+  final output = ByteData(totalBlocks * uf2BlockSize);
 
   for (var blockNum = 0; blockNum < totalBlocks; blockNum++) {
-    final offset = blockNum * _blockSize;
-    final dataOffset = blockNum * _dataPerBlock;
-    final dataLength = (dataOffset + _dataPerBlock <= data.length)
-        ? _dataPerBlock
+    final offset = blockNum * uf2BlockSize;
+    final dataOffset = blockNum * dataPerBlock;
+    final dataLength = (dataOffset + dataPerBlock <= data.length)
+        ? dataPerBlock
         : data.length - dataOffset;
 
     // Header
-    output.setUint32(offset + 0, _magic1, Endian.little);
-    output.setUint32(offset + 4, _magic2, Endian.little);
+    output.setUint32(offset + 0, magic1, Endian.little);
+    output.setUint32(offset + 4, magic2, Endian.little);
     output.setUint32(offset + 8, 0x00000000, Endian.little); // flags
     output.setUint32(
       offset + 12,
@@ -65,10 +61,21 @@ Uint8List sampleToUf2(Uint8List data, {int slotIndex = 0}) {
     }
 
     // Final magic
-    output.setUint32(offset + _blockSize - 4, _magicEnd, Endian.little);
+    output.setUint32(offset + uf2BlockSize - 4, magicEnd, Endian.little);
   }
 
   return output.buffer.asUint8List();
+}
+
+/// Converts raw sample [data] into a UF2 file targeting the given [slotIndex]
+/// (0-7) in Plinky's sample memory.
+///
+/// Returns the UF2 file as bytes ready to be saved or flashed to a Plinky.
+Uint8List sampleToUf2(Uint8List data, {int slotIndex = 0}) {
+  assert(slotIndex >= 0 && slotIndex < 8, 'slotIndex must be 0-7');
+  assert(data.length <= maxSampleSize, 'Sample exceeds 8 MB limit');
+
+  return dataToUf2(data, sampleSlotAddresses[slotIndex]);
 }
 
 /// Returns the UF2 file path for a given original sample [filePath].
