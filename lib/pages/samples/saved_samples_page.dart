@@ -49,7 +49,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
           tabs: const [
             Tab(text: 'My Samples'),
             Tab(text: 'Community Samples'),
-            Tab(text: 'Upload'),
+            Tab(text: 'Create Sample'),
           ],
         ),
         if (savedSamplesState.errorMessage != null)
@@ -104,7 +104,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                 )
               else
                 const SignInPrompt(
-                  message: 'Sign in to upload samples',
+                  message: 'Sign in to create samples',
                 ),
             ],
           ),
