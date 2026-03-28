@@ -42,7 +42,7 @@ class UsernameDateLine extends ConsumerWidget {
                 ref
                     .read(userProfileProvider.notifier)
                     .loadUserProfile(userId, username);
-                ref.read(selectedPageProvider.notifier).selected = 5;
+                ref.read(selectedPageProvider.notifier).selected = 6;
               },
                 child: Text(
                   username,
