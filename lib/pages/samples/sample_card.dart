@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
+import 'package:plinkyhub/pages/samples/report_sample_dialog.dart';
 import 'package:plinkyhub/pages/samples/sample_mode_selector.dart';
 import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
@@ -205,6 +206,17 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                       username: sample.username,
                       itemType: 'sample',
                       itemName: sample.name,
+                    ),
+                  if (!isOwned)
+                    IconButton(
+                      icon: const Icon(Icons.flag_outlined, size: 20),
+                      tooltip: 'Report sample',
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (context) => ReportSampleDialog(
+                          sampleId: sample.id,
+                        ),
+                      ),
                     ),
                   const Spacer(),
                   if (isOwned) ...[
