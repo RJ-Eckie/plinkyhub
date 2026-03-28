@@ -138,7 +138,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
             gridDelegate:
                 const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              childAspectRatio: 2.5,
+              mainAxisExtent: 64,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
