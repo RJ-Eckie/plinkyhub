@@ -12,6 +12,7 @@ import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class CreatePackTab extends ConsumerStatefulWidget {
@@ -26,9 +27,10 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   final _descriptionController = TextEditingController();
   final _youtubeUrlController = TextEditingController();
   bool _isPublic = false;
-  final List<({String? presetId, String? sampleId})> _slots = List.generate(
+  final List<({String? presetId, String? sampleId, String? patternId})> _slots =
+      List.generate(
     32,
-    (_) => (presetId: null, sampleId: null),
+    (_) => (presetId: null, sampleId: null, patternId: null),
   );
   String? _editingPackId;
   String? _wavetableId;
@@ -49,14 +51,18 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _youtubeUrlController.text = pack.youtubeUrl;
     _isPublic = pack.isPublic;
     _wavetableId = pack.wavetableId;
-    _patternId = pack.patternId;
+    _patternId = pack.slots
+        .where((slot) => slot.patternId != null)
+        .map((slot) => slot.patternId)
+        .firstOrNull;
     for (var i = 0; i < 32; i++) {
-      _slots[i] = (presetId: null, sampleId: null);
+      _slots[i] = (presetId: null, sampleId: null, patternId: null);
     }
     for (final slot in pack.slots) {
       _slots[slot.slotNumber] = (
         presetId: slot.presetId,
         sampleId: slot.sampleId,
+        patternId: slot.patternId,
       );
     }
   }
@@ -70,7 +76,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _wavetableId = null;
     _patternId = null;
     for (var i = 0; i < 32; i++) {
-      _slots[i] = (presetId: null, sampleId: null);
+      _slots[i] = (presetId: null, sampleId: null, patternId: null);
     }
   }
 
@@ -182,6 +188,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
                     _slots[slotIndex] = (
                       presetId: presetId,
                       sampleId: _slots[slotIndex].sampleId,
+                      patternId: _slots[slotIndex].patternId,
                     );
                   });
                 },
@@ -190,6 +197,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
                     _slots[slotIndex] = (
                       presetId: _slots[slotIndex].presetId,
                       sampleId: sampleId,
+                      patternId: _slots[slotIndex].patternId,
                     );
                   });
                 },
@@ -224,13 +232,47 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   }
 
   Future<void> _savePack() async {
-    final slots = <({int slotNumber, String? presetId, String? sampleId})>[];
+    final slots = <({
+      int slotNumber,
+      String? presetId,
+      String? sampleId,
+      String? patternId,
+    })>[];
+
+    // Preset slots (0-31).
     for (var i = 0; i < 32; i++) {
       slots.add((
-        slotNumber: i,
+        slotNumber: presetSlotStart + i,
         presetId: _slots[i].presetId,
-        sampleId: _slots[i].sampleId,
+        sampleId: null,
+        patternId: null,
       ));
+    }
+
+    // Pattern slot (32) for manual pack creation.
+    if (_patternId != null) {
+      slots.add((
+        slotNumber: patternSlotStart,
+        presetId: null,
+        sampleId: null,
+        patternId: _patternId,
+      ));
+    }
+
+    // Sample slots (56-63) from unique samples in presets.
+    final seenSampleIds = <String>{};
+    var sampleIndex = 0;
+    for (var i = 0; i < 32; i++) {
+      final sampleId = _slots[i].sampleId;
+      if (sampleId != null && seenSampleIds.add(sampleId)) {
+        slots.add((
+          slotNumber: sampleSlotStart + sampleIndex,
+          presetId: null,
+          sampleId: sampleId,
+          patternId: null,
+        ));
+        sampleIndex++;
+      }
     }
 
     if (_isPublic) {
@@ -239,16 +281,16 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         final summary = findPrivateItems(
           ref: ref,
           currentUserId: userId,
-          slots: _slots
+          slots: slots
               .map(
                 (slot) => (
                   presetId: slot.presetId,
                   sampleId: slot.sampleId,
+                  patternId: slot.patternId,
                 ),
               )
               .toList(),
           wavetableId: _wavetableId,
-          patternId: _patternId,
         );
 
         if (summary.hasPrivateItems && mounted) {
@@ -278,7 +320,6 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         isPublic: _isPublic,
         slots: slots,
         wavetableId: _wavetableId,
-        patternId: _patternId,
         youtubeUrl: _youtubeUrlController.text.trim(),
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -291,7 +332,6 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         isPublic: _isPublic,
         slots: slots,
         wavetableId: _wavetableId,
-        patternId: _patternId,
         youtubeUrl: _youtubeUrlController.text.trim(),
       );
       ScaffoldMessenger.of(context).showSnackBar(

@@ -154,6 +154,7 @@ class PackCard extends ConsumerWidget {
             (slot) => (
               presetId: slot.presetId,
               sampleId: slot.sampleId,
+              patternId: slot.patternId,
             ),
           )
           .toList();
@@ -162,7 +163,6 @@ class PackCard extends ConsumerWidget {
         currentUserId: userId,
         slots: slots,
         wavetableId: pack.wavetableId,
-        patternId: pack.patternId,
       );
 
       if (summary.hasPrivateItems) {

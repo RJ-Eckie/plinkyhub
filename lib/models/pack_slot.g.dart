@@ -12,6 +12,7 @@ _PackSlot _$PackSlotFromJson(Map<String, dynamic> json) => _PackSlot(
   slotNumber: (json['slot_number'] as num).toInt(),
   presetId: json['preset_id'] as String?,
   sampleId: json['sample_id'] as String?,
+  patternId: json['pattern_id'] as String?,
 );
 
 Map<String, dynamic> _$PackSlotToJson(_PackSlot instance) => <String, dynamic>{
@@ -20,4 +21,5 @@ Map<String, dynamic> _$PackSlotToJson(_PackSlot instance) => <String, dynamic>{
   'slot_number': instance.slotNumber,
   'preset_id': instance.presetId,
   'sample_id': instance.sampleId,
+  'pattern_id': instance.patternId,
 };

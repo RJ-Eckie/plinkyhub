@@ -16,34 +16,34 @@ class PrivateItemSummary {
   PrivateItemSummary({
     required this.presetIds,
     required this.sampleIds,
+    required this.patternIds,
     required this.wavetableId,
-    required this.patternId,
   });
 
   final List<String> presetIds;
   final List<String> sampleIds;
+  final List<String> patternIds;
   final String? wavetableId;
-  final String? patternId;
 
   bool get hasPrivateItems =>
       presetIds.isNotEmpty ||
       sampleIds.isNotEmpty ||
-      wavetableId != null ||
-      patternId != null;
+      patternIds.isNotEmpty ||
+      wavetableId != null;
 
   int get totalCount =>
       presetIds.length +
       sampleIds.length +
-      (wavetableId != null ? 1 : 0) +
-      (patternId != null ? 1 : 0);
+      patternIds.length +
+      (wavetableId != null ? 1 : 0);
 }
 
 PrivateItemSummary findPrivateItems({
   required WidgetRef ref,
   required String currentUserId,
-  required List<({String? presetId, String? sampleId})> slots,
+  required List<({String? presetId, String? sampleId, String? patternId})>
+      slots,
   required String? wavetableId,
-  required String? patternId,
 }) {
   final presetsState = ref.read(savedPresetsProvider);
   final samplesState = ref.read(savedSamplesProvider);
@@ -52,9 +52,11 @@ PrivateItemSummary findPrivateItems({
 
   final privatePresetIds = <String>[];
   final privateSampleIds = <String>[];
+  final privatePatternIds = <String>[];
 
   final seenPresetIds = <String>{};
   final seenSampleIds = <String>{};
+  final seenPatternIds = <String>{};
 
   for (final slot in slots) {
     if (slot.presetId != null && seenPresetIds.add(slot.presetId!)) {
@@ -77,6 +79,16 @@ PrivateItemSummary findPrivateItems({
         privateSampleIds.add(sample.id);
       }
     }
+    if (slot.patternId != null && seenPatternIds.add(slot.patternId!)) {
+      final pattern = patternsState.userPatterns
+          .where((p) => p.id == slot.patternId)
+          .firstOrNull;
+      if (pattern != null &&
+          pattern.userId == currentUserId &&
+          !pattern.isPublic) {
+        privatePatternIds.add(pattern.id);
+      }
+    }
   }
 
   String? privateWavetableId;
@@ -91,23 +103,11 @@ PrivateItemSummary findPrivateItems({
     }
   }
 
-  String? privatePatternId;
-  if (patternId != null) {
-    final pattern = patternsState.userPatterns
-        .where((p) => p.id == patternId)
-        .firstOrNull;
-    if (pattern != null &&
-        pattern.userId == currentUserId &&
-        !pattern.isPublic) {
-      privatePatternId = patternId;
-    }
-  }
-
   return PrivateItemSummary(
     presetIds: privatePresetIds,
     sampleIds: privateSampleIds,
+    patternIds: privatePatternIds,
     wavetableId: privateWavetableId,
-    patternId: privatePatternId,
   );
 }
 
@@ -124,11 +124,12 @@ Future<SharingCheckResult?> showSharingConflictDialog(
     final count = summary.sampleIds.length;
     parts.add('$count sample${count == 1 ? '' : 's'}');
   }
+  if (summary.patternIds.isNotEmpty) {
+    final count = summary.patternIds.length;
+    parts.add('$count pattern${count == 1 ? '' : 's'}');
+  }
   if (summary.wavetableId != null) {
     parts.add('1 wavetable');
-  }
-  if (summary.patternId != null) {
-    parts.add('1 pattern');
   }
 
   return showDialog<SharingCheckResult>(
@@ -184,6 +185,15 @@ Future<void> makeItemsPublic(PrivateItemSummary summary) async {
           summary.sampleIds,
         );
   }
+  if (summary.patternIds.isNotEmpty) {
+    await supabase
+        .from('patterns')
+        .update({'is_public': true})
+        .inFilter(
+          'id',
+          summary.patternIds,
+        );
+  }
   if (summary.wavetableId != null) {
     await supabase
         .from('wavetables')
@@ -191,15 +201,6 @@ Future<void> makeItemsPublic(PrivateItemSummary summary) async {
         .eq(
           'id',
           summary.wavetableId!,
-        );
-  }
-  if (summary.patternId != null) {
-    await supabase
-        .from('patterns')
-        .update({'is_public': true})
-        .eq(
-          'id',
-          summary.patternId!,
         );
   }
 }

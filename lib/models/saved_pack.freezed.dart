@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedPack {
 
- String get id; String get userId; String get name; DateTime get createdAt; DateTime get updatedAt; String get description; bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(readValue: _readStarCount) int get starCount; bool get isStarred;@JsonKey(name: 'pack_slots') List<PackSlot> get slots; String? get wavetableId; String? get patternId; String get youtubeUrl;
+ String get id; String get userId; String get name; DateTime get createdAt; DateTime get updatedAt; String get description; bool get isPublic;@JsonKey(readValue: _readUsername) String get username;@JsonKey(readValue: _readStarCount) int get starCount; bool get isStarred;@JsonKey(name: 'pack_slots') List<PackSlot> get slots; String? get wavetableId; String get youtubeUrl;
 /// Create a copy of SavedPack
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SavedPackCopyWith<SavedPack> get copyWith => _$SavedPackCopyWithImpl<SavedPack>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedPack&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.username, username) || other.username == username)&&(identical(other.starCount, starCount) || other.starCount == starCount)&&(identical(other.isStarred, isStarred) || other.isStarred == isStarred)&&const DeepCollectionEquality().equals(other.slots, slots)&&(identical(other.wavetableId, wavetableId) || other.wavetableId == wavetableId)&&(identical(other.patternId, patternId) || other.patternId == patternId)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedPack&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.username, username) || other.username == username)&&(identical(other.starCount, starCount) || other.starCount == starCount)&&(identical(other.isStarred, isStarred) || other.isStarred == isStarred)&&const DeepCollectionEquality().equals(other.slots, slots)&&(identical(other.wavetableId, wavetableId) || other.wavetableId == wavetableId)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,name,createdAt,updatedAt,description,isPublic,username,starCount,isStarred,const DeepCollectionEquality().hash(slots),wavetableId,patternId,youtubeUrl);
+int get hashCode => Object.hash(runtimeType,id,userId,name,createdAt,updatedAt,description,isPublic,username,starCount,isStarred,const DeepCollectionEquality().hash(slots),wavetableId,youtubeUrl);
 
 @override
 String toString() {
-  return 'SavedPack(id: $id, userId: $userId, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isPublic: $isPublic, username: $username, starCount: $starCount, isStarred: $isStarred, slots: $slots, wavetableId: $wavetableId, patternId: $patternId, youtubeUrl: $youtubeUrl)';
+  return 'SavedPack(id: $id, userId: $userId, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isPublic: $isPublic, username: $username, starCount: $starCount, isStarred: $isStarred, slots: $slots, wavetableId: $wavetableId, youtubeUrl: $youtubeUrl)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $SavedPackCopyWith<$Res>  {
   factory $SavedPackCopyWith(SavedPack value, $Res Function(SavedPack) _then) = _$SavedPackCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String name, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots, String? wavetableId, String? patternId, String youtubeUrl
+ String id, String userId, String name, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots, String? wavetableId, String youtubeUrl
 });
 
 
@@ -65,7 +65,7 @@ class _$SavedPackCopyWithImpl<$Res>
 
 /// Create a copy of SavedPack
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isPublic = null,Object? username = null,Object? starCount = null,Object? isStarred = null,Object? slots = null,Object? wavetableId = freezed,Object? patternId = freezed,Object? youtubeUrl = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isPublic = null,Object? username = null,Object? starCount = null,Object? isStarred = null,Object? slots = null,Object? wavetableId = freezed,Object? youtubeUrl = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -79,7 +79,6 @@ as String,starCount: null == starCount ? _self.starCount : starCount // ignore: 
 as int,isStarred: null == isStarred ? _self.isStarred : isStarred // ignore: cast_nullable_to_non_nullable
 as bool,slots: null == slots ? _self.slots : slots // ignore: cast_nullable_to_non_nullable
 as List<PackSlot>,wavetableId: freezed == wavetableId ? _self.wavetableId : wavetableId // ignore: cast_nullable_to_non_nullable
-as String?,patternId: freezed == patternId ? _self.patternId : patternId // ignore: cast_nullable_to_non_nullable
 as String?,youtubeUrl: null == youtubeUrl ? _self.youtubeUrl : youtubeUrl // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -166,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots,  String? wavetableId,  String? patternId,  String youtubeUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots,  String? wavetableId,  String youtubeUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedPack() when $default != null:
-return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots,_that.wavetableId,_that.patternId,_that.youtubeUrl);case _:
+return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots,_that.wavetableId,_that.youtubeUrl);case _:
   return orElse();
 
 }
@@ -187,10 +186,10 @@ return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots,  String? wavetableId,  String? patternId,  String youtubeUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots,  String? wavetableId,  String youtubeUrl)  $default,) {final _that = this;
 switch (_that) {
 case _SavedPack():
-return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots,_that.wavetableId,_that.patternId,_that.youtubeUrl);case _:
+return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots,_that.wavetableId,_that.youtubeUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +206,10 @@ return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots,  String? wavetableId,  String? patternId,  String youtubeUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String name,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isPublic, @JsonKey(readValue: _readUsername)  String username, @JsonKey(readValue: _readStarCount)  int starCount,  bool isStarred, @JsonKey(name: 'pack_slots')  List<PackSlot> slots,  String? wavetableId,  String youtubeUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedPack() when $default != null:
-return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots,_that.wavetableId,_that.patternId,_that.youtubeUrl);case _:
+return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt,_that.description,_that.isPublic,_that.username,_that.starCount,_that.isStarred,_that.slots,_that.wavetableId,_that.youtubeUrl);case _:
   return null;
 
 }
@@ -222,7 +221,7 @@ return $default(_that.id,_that.userId,_that.name,_that.createdAt,_that.updatedAt
 @JsonSerializable()
 
 class _SavedPack implements SavedPack {
-  const _SavedPack({required this.id, required this.userId, required this.name, required this.createdAt, required this.updatedAt, this.description = '', this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(readValue: _readStarCount) this.starCount = 0, this.isStarred = false, @JsonKey(name: 'pack_slots') final  List<PackSlot> slots = const [], this.wavetableId, this.patternId, this.youtubeUrl = ''}): _slots = slots;
+  const _SavedPack({required this.id, required this.userId, required this.name, required this.createdAt, required this.updatedAt, this.description = '', this.isPublic = false, @JsonKey(readValue: _readUsername) this.username = '', @JsonKey(readValue: _readStarCount) this.starCount = 0, this.isStarred = false, @JsonKey(name: 'pack_slots') final  List<PackSlot> slots = const [], this.wavetableId, this.youtubeUrl = ''}): _slots = slots;
   factory _SavedPack.fromJson(Map<String, dynamic> json) => _$SavedPackFromJson(json);
 
 @override final  String id;
@@ -243,7 +242,6 @@ class _SavedPack implements SavedPack {
 }
 
 @override final  String? wavetableId;
-@override final  String? patternId;
 @override@JsonKey() final  String youtubeUrl;
 
 /// Create a copy of SavedPack
@@ -259,16 +257,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedPack&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.username, username) || other.username == username)&&(identical(other.starCount, starCount) || other.starCount == starCount)&&(identical(other.isStarred, isStarred) || other.isStarred == isStarred)&&const DeepCollectionEquality().equals(other._slots, _slots)&&(identical(other.wavetableId, wavetableId) || other.wavetableId == wavetableId)&&(identical(other.patternId, patternId) || other.patternId == patternId)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedPack&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.username, username) || other.username == username)&&(identical(other.starCount, starCount) || other.starCount == starCount)&&(identical(other.isStarred, isStarred) || other.isStarred == isStarred)&&const DeepCollectionEquality().equals(other._slots, _slots)&&(identical(other.wavetableId, wavetableId) || other.wavetableId == wavetableId)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,name,createdAt,updatedAt,description,isPublic,username,starCount,isStarred,const DeepCollectionEquality().hash(_slots),wavetableId,patternId,youtubeUrl);
+int get hashCode => Object.hash(runtimeType,id,userId,name,createdAt,updatedAt,description,isPublic,username,starCount,isStarred,const DeepCollectionEquality().hash(_slots),wavetableId,youtubeUrl);
 
 @override
 String toString() {
-  return 'SavedPack(id: $id, userId: $userId, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isPublic: $isPublic, username: $username, starCount: $starCount, isStarred: $isStarred, slots: $slots, wavetableId: $wavetableId, patternId: $patternId, youtubeUrl: $youtubeUrl)';
+  return 'SavedPack(id: $id, userId: $userId, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isPublic: $isPublic, username: $username, starCount: $starCount, isStarred: $isStarred, slots: $slots, wavetableId: $wavetableId, youtubeUrl: $youtubeUrl)';
 }
 
 
@@ -279,7 +277,7 @@ abstract mixin class _$SavedPackCopyWith<$Res> implements $SavedPackCopyWith<$Re
   factory _$SavedPackCopyWith(_SavedPack value, $Res Function(_SavedPack) _then) = __$SavedPackCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String name, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots, String? wavetableId, String? patternId, String youtubeUrl
+ String id, String userId, String name, DateTime createdAt, DateTime updatedAt, String description, bool isPublic,@JsonKey(readValue: _readUsername) String username,@JsonKey(readValue: _readStarCount) int starCount, bool isStarred,@JsonKey(name: 'pack_slots') List<PackSlot> slots, String? wavetableId, String youtubeUrl
 });
 
 
@@ -296,7 +294,7 @@ class __$SavedPackCopyWithImpl<$Res>
 
 /// Create a copy of SavedPack
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isPublic = null,Object? username = null,Object? starCount = null,Object? isStarred = null,Object? slots = null,Object? wavetableId = freezed,Object? patternId = freezed,Object? youtubeUrl = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isPublic = null,Object? username = null,Object? starCount = null,Object? isStarred = null,Object? slots = null,Object? wavetableId = freezed,Object? youtubeUrl = null,}) {
   return _then(_SavedPack(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -310,7 +308,6 @@ as String,starCount: null == starCount ? _self.starCount : starCount // ignore: 
 as int,isStarred: null == isStarred ? _self.isStarred : isStarred // ignore: cast_nullable_to_non_nullable
 as bool,slots: null == slots ? _self._slots : slots // ignore: cast_nullable_to_non_nullable
 as List<PackSlot>,wavetableId: freezed == wavetableId ? _self.wavetableId : wavetableId // ignore: cast_nullable_to_non_nullable
-as String?,patternId: freezed == patternId ? _self.patternId : patternId // ignore: cast_nullable_to_non_nullable
 as String?,youtubeUrl: null == youtubeUrl ? _self.youtubeUrl : youtubeUrl // ignore: cast_nullable_to_non_nullable
 as String,
   ));

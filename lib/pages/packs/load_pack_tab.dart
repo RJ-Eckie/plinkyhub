@@ -60,10 +60,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     text: 'Wavetable',
   );
   final _wavetableDescriptionController = TextEditingController();
-  final _patternNameController = TextEditingController(
-    text: 'Patterns',
-  );
-  final _patternDescriptionController = TextEditingController();
+  final _patternNames = <int, TextEditingController>{};
+  final _patternDescriptions = <int, TextEditingController>{};
   bool _includeWavetableInPack = true;
   bool _includePatternsInPack = true;
 
@@ -75,8 +73,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     _packDescriptionController.dispose();
     _wavetableNameController.dispose();
     _wavetableDescriptionController.dispose();
-    _patternNameController.dispose();
-    _patternDescriptionController.dispose();
+    for (final controller in _patternNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _patternDescriptions.values) {
+      controller.dispose();
+    }
     for (final controller in _presetNames.values) {
       controller.dispose();
     }
@@ -105,6 +107,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     for (final controller in _sampleDescriptions.values) {
       controller.dispose();
     }
+    for (final controller in _patternNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _patternDescriptions.values) {
+      controller.dispose();
+    }
     setState(() {
       _step = _LoadStep.select;
       _statusMessage = '';
@@ -122,10 +130,10 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _presetCategories.clear();
       _sampleNames.clear();
       _sampleDescriptions.clear();
+      _patternNames.clear();
+      _patternDescriptions.clear();
       _wavetableNameController.text = 'Wavetable';
       _wavetableDescriptionController.clear();
-      _patternNameController.text = 'Patterns';
-      _patternDescriptionController.clear();
       _includeWavetableInPack = true;
       _includePatternsInPack = true;
     });
@@ -262,12 +270,15 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         _wavetableDescriptionController.clear();
       }
 
-      final hasPatterns = parsed.nonEmptyPatternCount > 0;
-      _includePatternsInPack = hasPatterns;
-      if (hasPatterns) {
-        _patternNameController.text = 'Patterns';
-        _patternDescriptionController.clear();
+      _patternNames.clear();
+      _patternDescriptions.clear();
+      for (final patternIndex in parsed.nonEmptyPatternIndices) {
+        _patternNames[patternIndex] = TextEditingController(
+          text: 'Pattern ${patternIndex + 1}',
+        );
+        _patternDescriptions[patternIndex] = TextEditingController();
       }
+      _includePatternsInPack = _patternNames.isNotEmpty;
 
       setState(() {
         _step = _LoadStep.review;
@@ -389,40 +400,62 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         wavetableId = wavetableResponse['id'] as String;
       }
 
-      // Upload patterns (serialized pattern quarters from PRESETS.UF2).
-      String? patternId;
-      if (_includePatternsInPack &&
-          _patternQuarters.any((q) => q != null)) {
-        setState(() {
-          _statusMessage = 'Uploading patterns...';
-        });
+      // Upload individual patterns.
+      final patternIdByIndex = <int, String>{};
+      if (_includePatternsInPack) {
+        for (final entry in _patternNames.entries) {
+          final patternIndex = entry.key;
+          final name = entry.value.text.trim();
 
-        final patternBlob = serializePatternQuarters(_patternQuarters);
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final patternPath = '$userId/patterns_$timestamp.bin';
+          setState(() {
+            _statusMessage = 'Uploading pattern "$name"...';
+          });
 
-        await _supabase.storage
-            .from('patterns')
-            .uploadBinary(
-              patternPath,
-              patternBlob,
-              fileOptions: const FileOptions(upsert: true),
-            );
+          // Extract this pattern's 4 quarters.
+          final quarterStart = patternIndex * 4;
+          final quarters = List<Uint8List?>.filled(
+            _patternQuarters.length,
+            null,
+          );
+          for (var q = 0; q < 4; q++) {
+            final index = quarterStart + q;
+            if (index < _patternQuarters.length) {
+              quarters[index] = _patternQuarters[index];
+            }
+          }
 
-        final patternWrite = PatternWrite(
-          userId: userId,
-          name: _patternNameController.text.trim(),
-          filePath: patternPath,
-          description: _patternDescriptionController.text.trim(),
-          isPublic: _packIsPublic,
-        );
+          final patternBlob = serializePatternQuarters(quarters);
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final patternPath =
+              '$userId/pattern${patternIndex}_$timestamp.bin';
 
-        final patternResponse = await _supabase
-            .from('patterns')
-            .insert(patternWrite.toJson())
-            .select('id')
-            .single();
-        patternId = patternResponse['id'] as String;
+          await _supabase.storage
+              .from('patterns')
+              .uploadBinary(
+                patternPath,
+                patternBlob,
+                fileOptions: const FileOptions(upsert: true),
+              );
+
+          final description =
+              _patternDescriptions[patternIndex]?.text.trim() ?? '';
+
+          final patternWrite = PatternWrite(
+            userId: userId,
+            name: name,
+            filePath: patternPath,
+            description: description,
+            isPublic: _packIsPublic,
+          );
+
+          final patternResponse = await _supabase
+              .from('patterns')
+              .insert(patternWrite.toJson())
+              .select('id')
+              .single();
+          patternIdByIndex[patternIndex] =
+              patternResponse['id'] as String;
+        }
       }
 
       // Upload presets.
@@ -472,7 +505,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         description: _packDescriptionController.text.trim(),
         isPublic: _packIsPublic,
         wavetableId: _includeWavetableInPack ? wavetableId : null,
-        patternId: _includePatternsInPack ? patternId : null,
       );
       final packResponse = await _supabase
           .from('packs')
@@ -481,38 +513,43 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           .single();
       final packId = packResponse['id'] as String;
 
-      // Insert pack slots.
+      // Insert pack slots (presets: 0-31, patterns: 32-55, samples: 56-63).
       final slotRows = <Map<String, dynamic>>[];
+
+      // Preset slots (0-31).
       for (var i = 0; i < presetCount; i++) {
         final presetId = presetIdBySlot[i];
-        String? sampleId;
         if (presetId != null) {
-          final presetBytes = _presetDataList[i];
-          if (presetBytes != null) {
-            final preset = Preset(presetBytes.buffer);
-            if (preset.usesSample) {
-              for (final entry in sampleIdBySlot.entries) {
-                final raw = sampleSlotToRaw(entry.key);
-                final presetRaw = preset.parameterById('P_SAMPLE')?.value;
-                if (presetRaw != null && (presetRaw - raw).abs() < 2) {
-                  sampleId = entry.value;
-                  break;
-                }
-              }
-            }
-          }
-        }
-
-        if (presetId != null || sampleId != null) {
           slotRows.add(
             PackSlotWrite(
               packId: packId,
-              slotNumber: i,
+              slotNumber: presetSlotStart + i,
               presetId: presetId,
-              sampleId: sampleId,
             ).toJson(),
           );
         }
+      }
+
+      // Pattern slots (32-55).
+      for (final entry in patternIdByIndex.entries) {
+        slotRows.add(
+          PackSlotWrite(
+            packId: packId,
+            slotNumber: patternSlotStart + entry.key,
+            patternId: entry.value,
+          ).toJson(),
+        );
+      }
+
+      // Sample slots (56-63).
+      for (final entry in sampleIdBySlot.entries) {
+        slotRows.add(
+          PackSlotWrite(
+            packId: packId,
+            slotNumber: sampleSlotStart + entry.key,
+            sampleId: entry.value,
+          ).toJson(),
+        );
       }
 
       if (slotRows.isNotEmpty) {
@@ -575,10 +612,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               includeWavetable: _includeWavetableInPack,
               onIncludeWavetableChanged: (value) =>
                   setState(() => _includeWavetableInPack = value),
-              patternNameController: _patternNameController,
-              patternDescriptionController:
-                  _patternDescriptionController,
-              hasPatterns: _patternQuarters.any((q) => q != null),
+              patternNames: _patternNames,
+              patternDescriptions: _patternDescriptions,
               includePatterns: _includePatternsInPack,
               onIncludePatternsChanged: (value) =>
                   setState(() => _includePatternsInPack = value),
@@ -664,9 +699,8 @@ class _LoadReviewStep extends StatelessWidget {
     required this.hasWavetable,
     required this.includeWavetable,
     required this.onIncludeWavetableChanged,
-    required this.patternNameController,
-    required this.patternDescriptionController,
-    required this.hasPatterns,
+    required this.patternNames,
+    required this.patternDescriptions,
     required this.includePatterns,
     required this.onIncludePatternsChanged,
     required this.onBack,
@@ -689,9 +723,8 @@ class _LoadReviewStep extends StatelessWidget {
   final bool hasWavetable;
   final bool includeWavetable;
   final ValueChanged<bool> onIncludeWavetableChanged;
-  final TextEditingController patternNameController;
-  final TextEditingController patternDescriptionController;
-  final bool hasPatterns;
+  final Map<int, TextEditingController> patternNames;
+  final Map<int, TextEditingController> patternDescriptions;
   final bool includePatterns;
   final ValueChanged<bool> onIncludePatternsChanged;
   final VoidCallback onBack;
@@ -706,8 +739,10 @@ class _LoadReviewStep extends StatelessWidget {
         Text(
           'Found ${presetNames.length} presets, '
           '${sampleNames.length} samples'
-          '${hasWavetable ? ', a wavetable' : ''}'
-          '${hasPatterns ? '${hasWavetable ? ',' : ''} and patterns' : ''} '
+          '${patternNames.isNotEmpty
+              ? ', ${patternNames.length} patterns'
+              : ''}'
+          '${hasWavetable ? ' and a wavetable' : ''} '
           'on the Plinky.\n\n'
           'Review the names and sharing '
           'settings below, then save.',
@@ -778,7 +813,7 @@ class _LoadReviewStep extends StatelessWidget {
               onEdit: () => _showWavetableEditDialog(context),
             ),
         ],
-        if (hasPatterns) ...[
+        if (patternNames.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text(
             'Patterns',
@@ -790,11 +825,15 @@ class _LoadReviewStep extends StatelessWidget {
             onChanged: onIncludePatternsChanged,
           ),
           if (includePatterns)
-            _NamedItemRow(
-              controller: patternNameController,
-              label: 'Patterns name',
-              onEdit: () => _showPatternEditDialog(context),
-            ),
+            for (final patternIndex in patternNames.keys.toList()..sort())
+              _NamedItemRow(
+                controller: patternNames[patternIndex]!,
+                label: 'Pattern ${patternIndex + 1}',
+                onEdit: () => _showPatternEditDialog(
+                  context,
+                  patternIndex,
+                ),
+              ),
         ],
         if (presetNames.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -862,13 +901,13 @@ class _LoadReviewStep extends StatelessWidget {
     );
   }
 
-  void _showPatternEditDialog(BuildContext context) {
+  void _showPatternEditDialog(BuildContext context, int patternIndex) {
     showDialog<void>(
       context: context,
       builder: (context) => _NameDescriptionEditDialog(
-        title: 'Edit Patterns',
-        nameController: patternNameController,
-        descriptionController: patternDescriptionController,
+        title: 'Edit Pattern',
+        nameController: patternNames[patternIndex]!,
+        descriptionController: patternDescriptions[patternIndex]!,
       ),
     );
   }

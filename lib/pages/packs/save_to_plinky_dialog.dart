@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
@@ -62,7 +63,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
   ) async {
     final slots = widget.pack.slots;
 
-    // Collect unique patch IDs and sample IDs from the pack.
+    // Collect unique IDs from the pack slots by range.
     final presetIds = <String>{};
     final sampleIds = <String>{};
     for (final slot in slots) {
@@ -107,18 +108,20 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       }
     }
 
-    // Assign unique samples to Plinky sample slots (0-7).
-    final uniqueSampleIds = sampleIds.toList();
-    if (uniqueSampleIds.length > sampleCount) {
+    // Build sample slot mapping from pack slots (56-63 → Plinky 0-7).
+    final sampleSlotMapping = <String, int>{};
+    for (final slot in slots) {
+      if (slot.sampleId != null &&
+          slot.slotNumber >= sampleSlotStart) {
+        final plinkySlot = slot.slotNumber - sampleSlotStart;
+        sampleSlotMapping[slot.sampleId!] = plinkySlot;
+      }
+    }
+    if (sampleSlotMapping.length > sampleCount) {
       throw Exception(
-        'Pack has ${uniqueSampleIds.length} samples, '
+        'Pack has ${sampleSlotMapping.length} samples, '
         'but Plinky only supports $sampleCount.',
       );
-    }
-    // Map from database sample ID → Plinky slot index (0-7).
-    final sampleSlotMapping = <String, int>{};
-    for (var i = 0; i < uniqueSampleIds.length; i++) {
-      sampleSlotMapping[uniqueSampleIds[i]] = i;
     }
 
     // Download sample PCM files and build SampleInfo structs.
@@ -134,7 +137,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
 
       setState(() {
         _statusMessage =
-            'Downloading sample ${slotIndex + 1}/${uniqueSampleIds.length}...';
+            'Downloading sample ${slotIndex + 1}/${sampleSlotMapping.length}...';
       });
 
       final pcmFilePath = metadata['pcm_file_path'] as String;
@@ -168,7 +171,8 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
     setState(() => _statusMessage = 'Generating PRESETS.UF2...');
     final presets = List<Uint8List?>.filled(presetCount, null);
     for (final slot in slots) {
-      if (slot.slotNumber < 0 || slot.slotNumber >= presetCount) {
+      if (slot.slotNumber < presetSlotStart ||
+          slot.slotNumber >= patternSlotStart) {
         continue;
       }
       if (slot.presetId == null) {
@@ -182,27 +186,59 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       // Clone the preset bytes so we can modify P_SAMPLE.
       final presetBytes = Uint8List.fromList(originalPresetBytes);
 
-      if (slot.sampleId != null &&
-          sampleSlotMapping.containsKey(slot.sampleId)) {
-        final firmwareSlot = sampleSlotMapping[slot.sampleId]!;
-        setPresetSampleSlot(presetBytes, firmwareSlot);
+      // Find the sample for this preset via its P_SAMPLE parameter.
+      final preset = Preset(presetBytes.buffer);
+      if (preset.usesSample) {
+        for (final entry in sampleSlotMapping.entries) {
+          final raw = sampleSlotToRaw(entry.value);
+          final presetRaw =
+              preset.parameterById('P_SAMPLE')?.value;
+          if (presetRaw != null &&
+              (presetRaw - raw).abs() < 2) {
+            setPresetSampleSlot(presetBytes, entry.value);
+            break;
+          }
+        }
       }
 
-      presets[slot.slotNumber] = presetBytes;
+      presets[slot.slotNumber - presetSlotStart] = presetBytes;
     }
 
-    // Fetch pattern quarter data if the pack has patterns.
+    // Fetch pattern quarter data from slots (32-55).
     List<Uint8List?>? patternQuarters;
-    if (widget.pack.patternId != null) {
+    final patternSlots = slots
+        .where(
+          (slot) =>
+              slot.patternId != null &&
+              slot.slotNumber >= patternSlotStart &&
+              slot.slotNumber < sampleSlotStart,
+        )
+        .toList();
+    if (patternSlots.isNotEmpty) {
       setState(() => _statusMessage = 'Fetching patterns...');
-      final patternFilePath = await _fetchFilePath(
-        'patterns',
-        widget.pack.patternId!,
+      patternQuarters = List<Uint8List?>.filled(
+        patternCount * 4,
+        null,
       );
-      final patternBlob = await _supabase.storage
-          .from('patterns')
-          .download(patternFilePath);
-      patternQuarters = deserializePatternQuarters(patternBlob);
+      for (final slot in patternSlots) {
+        final patternFilePath = await _fetchFilePath(
+          'patterns',
+          slot.patternId!,
+        );
+        final patternBlob = await _supabase.storage
+            .from('patterns')
+            .download(patternFilePath);
+        final quarters = deserializePatternQuarters(patternBlob);
+        // Place this pattern's quarters at its Plinky index.
+        final patternIndex = slot.slotNumber - patternSlotStart;
+        final baseIndex = patternIndex * 4;
+        for (var q = 0; q < 4; q++) {
+          if (baseIndex + q < patternQuarters.length &&
+              q < quarters.length) {
+            patternQuarters[baseIndex + q] = quarters[q];
+          }
+        }
+      }
     }
 
     // Generate PRESETS.UF2 (includes presets, samples, and patterns).

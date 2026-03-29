@@ -44,7 +44,9 @@ List<SavedPack> findPacksUsingPattern(WidgetRef ref, String patternId) {
   return ref
       .read(savedPacksProvider)
       .userPacks
-      .where((pack) => pack.patternId == patternId)
+      .where(
+        (pack) => pack.slots.any((slot) => slot.patternId == patternId),
+      )
       .toList();
 }
 

@@ -7,6 +7,14 @@ import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// A slot entry for creating or updating a pack.
+typedef PackSlotEntry = ({
+  int slotNumber,
+  String? presetId,
+  String? sampleId,
+  String? patternId,
+});
+
 final savedPacksProvider =
     NotifierProvider<SavedPacksNotifier, SavedPacksState>(
       SavedPacksNotifier.new,
@@ -129,11 +137,10 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
   Future<void> savePack(
     String name, {
-    required List<({int slotNumber, String? presetId, String? sampleId})> slots,
+    required List<PackSlotEntry> slots,
     String description = '',
     bool isPublic = false,
     String? wavetableId,
-    String? patternId,
     String youtubeUrl = '',
   }) async {
     final userId = ref.read(authenticationProvider).user?.id;
@@ -149,7 +156,6 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         description: description,
         isPublic: isPublic,
         wavetableId: wavetableId,
-        patternId: patternId,
         youtubeUrl: youtubeUrl,
       );
       final packResponse = await _supabase
@@ -203,16 +209,22 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
   Future<void> _insertSlots(
     String packId,
-    List<({int slotNumber, String? presetId, String? sampleId})> slots,
+    List<PackSlotEntry> slots,
   ) async {
     final slotRows = slots
-        .where((slot) => slot.presetId != null || slot.sampleId != null)
+        .where(
+          (slot) =>
+              slot.presetId != null ||
+              slot.sampleId != null ||
+              slot.patternId != null,
+        )
         .map(
           (slot) => PackSlotWrite(
             packId: packId,
             slotNumber: slot.slotNumber,
             presetId: slot.presetId,
             sampleId: slot.sampleId,
+            patternId: slot.patternId,
           ).toJson(),
         )
         .toList();
@@ -227,9 +239,8 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     required String name,
     required String description,
     required bool isPublic,
-    required List<({int slotNumber, String? presetId, String? sampleId})> slots,
+    required List<PackSlotEntry> slots,
     String? wavetableId,
-    String? patternId,
     String youtubeUrl = '',
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -245,7 +256,6 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         description: description,
         isPublic: isPublic,
         wavetableId: wavetableId,
-        patternId: patternId,
         youtubeUrl: youtubeUrl,
       );
       await _supabase.from('packs').update(write.toJson()).eq('id', id);

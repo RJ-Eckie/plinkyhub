@@ -10,6 +10,7 @@ abstract class PackSlotWrite with _$PackSlotWrite {
     required int slotNumber,
     String? presetId,
     String? sampleId,
+    String? patternId,
   }) = _PackSlotWrite;
 
   factory PackSlotWrite.fromJson(Map<String, dynamic> json) =>

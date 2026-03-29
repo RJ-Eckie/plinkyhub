@@ -11,7 +11,6 @@ abstract class PackWrite with _$PackWrite {
     @Default('') String description,
     @Default(false) bool isPublic,
     String? wavetableId,
-    String? patternId,
     @Default('') String youtubeUrl,
   }) = _PackWrite;
 

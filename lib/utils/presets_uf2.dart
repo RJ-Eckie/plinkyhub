@@ -42,6 +42,18 @@ const sampleCount = 8;
 /// Number of patterns on Plinky.
 const patternCount = 24;
 
+// -- Pack slot ranges --
+// Slots 0-31: presets, 32-55: patterns, 56-63: samples.
+
+/// First pack slot number for presets.
+const presetSlotStart = 0;
+
+/// First pack slot number for patterns.
+const patternSlotStart = presetCount;
+
+/// First pack slot number for samples.
+const sampleSlotStart = presetCount + patternCount;
+
 /// Number of quarters per pattern.
 const _quartersPerPattern = 4;
 

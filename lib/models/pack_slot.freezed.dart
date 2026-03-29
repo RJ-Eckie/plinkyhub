@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PackSlot {
 
- String get id; String get packId; int get slotNumber; String? get presetId; String? get sampleId;
+ String get id; String get packId; int get slotNumber; String? get presetId; String? get sampleId; String? get patternId;
 /// Create a copy of PackSlot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PackSlotCopyWith<PackSlot> get copyWith => _$PackSlotCopyWithImpl<PackSlot>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackSlot&&(identical(other.id, id) || other.id == id)&&(identical(other.packId, packId) || other.packId == packId)&&(identical(other.slotNumber, slotNumber) || other.slotNumber == slotNumber)&&(identical(other.presetId, presetId) || other.presetId == presetId)&&(identical(other.sampleId, sampleId) || other.sampleId == sampleId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackSlot&&(identical(other.id, id) || other.id == id)&&(identical(other.packId, packId) || other.packId == packId)&&(identical(other.slotNumber, slotNumber) || other.slotNumber == slotNumber)&&(identical(other.presetId, presetId) || other.presetId == presetId)&&(identical(other.sampleId, sampleId) || other.sampleId == sampleId)&&(identical(other.patternId, patternId) || other.patternId == patternId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,packId,slotNumber,presetId,sampleId);
+int get hashCode => Object.hash(runtimeType,id,packId,slotNumber,presetId,sampleId,patternId);
 
 @override
 String toString() {
-  return 'PackSlot(id: $id, packId: $packId, slotNumber: $slotNumber, presetId: $presetId, sampleId: $sampleId)';
+  return 'PackSlot(id: $id, packId: $packId, slotNumber: $slotNumber, presetId: $presetId, sampleId: $sampleId, patternId: $patternId)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PackSlotCopyWith<$Res>  {
   factory $PackSlotCopyWith(PackSlot value, $Res Function(PackSlot) _then) = _$PackSlotCopyWithImpl;
 @useResult
 $Res call({
- String id, String packId, int slotNumber, String? presetId, String? sampleId
+ String id, String packId, int slotNumber, String? presetId, String? sampleId, String? patternId
 });
 
 
@@ -65,13 +65,14 @@ class _$PackSlotCopyWithImpl<$Res>
 
 /// Create a copy of PackSlot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? packId = null,Object? slotNumber = null,Object? presetId = freezed,Object? sampleId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? packId = null,Object? slotNumber = null,Object? presetId = freezed,Object? sampleId = freezed,Object? patternId = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,packId: null == packId ? _self.packId : packId // ignore: cast_nullable_to_non_nullable
 as String,slotNumber: null == slotNumber ? _self.slotNumber : slotNumber // ignore: cast_nullable_to_non_nullable
 as int,presetId: freezed == presetId ? _self.presetId : presetId // ignore: cast_nullable_to_non_nullable
 as String?,sampleId: freezed == sampleId ? _self.sampleId : sampleId // ignore: cast_nullable_to_non_nullable
+as String?,patternId: freezed == patternId ? _self.patternId : patternId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String packId,  int slotNumber,  String? presetId,  String? sampleId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String packId,  int slotNumber,  String? presetId,  String? sampleId,  String? patternId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PackSlot() when $default != null:
-return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.sampleId);case _:
+return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.sampleId,_that.patternId);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.samp
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String packId,  int slotNumber,  String? presetId,  String? sampleId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String packId,  int slotNumber,  String? presetId,  String? sampleId,  String? patternId)  $default,) {final _that = this;
 switch (_that) {
 case _PackSlot():
-return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.sampleId);case _:
+return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.sampleId,_that.patternId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.samp
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String packId,  int slotNumber,  String? presetId,  String? sampleId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String packId,  int slotNumber,  String? presetId,  String? sampleId,  String? patternId)?  $default,) {final _that = this;
 switch (_that) {
 case _PackSlot() when $default != null:
-return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.sampleId);case _:
+return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.sampleId,_that.patternId);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.id,_that.packId,_that.slotNumber,_that.presetId,_that.samp
 @JsonSerializable()
 
 class _PackSlot implements PackSlot {
-  const _PackSlot({required this.id, required this.packId, required this.slotNumber, this.presetId, this.sampleId});
+  const _PackSlot({required this.id, required this.packId, required this.slotNumber, this.presetId, this.sampleId, this.patternId});
   factory _PackSlot.fromJson(Map<String, dynamic> json) => _$PackSlotFromJson(json);
 
 @override final  String id;
@@ -221,6 +222,7 @@ class _PackSlot implements PackSlot {
 @override final  int slotNumber;
 @override final  String? presetId;
 @override final  String? sampleId;
+@override final  String? patternId;
 
 /// Create a copy of PackSlot
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackSlot&&(identical(other.id, id) || other.id == id)&&(identical(other.packId, packId) || other.packId == packId)&&(identical(other.slotNumber, slotNumber) || other.slotNumber == slotNumber)&&(identical(other.presetId, presetId) || other.presetId == presetId)&&(identical(other.sampleId, sampleId) || other.sampleId == sampleId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackSlot&&(identical(other.id, id) || other.id == id)&&(identical(other.packId, packId) || other.packId == packId)&&(identical(other.slotNumber, slotNumber) || other.slotNumber == slotNumber)&&(identical(other.presetId, presetId) || other.presetId == presetId)&&(identical(other.sampleId, sampleId) || other.sampleId == sampleId)&&(identical(other.patternId, patternId) || other.patternId == patternId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,packId,slotNumber,presetId,sampleId);
+int get hashCode => Object.hash(runtimeType,id,packId,slotNumber,presetId,sampleId,patternId);
 
 @override
 String toString() {
-  return 'PackSlot(id: $id, packId: $packId, slotNumber: $slotNumber, presetId: $presetId, sampleId: $sampleId)';
+  return 'PackSlot(id: $id, packId: $packId, slotNumber: $slotNumber, presetId: $presetId, sampleId: $sampleId, patternId: $patternId)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$PackSlotCopyWith<$Res> implements $PackSlotCopyWith<$Res>
   factory _$PackSlotCopyWith(_PackSlot value, $Res Function(_PackSlot) _then) = __$PackSlotCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String packId, int slotNumber, String? presetId, String? sampleId
+ String id, String packId, int slotNumber, String? presetId, String? sampleId, String? patternId
 });
 
 
@@ -272,13 +274,14 @@ class __$PackSlotCopyWithImpl<$Res>
 
 /// Create a copy of PackSlot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? packId = null,Object? slotNumber = null,Object? presetId = freezed,Object? sampleId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? packId = null,Object? slotNumber = null,Object? presetId = freezed,Object? sampleId = freezed,Object? patternId = freezed,}) {
   return _then(_PackSlot(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,packId: null == packId ? _self.packId : packId // ignore: cast_nullable_to_non_nullable
 as String,slotNumber: null == slotNumber ? _self.slotNumber : slotNumber // ignore: cast_nullable_to_non_nullable
 as int,presetId: freezed == presetId ? _self.presetId : presetId // ignore: cast_nullable_to_non_nullable
 as String?,sampleId: freezed == sampleId ? _self.sampleId : sampleId // ignore: cast_nullable_to_non_nullable
+as String?,patternId: freezed == patternId ? _self.patternId : patternId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

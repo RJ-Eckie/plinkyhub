@@ -11,6 +11,7 @@ abstract class PackSlot with _$PackSlot {
     required int slotNumber,
     String? presetId,
     String? sampleId,
+    String? patternId,
   }) = _PackSlot;
 
   factory PackSlot.fromJson(Map<String, dynamic> json) =>
