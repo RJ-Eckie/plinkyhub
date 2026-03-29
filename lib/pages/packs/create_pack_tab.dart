@@ -29,9 +29,9 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   bool _isPublic = false;
   final List<({String? presetId, String? sampleId, String? patternId})> _slots =
       List.generate(
-    32,
-    (_) => (presetId: null, sampleId: null, patternId: null),
-  );
+        32,
+        (_) => (presetId: null, sampleId: null, patternId: null),
+      );
   String? _editingPackId;
   String? _wavetableId;
   String? _patternId;
@@ -232,12 +232,15 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   }
 
   Future<void> _savePack() async {
-    final slots = <({
-      int slotNumber,
-      String? presetId,
-      String? sampleId,
-      String? patternId,
-    })>[];
+    final slots =
+        <
+          ({
+            int slotNumber,
+            String? presetId,
+            String? sampleId,
+            String? patternId,
+          })
+        >[];
 
     // Preset slots (0-31).
     for (var i = 0; i < 32; i++) {

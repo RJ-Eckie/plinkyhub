@@ -82,17 +82,16 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     final packName = _packNameController.text.trim();
     for (final entry in _presetNames.entries) {
       if (!_presetsWithDeviceName.contains(entry.key)) {
-        entry.value.text =
-            packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+        entry.value.text = packName.isEmpty
+            ? ''
+            : '$packName - ${entry.key + 1}';
       }
     }
     for (final entry in _sampleNames.entries) {
-      entry.value.text =
-          packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+      entry.value.text = packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
     }
     for (final entry in _patternNames.entries) {
-      entry.value.text =
-          packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+      entry.value.text = packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
     }
   }
 
@@ -458,8 +457,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
 
           final patternBlob = serializePatternQuarters(quarters);
           final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final patternPath =
-              '$userId/pattern${patternIndex}_$timestamp.bin';
+          final patternPath = '$userId/pattern${patternIndex}_$timestamp.bin';
 
           await _supabase.storage
               .from('patterns')
@@ -485,8 +483,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               .insert(patternWrite.toJson())
               .select('id')
               .single();
-          patternIdByIndex[patternIndex] =
-              patternResponse['id'] as String;
+          patternIdByIndex[patternIndex] = patternResponse['id'] as String;
         }
       }
 
@@ -646,8 +643,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               onPackIsPublicChanged: (value) =>
                   setState(() => _packIsPublic = value),
               wavetableNameController: _wavetableNameController,
-              wavetableDescriptionController:
-                  _wavetableDescriptionController,
+              wavetableDescriptionController: _wavetableDescriptionController,
               hasWavetable:
                   _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty,
               includeWavetable: _includeWavetableInPack,
@@ -782,9 +778,7 @@ class _LoadReviewStep extends StatelessWidget {
         Text(
           'Found ${presetNames.length} presets, '
           '${sampleNames.length} samples'
-          '${patternNames.isNotEmpty
-              ? ', ${patternNames.length} patterns'
-              : ''}'
+          '${patternNames.isNotEmpty ? ', ${patternNames.length} patterns' : ''}'
           '${hasWavetable ? ' and a wavetable' : ''} '
           'on the Plinky.\n\n'
           'Review the names and sharing '
@@ -820,8 +814,7 @@ class _LoadReviewStep extends StatelessWidget {
           value: packIsPublic,
           onChanged: onPackIsPublicChanged,
         ),
-        if (sampleNames.isNotEmpty ||
-            emptySampleSlots.isNotEmpty) ...[
+        if (sampleNames.isNotEmpty || emptySampleSlots.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text(
             'Samples',

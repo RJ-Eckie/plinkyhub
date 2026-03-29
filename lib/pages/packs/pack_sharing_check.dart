@@ -42,7 +42,7 @@ PrivateItemSummary findPrivateItems({
   required WidgetRef ref,
   required String currentUserId,
   required List<({String? presetId, String? sampleId, String? patternId})>
-      slots,
+  slots,
   required String? wavetableId,
 }) {
   final presetsState = ref.read(savedPresetsProvider);

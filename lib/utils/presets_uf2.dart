@@ -113,7 +113,8 @@ Map<int, Uint8List> _scanFlashPages(Uint8List flashImage) {
       continue;
     }
 
-    final seq = flashImage[footerOffset + 4] |
+    final seq =
+        flashImage[footerOffset + 4] |
         (flashImage[footerOffset + 5] << 8) |
         (flashImage[footerOffset + 6] << 16) |
         (flashImage[footerOffset + 7] << 24);
@@ -392,7 +393,6 @@ ParsedSampleInfo? parseSampleInfo(Uint8List sampleInfoBytes) {
   );
 }
 
-
 /// Extracts all items from a raw PRESETS flash image using the wear-leveling
 /// page footer to identify each item correctly.
 ///
@@ -410,8 +410,7 @@ ParsedFlashImage parseFlashImage(Uint8List flashImage) {
     }
     final presetBytes = Uint8List.sublistView(page, 0, presetSize);
     final isEmpty =
-        presetBytes.every((b) => b == 0xFF) ||
-        presetBytes.every((b) => b == 0);
+        presetBytes.every((b) => b == 0xFF) || presetBytes.every((b) => b == 0);
     if (!isEmpty) {
       presets[i] = Uint8List.fromList(presetBytes);
     }
@@ -429,15 +428,15 @@ ParsedFlashImage parseFlashImage(Uint8List flashImage) {
   }
 
   // Extract pattern quarters (item IDs 32-127).
-  final patternQuarters =
-      List<Uint8List?>.filled(_patternQuarterCount, null);
+  final patternQuarters = List<Uint8List?>.filled(_patternQuarterCount, null);
   for (var i = 0; i < _patternQuarterCount; i++) {
     final page = pages[_patternQuarterItemIdStart + i];
     if (page == null) {
       continue;
     }
-    patternQuarters[i] =
-        Uint8List.fromList(page.sublist(0, patternQuarterSize));
+    patternQuarters[i] = Uint8List.fromList(
+      page.sublist(0, patternQuarterSize),
+    );
   }
 
   return ParsedFlashImage(
@@ -499,7 +498,6 @@ class ParsedFlashImage {
   }
 }
 
-
 /// Generates a complete PRESETS.UF2 file from presets, sample metadata,
 /// and pattern quarters.
 ///
@@ -519,8 +517,7 @@ Uint8List generatePresetsUf2({
   assert(presets.length == presetCount);
   assert(sampleInfos.length <= sampleCount);
   assert(
-    patternQuarters == null ||
-        patternQuarters.length <= _patternQuarterCount,
+    patternQuarters == null || patternQuarters.length <= _patternQuarterCount,
   );
 
   // Create raw flash image: 256 pages × 2048 bytes, initialized to 0xFF

@@ -111,8 +111,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
     // Build sample slot mapping from pack slots (56-63 → Plinky 0-7).
     final sampleSlotMapping = <String, int>{};
     for (final slot in slots) {
-      if (slot.sampleId != null &&
-          slot.slotNumber >= sampleSlotStart) {
+      if (slot.sampleId != null && slot.slotNumber >= sampleSlotStart) {
         final plinkySlot = slot.slotNumber - sampleSlotStart;
         sampleSlotMapping[slot.sampleId!] = plinkySlot;
       }
@@ -191,10 +190,8 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       if (preset.usesSample) {
         for (final entry in sampleSlotMapping.entries) {
           final raw = sampleSlotToRaw(entry.value);
-          final presetRaw =
-              preset.parameterById('P_SAMPLE')?.value;
-          if (presetRaw != null &&
-              (presetRaw - raw).abs() < 2) {
+          final presetRaw = preset.parameterById('P_SAMPLE')?.value;
+          if (presetRaw != null && (presetRaw - raw).abs() < 2) {
             setPresetSampleSlot(presetBytes, entry.value);
             break;
           }
@@ -233,8 +230,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         final patternIndex = slot.slotNumber - patternSlotStart;
         final baseIndex = patternIndex * 4;
         for (var q = 0; q < 4; q++) {
-          if (baseIndex + q < patternQuarters.length &&
-              q < quarters.length) {
+          if (baseIndex + q < patternQuarters.length && q < quarters.length) {
             patternQuarters[baseIndex + q] = quarters[q];
           }
         }
@@ -291,7 +287,6 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         wavetableBytes,
       );
     }
-
   }
 
   Future<String> _fetchFilePath(
