@@ -21,6 +21,7 @@ abstract class SavedPack with _$SavedPack implements Searchable {
     @Default([]) @JsonKey(name: 'pack_slots') List<PackSlot> slots,
     String? wavetableId,
     String? patternId,
+    @Default('') String youtubeUrl,
   }) = _SavedPack;
 
   factory SavedPack.fromJson(Map<String, dynamic> json) =>

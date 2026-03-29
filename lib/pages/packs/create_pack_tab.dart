@@ -24,6 +24,7 @@ class CreatePackTab extends ConsumerStatefulWidget {
 class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _youtubeUrlController = TextEditingController();
   bool _isPublic = false;
   final List<({String? presetId, String? sampleId})> _slots = List.generate(
     32,
@@ -37,6 +38,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _youtubeUrlController.dispose();
     super.dispose();
   }
 
@@ -44,6 +46,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _editingPackId = pack.id;
     _nameController.text = pack.name;
     _descriptionController.text = pack.description;
+    _youtubeUrlController.text = pack.youtubeUrl;
     _isPublic = pack.isPublic;
     _wavetableId = pack.wavetableId;
     _patternId = pack.patternId;
@@ -62,6 +65,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _editingPackId = null;
     _nameController.clear();
     _descriptionController.clear();
+    _youtubeUrlController.clear();
     _isPublic = false;
     _wavetableId = null;
     _patternId = null;
@@ -130,6 +134,16 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
               border: OutlineInputBorder(),
             ),
             maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _youtubeUrlController,
+            decoration: const InputDecoration(
+              labelText: 'YouTube URL (optional)',
+              hintText: 'https://www.youtube.com/watch?v=...',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.play_circle_outline),
+            ),
           ),
           const SizedBox(height: 12),
           SwitchListTile(
@@ -265,6 +279,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         slots: slots,
         wavetableId: _wavetableId,
         patternId: _patternId,
+        youtubeUrl: _youtubeUrlController.text.trim(),
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pack updated')),
@@ -277,6 +292,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         slots: slots,
         wavetableId: _wavetableId,
         patternId: _patternId,
+        youtubeUrl: _youtubeUrlController.text.trim(),
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pack saved')),

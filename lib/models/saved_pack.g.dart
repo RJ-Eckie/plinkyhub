@@ -24,6 +24,7 @@ _SavedPack _$SavedPackFromJson(Map<String, dynamic> json) => _SavedPack(
       const [],
   wavetableId: json['wavetable_id'] as String?,
   patternId: json['pattern_id'] as String?,
+  youtubeUrl: json['youtube_url'] as String? ?? '',
 );
 
 Map<String, dynamic> _$SavedPackToJson(_SavedPack instance) =>
@@ -41,4 +42,5 @@ Map<String, dynamic> _$SavedPackToJson(_SavedPack instance) =>
       'pack_slots': instance.slots,
       'wavetable_id': instance.wavetableId,
       'pattern_id': instance.patternId,
+      'youtube_url': instance.youtubeUrl,
     };
