@@ -223,6 +223,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       }
       await _supabase.from('samples').delete().eq('id', id);
       await fetchUserSamples();
+      await fetchPublicSamples();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

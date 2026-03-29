@@ -206,6 +206,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       }
       await _supabase.from('wavetables').delete().eq('id', id);
       await fetchUserWavetables();
+      await fetchPublicWavetables();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

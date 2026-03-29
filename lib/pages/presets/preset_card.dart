@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/pages/presets/star_button.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
+import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:plinkyhub/widgets/username_date_line.dart';
@@ -121,6 +122,16 @@ class PresetCard extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final referencingPacks = findPacksUsingPreset(ref, preset.id);
+    if (referencingPacks.isNotEmpty) {
+      showPackUsageDialog(
+        context,
+        itemType: 'preset',
+        packs: referencingPacks,
+      );
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

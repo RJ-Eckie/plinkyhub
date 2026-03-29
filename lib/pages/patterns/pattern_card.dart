@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
+import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
@@ -107,6 +108,16 @@ class PatternCard extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final referencingPacks = findPacksUsingPattern(ref, pattern.id);
+    if (referencingPacks.isNotEmpty) {
+      showPackUsageDialog(
+        context,
+        itemType: 'pattern',
+        packs: referencingPacks,
+      );
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

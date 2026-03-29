@@ -10,6 +10,7 @@ import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/utils/wav.dart';
+import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
@@ -312,6 +313,16 @@ class _SampleCardState extends ConsumerState<SampleCard> {
   }
 
   void _confirmDelete(BuildContext context) {
+    final referencingPacks = findPacksUsingSample(ref, widget.sample.id);
+    if (referencingPacks.isNotEmpty) {
+      showPackUsageDialog(
+        context,
+        itemType: 'sample',
+        packs: referencingPacks,
+      );
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

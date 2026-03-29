@@ -71,6 +71,34 @@ class AboutPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
+            'Bugs & Feature Requests',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Found a bug or have a feature request? '
+            'Open an issue on GitHub or ping spydon on '
+            'the Plinky Discord.',
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => web.window.open(
+              'https://github.com/spydon/plinkyhub/issues',
+              '_blank',
+            ),
+            icon: const Icon(Icons.bug_report),
+            label: const Text('GitHub Issues'),
+          ),
+          TextButton.icon(
+            onPressed: () => web.window.open(
+              'https://discord.gg/pHzcVnBt3A',
+              '_blank',
+            ),
+            icon: const Icon(Icons.forum),
+            label: const Text('Plinky Discord'),
+          ),
+          const SizedBox(height: 24),
+          Text(
             'Links',
             style: Theme.of(context).textTheme.titleMedium,
           ),

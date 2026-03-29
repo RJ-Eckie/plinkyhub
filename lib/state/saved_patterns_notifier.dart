@@ -202,6 +202,7 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
       }
       await _supabase.from('patterns').delete().eq('id', id);
       await fetchUserPatterns();
+      await fetchPublicPatterns();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/pages/wavetables/save_wavetable_to_plinky_dialog.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
@@ -123,6 +124,16 @@ class WavetableCard extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final referencingPacks = findPacksUsingWavetable(ref, wavetable.id);
+    if (referencingPacks.isNotEmpty) {
+      showPackUsageDialog(
+        context,
+        itemType: 'wavetable',
+        packs: referencingPacks,
+      );
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

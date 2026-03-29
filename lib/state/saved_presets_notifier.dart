@@ -240,6 +240,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     try {
       await _supabase.from('presets').delete().eq('id', id);
       await fetchUserPresets();
+      await fetchPublicPresets();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

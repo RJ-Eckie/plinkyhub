@@ -275,6 +275,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     try {
       await _supabase.from('packs').delete().eq('id', id);
       await fetchUserPacks();
+      await fetchPublicPacks();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
