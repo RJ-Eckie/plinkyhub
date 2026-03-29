@@ -55,6 +55,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   final _presetNames = <int, TextEditingController>{};
   final _presetDescriptions = <int, TextEditingController>{};
   final _presetCategories = <int, PresetCategory>{};
+  // Tracks which presets have a name from the device (not derived).
+  final _presetsWithDeviceName = <int>{};
   final _sampleNames = <int, TextEditingController>{};
   final _sampleDescriptions = <int, TextEditingController>{};
   final _wavetableNameController = TextEditingController(
@@ -69,7 +71,34 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   SupabaseClient get _supabase => Supabase.instance.client;
 
   @override
+  void initState() {
+    super.initState();
+    _packNameController.addListener(_updateDerivedNames);
+  }
+
+  /// Updates names of items that don't have a device name
+  /// to match the pack name with an appended number.
+  void _updateDerivedNames() {
+    final packName = _packNameController.text.trim();
+    for (final entry in _presetNames.entries) {
+      if (!_presetsWithDeviceName.contains(entry.key)) {
+        entry.value.text =
+            packName.isEmpty ? '' : '$packName ${entry.key + 1}';
+      }
+    }
+    for (final entry in _sampleNames.entries) {
+      entry.value.text =
+          packName.isEmpty ? '' : '$packName ${entry.key + 1}';
+    }
+    for (final entry in _patternNames.entries) {
+      entry.value.text =
+          packName.isEmpty ? '' : '$packName ${entry.key + 1}';
+    }
+  }
+
+  @override
   void dispose() {
+    _packNameController.removeListener(_updateDerivedNames);
     _packNameController.dispose();
     _packDescriptionController.dispose();
     _wavetableNameController.dispose();
@@ -130,6 +159,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _presetNames.clear();
       _presetDescriptions.clear();
       _presetCategories.clear();
+      _presetsWithDeviceName.clear();
       _sampleNames.clear();
       _sampleDescriptions.clear();
       _patternNames.clear();
@@ -238,6 +268,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _presetNames.clear();
       _presetDescriptions.clear();
       _presetCategories.clear();
+      _presetsWithDeviceName.clear();
       for (var i = 0; i < presetCount; i++) {
         final presetBytes = _presetDataList[i];
         if (presetBytes == null) {
@@ -248,8 +279,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           _presetDataList[i] = null;
           continue;
         }
-        final name = preset.name.isNotEmpty ? preset.name : 'Preset ${i + 1}';
-        _presetNames[i] = TextEditingController(text: name);
+        if (preset.name.isNotEmpty) {
+          _presetsWithDeviceName.add(i);
+        }
+        _presetNames[i] = TextEditingController(
+          text: preset.name.isNotEmpty ? preset.name : '',
+        );
         _presetDescriptions[i] = TextEditingController();
         _presetCategories[i] = preset.category;
       }
@@ -257,9 +292,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _sampleNames.clear();
       _sampleDescriptions.clear();
       for (final slotIndex in _samplePcmData.keys) {
-        _sampleNames[slotIndex] = TextEditingController(
-          text: 'Sample $slotIndex',
-        );
+        _sampleNames[slotIndex] = TextEditingController(text: '');
         _sampleDescriptions[slotIndex] = TextEditingController();
       }
 
@@ -274,9 +307,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _patternNames.clear();
       _patternDescriptions.clear();
       for (final patternIndex in parsed.nonEmptyPatternIndices) {
-        _patternNames[patternIndex] = TextEditingController(
-          text: 'Pattern ${patternIndex + 1}',
-        );
+        _patternNames[patternIndex] = TextEditingController(text: '');
         _patternDescriptions[patternIndex] = TextEditingController();
       }
       _includePatternsInPack = _patternNames.isNotEmpty;
