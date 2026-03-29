@@ -60,6 +60,43 @@ Uint8List generateWavetableUf2(List<Uint8List> wavFiles) {
     return _wavToLookup(wavFiles[shape - 1]);
   });
 
+  return _generateUf2FromLookups(lookups);
+}
+
+/// Generates a wavetable UF2 file from 15 raw sample arrays.
+///
+/// [sampleArrays] must contain exactly 15 entries, one for each cycle
+/// (c0–c14). Each entry is a list of floating-point samples in the range
+/// −1.0 to 1.0 representing one cycle of a waveform. The samples are
+/// resampled to the internal lookup table resolution automatically.
+///
+/// The output contains 17 shapes: a built-in saw (shape 0), the 15 user
+/// waveforms (shapes 1–15), and a built-in sine (shape 16).
+///
+/// Returns the complete UF2 file as bytes, ready to be flashed to a Plinky.
+Uint8List generateWavetableUf2FromSamples(List<List<double>> sampleArrays) {
+  if (sampleArrays.length != wavetableUserShapeCount) {
+    throw ArgumentError(
+      'Expected $wavetableUserShapeCount sample arrays, '
+      'got ${sampleArrays.length}',
+    );
+  }
+
+  final lookups = List<Float64List>.generate(wavetableShapeCount, (shape) {
+    if (shape == 0) {
+      return _generateSawLookup();
+    }
+    if (shape == wavetableShapeCount - 1) {
+      return _generateSineLookup();
+    }
+    return _samplesToLookup(sampleArrays[shape - 1]);
+  });
+
+  return _generateUf2FromLookups(lookups);
+}
+
+/// Shared UF2 generation from pre-built lookup tables.
+Uint8List _generateUf2FromLookups(List<Float64List> lookups) {
   // Build the windowed sinc anti-aliasing kernel.
   final kernel = _buildKernel();
 
@@ -117,6 +154,36 @@ Float64List _generateSineLookup() {
 /// normalised 65 536-sample lookup table.
 Float64List _wavToLookup(Uint8List wavBytes) {
   final samples = _decodeWavMono(wavBytes);
+
+  // Normalise to peak = 1.0.
+  var peak = 0.0;
+  for (final sample in samples) {
+    final absolute = sample.abs();
+    if (absolute > peak) {
+      peak = absolute;
+    }
+  }
+  final gain = peak > 0 ? 1.0 / peak : 1.0;
+
+  // Resample to wavetableLookupSize using linear interpolation (circular).
+  final lookup = Float64List(wavetableLookupSize);
+  for (var i = 0; i < wavetableLookupSize; i++) {
+    final sourcePosition = i * samples.length / wavetableLookupSize;
+    final index = sourcePosition.floor();
+    final fraction = sourcePosition - index;
+    final sample0 = samples[index % samples.length];
+    final sample1 = samples[(index + 1) % samples.length];
+    lookup[i] = (sample0 * (1.0 - fraction) + sample1 * fraction) * gain;
+  }
+  return lookup;
+}
+
+/// Resamples raw floating-point samples into a normalised 65 536-sample
+/// lookup table, mirroring [_wavToLookup] but without WAV decoding.
+Float64List _samplesToLookup(List<double> samples) {
+  if (samples.isEmpty) {
+    throw const FormatException('Sample array is empty');
+  }
 
   // Normalise to peak = 1.0.
   var peak = 0.0;

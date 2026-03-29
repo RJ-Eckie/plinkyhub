@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/pages/wavetables/draw_wavetable_tab.dart';
 import 'package:plinkyhub/pages/wavetables/upload_wavetable_tab.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
@@ -23,7 +24,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,8 +50,9 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
           controller: _tabController,
           tabs: const [
             Tab(text: 'My Wavetables'),
-            Tab(text: 'Community Wavetables'),
-            Tab(text: 'Create Wavetable'),
+            Tab(text: 'Community'),
+            Tab(text: 'Draw'),
+            Tab(text: 'Upload'),
           ],
         ),
         if (savedWavetablesState.errorMessage != null)
@@ -99,6 +101,14 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                 ),
                 itemLabel: 'wavetable',
               ),
+              if (isSignedIn)
+                DrawWavetableTab(
+                  onCreated: () => _tabController.animateTo(0),
+                )
+              else
+                const SignInPrompt(
+                  message: 'Sign in to create wavetables',
+                ),
               if (isSignedIn)
                 UploadWavetableTab(
                   onUploaded: () => _tabController.animateTo(0),
