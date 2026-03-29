@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
+import 'package:plinkyhub/pages/wavetables/harmonic_editor.dart';
 import 'package:plinkyhub/pages/wavetables/waveform_drawer.dart';
+import 'package:plinkyhub/pages/wavetables/waveform_effects_panel.dart';
+import 'package:plinkyhub/pages/wavetables/waveform_thumbnail.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/utils/waveform_effects.dart';
 import 'package:plinkyhub/utils/wavetable.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -26,10 +30,13 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   String? _errorMessage;
 
   int _selectedSlot = 0;
+  DrawingTool _selectedTool = DrawingTool.pencil;
 
-  /// The 15 waveform slots, each containing [waveformDrawerSampleCount]
-  /// samples initialised to a sine wave.
   late final List<List<double>> _slots;
+  late final List<WaveformEffects> _effects;
+
+  /// Cached post-effect samples for the selected slot.
+  List<double>? _postEffectSamples;
 
   @override
   void initState() {
@@ -37,6 +44,10 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
     _slots = List<List<double>>.generate(
       wavetableUserShapeCount,
       (_) => generateSinePreset(),
+    );
+    _effects = List<WaveformEffects>.generate(
+      wavetableUserShapeCount,
+      (_) => WaveformEffects(),
     );
   }
 
@@ -49,6 +60,19 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
 
   bool get _isBusy => _isGenerating || _isUploading;
 
+  WaveformEffects get _currentEffects => _effects[_selectedSlot];
+
+  void _updatePostEffectSamples() {
+    if (_currentEffects.hasAnyEffect) {
+      _postEffectSamples = applyEffects(
+        _slots[_selectedSlot],
+        _currentEffects,
+      );
+    } else {
+      _postEffectSamples = null;
+    }
+  }
+
   void _resetForm() {
     setState(() {
       _nameController.clear();
@@ -58,8 +82,11 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
       _isUploading = false;
       _errorMessage = null;
       _selectedSlot = 0;
+      _selectedTool = DrawingTool.pencil;
+      _postEffectSamples = null;
       for (var i = 0; i < _slots.length; i++) {
         _slots[i] = generateSinePreset();
+        _effects[i].reset();
       }
     });
   }
@@ -67,6 +94,7 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   void _applyPresetToSlot(List<double> Function() generator) {
     setState(() {
       _slots[_selectedSlot] = generator();
+      _updatePostEffectSamples();
     });
   }
 
@@ -75,6 +103,7 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
       for (var i = 0; i < _slots.length; i++) {
         _slots[i] = generator();
       }
+      _updatePostEffectSamples();
     });
   }
 
@@ -84,6 +113,27 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
       for (var i = 0; i < _slots.length; i++) {
         _slots[i] = List<double>.from(source);
       }
+    });
+  }
+
+  void _bakeEffects() {
+    setState(() {
+      _slots[_selectedSlot] = applyEffects(
+        _slots[_selectedSlot],
+        _currentEffects,
+      );
+      _currentEffects.reset();
+      _postEffectSamples = null;
+    });
+  }
+
+  /// Returns samples for upload: baked with effects applied.
+  List<List<double>> _getFinalSamples() {
+    return List<List<double>>.generate(_slots.length, (i) {
+      if (_effects[i].hasAnyEffect) {
+        return applyEffects(_slots[i], _effects[i]);
+      }
+      return _slots[i];
     });
   }
 
@@ -101,7 +151,8 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
     try {
       await Future<void>.delayed(Duration.zero);
 
-      final uf2Bytes = generateWavetableUf2FromSamples(_slots);
+      final finalSamples = _getFinalSamples();
+      final uf2Bytes = generateWavetableUf2FromSamples(finalSamples);
 
       setState(() {
         _isGenerating = false;
@@ -159,46 +210,76 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
 
   @override
   Widget build(BuildContext context) {
+    _updatePostEffectSamples();
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 700),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _DrawWavetableDescription(),
-              const SizedBox(height: 16),
-              _SlotSelector(
+              const SizedBox(height: 12),
+              _SlotThumbnailSelector(
+                slots: _slots,
                 selectedSlot: _selectedSlot,
                 onSlotSelected: (index) {
-                  setState(() => _selectedSlot = index);
+                  setState(() {
+                    _selectedSlot = index;
+                    _updatePostEffectSamples();
+                  });
                 },
               ),
               const SizedBox(height: 12),
+              _DrawingToolSelector(
+                selectedTool: _selectedTool,
+                onToolSelected: (tool) {
+                  setState(() => _selectedTool = tool);
+                },
+              ),
+              const SizedBox(height: 8),
               WaveformDrawer(
                 samples: _slots[_selectedSlot],
+                postEffectSamples: _postEffectSamples,
+                tool: _selectedTool,
                 onSamplesChanged: (updatedSamples) {
                   setState(() {
                     _slots[_selectedSlot] = updatedSamples;
+                    _updatePostEffectSamples();
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              HarmonicEditor(
+                samples: _slots[_selectedSlot],
+                postEffectSamples: _postEffectSamples,
+                onSamplesChanged: (updatedSamples) {
+                  setState(() {
+                    _slots[_selectedSlot] = updatedSamples;
+                    _updatePostEffectSamples();
                   });
                 },
               ),
               const SizedBox(height: 12),
               _PresetButtons(
                 isBusy: _isBusy,
-                onSinePressed: () => _applyPresetToSlot(generateSinePreset),
-                onSawPressed: () => _applyPresetToSlot(generateSawPreset),
-                onTrianglePressed: () =>
-                    _applyPresetToSlot(generateTrianglePreset),
-                onSquarePressed: () => _applyPresetToSlot(generateSquarePreset),
-                onFlatPressed: () => _applyPresetToSlot(generateFlatPreset),
+                onPresetSelected: _applyPresetToSlot,
               ),
               const SizedBox(height: 8),
               _BulkActions(
                 isBusy: _isBusy,
                 onCopyToAll: _copyToAllSlots,
                 onSineAll: () => _applyPresetToAll(generateSinePreset),
+              ),
+              const SizedBox(height: 16),
+              WaveformEffectsPanel(
+                effects: _currentEffects,
+                enabled: !_isBusy,
+                onEffectsChanged: () {
+                  setState(_updatePostEffectSamples);
+                },
+                onApply: _bakeEffects,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -253,7 +334,8 @@ class _DrawWavetableDescription extends StatelessWidget {
     return Text(
       'Draw waveforms for each of the 15 slots (c0–c14). '
       'Select a slot, then click and drag on the canvas to shape '
-      'the waveform. Use the presets as starting points. '
+      'the waveform. Edit harmonics in the bar chart below. '
+      'Use the waveshaper effects to further sculpt the sound. '
       'A built-in saw and sine are added automatically as the '
       'first and last shapes.',
       style: theme.textTheme.bodyMedium?.copyWith(
@@ -263,52 +345,96 @@ class _DrawWavetableDescription extends StatelessWidget {
   }
 }
 
-class _SlotSelector extends StatelessWidget {
-  const _SlotSelector({
+class _SlotThumbnailSelector extends StatefulWidget {
+  const _SlotThumbnailSelector({
+    required this.slots,
     required this.selectedSlot,
     required this.onSlotSelected,
   });
 
+  final List<List<double>> slots;
   final int selectedSlot;
   final ValueChanged<int> onSlotSelected;
 
   @override
+  State<_SlotThumbnailSelector> createState() => _SlotThumbnailSelectorState();
+}
+
+class _SlotThumbnailSelectorState extends State<_SlotThumbnailSelector> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    return ScrollbarTheme(
+      data: ScrollbarThemeData(
+        trackVisibility: WidgetStateProperty.all(true),
+        thumbVisibility: WidgetStateProperty.all(true),
+      ),
+      child: Scrollbar(
+        controller: _scrollController,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: List.generate(wavetableUserShapeCount, (index) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index < wavetableUserShapeCount - 1 ? 4 : 0,
+                ),
+                child: WaveformThumbnail(
+                  samples: widget.slots[index],
+                  isSelected: index == widget.selectedSlot,
+                  slotIndex: index,
+                  onTap: () => widget.onSlotSelected(index),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawingToolSelector extends StatelessWidget {
+  const _DrawingToolSelector({
+    required this.selectedTool,
+    required this.onToolSelected,
+  });
+
+  final DrawingTool selectedTool;
+  final ValueChanged<DrawingTool> onToolSelected;
+
+  static const _toolLabels = {
+    DrawingTool.pencil: 'Pencil',
+    DrawingTool.brush: 'Brush',
+    DrawingTool.grab: 'Grab',
+    DrawingTool.line: 'Line',
+    DrawingTool.eraser: 'Eraser',
+    DrawingTool.smooth: 'Smooth',
+  };
+
+  @override
+  Widget build(BuildContext context) {
     return Wrap(
       spacing: 4,
       runSpacing: 4,
-      children: List.generate(wavetableUserShapeCount, (index) {
-        final isSelected = index == selectedSlot;
-        return SizedBox(
-          width: 40,
-          height: 32,
-          child: Material(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(6),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(6),
-              onTap: () => onSlotSelected(index),
-              child: Center(
-                child: Text(
-                  'c$index',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: isSelected
-                        ? colorScheme.onPrimary
-                        : colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ),
-          ),
+      children: DrawingTool.values.map((tool) {
+        final isSelected = tool == selectedTool;
+        return ChoiceChip(
+          label: Text(_toolLabels[tool]!),
+          selected: isSelected,
+          onSelected: (_) => onToolSelected(tool),
+          visualDensity: VisualDensity.compact,
         );
-      }),
+      }).toList(),
     );
   }
 }
@@ -316,19 +442,11 @@ class _SlotSelector extends StatelessWidget {
 class _PresetButtons extends StatelessWidget {
   const _PresetButtons({
     required this.isBusy,
-    required this.onSinePressed,
-    required this.onSawPressed,
-    required this.onTrianglePressed,
-    required this.onSquarePressed,
-    required this.onFlatPressed,
+    required this.onPresetSelected,
   });
 
   final bool isBusy;
-  final VoidCallback onSinePressed;
-  final VoidCallback onSawPressed;
-  final VoidCallback onTrianglePressed;
-  final VoidCallback onSquarePressed;
-  final VoidCallback onFlatPressed;
+  final void Function(List<double> Function() generator) onPresetSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -344,23 +462,57 @@ class _PresetButtons extends StatelessWidget {
           children: [
             _PresetChip(
               label: 'Sine',
-              onPressed: isBusy ? null : onSinePressed,
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateSinePreset),
             ),
             _PresetChip(
               label: 'Saw',
-              onPressed: isBusy ? null : onSawPressed,
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateSawPreset),
             ),
             _PresetChip(
               label: 'Triangle',
-              onPressed: isBusy ? null : onTrianglePressed,
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateTrianglePreset),
             ),
             _PresetChip(
               label: 'Square',
-              onPressed: isBusy ? null : onSquarePressed,
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateSquarePreset),
+            ),
+            _PresetChip(
+              label: 'Rectangle',
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateRectanglePreset),
+            ),
+            _PresetChip(
+              label: 'Rectified',
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateRectifiedSinePreset),
+            ),
+            _PresetChip(
+              label: 'Noise',
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateNoisePreset),
+            ),
+            _PresetChip(
+              label: 'Chirp',
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateChirpPreset),
             ),
             _PresetChip(
               label: 'Flat',
-              onPressed: isBusy ? null : onFlatPressed,
+              onPressed: isBusy
+                  ? null
+                  : () => onPresetSelected(generateFlatPreset),
             ),
           ],
         ),
