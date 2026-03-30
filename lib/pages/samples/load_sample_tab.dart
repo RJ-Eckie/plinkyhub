@@ -3,9 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
-import 'package:plinkyhub/pages/samples/base_note_selector.dart';
-import 'package:plinkyhub/pages/samples/sample_mode_selector.dart';
-import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
+import 'package:plinkyhub/pages/samples/sample_metadata_form.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
@@ -374,53 +372,24 @@ class _LoadReviewView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Share with community'),
-                value: isPublic,
-                onChanged: onIsPublicChanged,
-              ),
-              const SizedBox(height: 16),
-              SampleModeSelector(
+              SampleMetadataForm(
+                nameController: nameController,
+                descriptionController: descriptionController,
+                isPublic: isPublic,
+                onIsPublicChanged: (value) =>
+                    onIsPublicChanged(value ?? true),
                 pitched: pitched,
-                enabled: true,
-                onChanged: onPitchedChanged,
-              ),
-              const SizedBox(height: 16),
-              if (!pitched)
-                BaseNoteSelector(
-                  baseNote: baseNote,
-                  fineTune: fineTune,
-                  enabled: true,
-                  onBaseNoteChanged: onBaseNoteChanged,
-                  onFineTuneChanged: onFineTuneChanged,
-                ),
-              if (!pitched) const SizedBox(height: 16),
-              SlicePointsEditor(
+                onPitchedChanged: onPitchedChanged,
+                baseNote: baseNote,
+                onBaseNoteChanged: onBaseNoteChanged,
+                fineTune: fineTune,
+                onFineTuneChanged: onFineTuneChanged,
                 slicePoints: slicePoints,
-                wavBytes: wavBytes,
-                pcmFrameCount: pcmFrameCount,
-                enabled: true,
-                onChanged: onSlicePointsChanged,
-                pitched: pitched,
+                onSlicePointsChanged: onSlicePointsChanged,
                 sliceNotes: sliceNotes,
                 onSliceNotesChanged: onSliceNotesChanged,
+                wavBytes: wavBytes,
+                pcmFrameCount: pcmFrameCount,
               ),
               const SizedBox(height: 16),
               Row(

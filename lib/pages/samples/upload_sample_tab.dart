@@ -4,9 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
-import 'package:plinkyhub/pages/samples/base_note_selector.dart';
-import 'package:plinkyhub/pages/samples/sample_mode_selector.dart';
-import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
+import 'package:plinkyhub/pages/samples/sample_metadata_form.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
@@ -433,58 +431,30 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
                 ),
               ],
               const SizedBox(height: 16),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Share with community'),
-                value: _isPublic,
-                onChanged: _isUploading
-                    ? null
-                    : (value) => setState(() => _isPublic = value),
-              ),
-              const SizedBox(height: 16),
-              SampleModeSelector(
+              SampleMetadataForm(
+                nameController: _nameController,
+                descriptionController: _descriptionController,
+                isPublic: _isPublic,
+                onIsPublicChanged: (value) =>
+                    setState(() => _isPublic = value ?? true),
                 pitched: _pitched,
-                enabled: !_isUploading,
-                onChanged: (value) => setState(() => _pitched = value),
-              ),
-              const SizedBox(height: 16),
-              if (!_pitched)
-                BaseNoteSelector(
-                  baseNote: _baseNote,
-                  fineTune: _fineTune,
-                  enabled: !_isUploading,
-                  onBaseNoteChanged: (value) =>
-                      setState(() => _baseNote = value),
-                  onFineTuneChanged: (value) =>
-                      setState(() => _fineTune = value),
-                ),
-              if (!_pitched) const SizedBox(height: 16),
-              SlicePointsEditor(
+                onPitchedChanged: (value) =>
+                    setState(() => _pitched = value),
+                baseNote: _baseNote,
+                onBaseNoteChanged: (value) =>
+                    setState(() => _baseNote = value),
+                fineTune: _fineTune,
+                onFineTuneChanged: (value) =>
+                    setState(() => _fineTune = value),
                 slicePoints: _slicePoints,
-                wavBytes: _wavBytes,
-                pcmFrameCount: _pcmFrameCount,
-                enabled: !_isUploading,
-                onChanged: (points) => setState(() => _slicePoints = points),
-                pitched: _pitched,
+                onSlicePointsChanged: (points) =>
+                    setState(() => _slicePoints = points),
                 sliceNotes: _sliceNotes,
                 onSliceNotesChanged: (notes) =>
                     setState(() => _sliceNotes = notes),
+                wavBytes: _wavBytes,
+                pcmFrameCount: _pcmFrameCount,
+                enabled: !_isUploading,
               ),
               const SizedBox(height: 8),
               Text(
