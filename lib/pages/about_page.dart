@@ -51,6 +51,10 @@ class AboutPage extends StatelessWidget {
           const Text(
             '\u2022 mmalex for the parameter icons',
           ),
+          const SizedBox(height: 4),
+          const Text(
+            '\u2022 Nathan Plante (Kilgore) for alpha testing and inspiration',
+          ),
           const SizedBox(height: 24),
           Text(
             'Disclaimer',
