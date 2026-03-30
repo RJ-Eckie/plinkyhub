@@ -85,7 +85,9 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
         _isConverting = true;
         _sampleTooLongWarning = null;
         if (_nameController.text.isEmpty) {
-          _nameController.text = name;
+          final dotIndex = name.lastIndexOf('.');
+          _nameController.text =
+              dotIndex > 0 ? name.substring(0, dotIndex) : name;
         }
       });
 
@@ -253,7 +255,10 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
           _isConverting = false;
           _sampleTooLongWarning = warning;
           if (_nameController.text.isEmpty) {
-            _nameController.text = _sampleUf2FileName!;
+            final name = _sampleUf2FileName!;
+            final dotIndex = name.lastIndexOf('.');
+            _nameController.text =
+                dotIndex > 0 ? name.substring(0, dotIndex) : name;
           }
           if (sampleInfo != null) {
             _slicePoints = sampleInfo.slicePoints;
@@ -270,6 +275,19 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
         });
       }
     }
+  }
+
+  void _clearSample() {
+    setState(() {
+      _wavBytes = null;
+      _fileName = null;
+      _sampleUf2Bytes = null;
+      _sampleUf2FileName = null;
+      _presetsUf2Bytes = null;
+      _isConverting = false;
+      _pcmFrameCount = null;
+      _sampleTooLongWarning = null;
+    });
   }
 
   int _parseSlotIndexFromFilename(String filename) {
@@ -346,97 +364,139 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Upload a WAV file, or a SAMPLEx.UF2 file '
-                    'from your Plinky. If you also provide the '
-                    'PRESETS.UF2 file, slice points and other '
-                    'metadata will be imported automatically.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  PlinkyButton(
-                    onPressed:
-                        _isUploading || _isConverting ? null : _pickWavFile,
-                    icon: Icons.audio_file,
-                    label: _fileName != null && _sampleUf2Bytes == null
-                        ? _fileName!
-                        : 'Choose WAV file',
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Or upload from Plinky UF2 files:',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PlinkyButton(
-                          onPressed: _isUploading || _isConverting
-                              ? null
-                              : _pickSampleUf2,
-                          icon: Icons.memory,
-                          label: _sampleUf2FileName ?? 'SAMPLEx.UF2',
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: PlinkyButton(
-                          onPressed: _isUploading || _isConverting
-                              ? null
-                              : _pickPresetsUf2,
-                          icon: Icons.settings,
-                          label: 'PRESETS.UF2',
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_presetsUf2Bytes != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Metadata loaded from PRESETS.UF2',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                  if (_isConverting) ...[
-                    const SizedBox(height: 8),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _wavBytes == null
+                ? Center(
+                    key: const ValueKey('file-picker'),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Upload a WAV file, or a SAMPLEx.UF2 file '
+                            'from your Plinky. If you also provide the '
+                            'PRESETS.UF2 file, slice points and other '
+                            'metadata will be imported automatically.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
                           ),
-                        ),
-                        SizedBox(width: 8),
-                        Text('Validating sample...'),
-                      ],
-                    ),
-                  ],
-                  if (_sampleTooLongWarning != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _sampleTooLongWarning!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                          const SizedBox(height: 16),
+                          PlinkyButton(
+                            onPressed: _isUploading || _isConverting
+                                ? null
+                                : _pickWavFile,
+                            icon: Icons.audio_file,
+                            label: 'Choose WAV file',
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Or upload from Plinky UF2 files:',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: PlinkyButton(
+                                  onPressed: _isUploading || _isConverting
+                                      ? null
+                                      : _pickSampleUf2,
+                                  icon: Icons.memory,
+                                  label:
+                                      _sampleUf2FileName ?? 'SAMPLEx.UF2',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: PlinkyButton(
+                                  onPressed: _isUploading || _isConverting
+                                      ? null
+                                      : _pickPresetsUf2,
+                                  icon: Icons.settings,
+                                  label: 'PRESETS.UF2',
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_presetsUf2Bytes != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Metadata loaded from PRESETS.UF2',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                            ),
+                          ],
+                          if (_isConverting) ...[
+                            const SizedBox(height: 8),
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text('Validating sample...'),
+                              ],
+                            ),
+                          ],
+                          if (_sampleTooLongWarning != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              _sampleTooLongWarning!,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.error,
+                                  ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                  ],
-                ],
-              ),
-            ),
+                  )
+                : Center(
+                    key: const ValueKey('clear-sample'),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _fileName ?? 'Sample loaded',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          PlinkyButton(
+                            onPressed:
+                                _isUploading ? null : _clearSample,
+                            icon: Icons.clear,
+                            label: 'Clear sample',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(height: 16),
           SampleMetadataForm(
