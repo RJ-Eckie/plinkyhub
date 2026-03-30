@@ -41,7 +41,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
   AudioSource? _audioSource;
   SoundHandle? _activeHandle;
   int _playingSlice = -1;
-  bool _loadingAudio = false;
+  int? _loadingSliceIndex;
   List<(double, double)>? _waveformPeaks;
   int _draggingIndex = -1;
   bool _isNearLine = false;
@@ -88,7 +88,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
 
   Future<void> _playSlice(int sliceIndex) async {
     final wavBytes = widget.wavBytes;
-    if (wavBytes == null || _loadingAudio) {
+    if (wavBytes == null || _loadingSliceIndex != null) {
       return;
     }
 
@@ -103,13 +103,13 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
 
       // Initialize engine and load audio if needed
       if (_audioSource == null) {
-        setState(() => _loadingAudio = true);
+        setState(() => _loadingSliceIndex = sliceIndex);
         if (!soloud.isInitialized) {
           await soloud.init();
         }
         _audioSource = await soloud.loadMem('sample.wav', wavBytes);
         if (mounted) {
-          setState(() => _loadingAudio = false);
+          setState(() => _loadingSliceIndex = null);
         } else {
           return;
         }
@@ -150,7 +150,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
         setState(() {
           _activeHandle = null;
           _playingSlice = -1;
-          _loadingAudio = false;
+          _loadingSliceIndex = null;
         });
       }
     }
@@ -310,7 +310,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                 SizedBox(
                   width: 32,
                   height: 32,
-                  child: _loadingAudio
+                  child: _loadingSliceIndex == i
                       ? const Padding(
                           padding: EdgeInsets.all(8),
                           child: CircularProgressIndicator(strokeWidth: 2),
