@@ -1,6 +1,8 @@
 # Claude Code
 CLAUDE.md
 AGENTS.md
+.claude/
+.mcp.json
 
 # Environment
 .env
