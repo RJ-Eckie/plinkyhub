@@ -45,8 +45,9 @@ class SampleMetadataForm extends StatelessWidget {
   final int? pcmFrameCount;
   final bool enabled;
 
-  @override
-  Widget build(BuildContext context) {
+  static const double _wideBreakpoint = 800;
+
+  Widget _buildInfoSection() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,8 +80,8 @@ class SampleMetadataForm extends StatelessWidget {
           enabled: enabled,
           onChanged: onPitchedChanged,
         ),
-        const SizedBox(height: 16),
-        if (!pitched)
+        if (!pitched) ...[
+          const SizedBox(height: 16),
           BaseNoteSelector(
             baseNote: baseNote,
             fineTune: fineTune,
@@ -88,18 +89,51 @@ class SampleMetadataForm extends StatelessWidget {
             onBaseNoteChanged: onBaseNoteChanged,
             onFineTuneChanged: onFineTuneChanged,
           ),
-        if (!pitched) const SizedBox(height: 16),
-        SlicePointsEditor(
-          slicePoints: slicePoints,
-          wavBytes: wavBytes,
-          pcmFrameCount: pcmFrameCount,
-          enabled: enabled,
-          onChanged: onSlicePointsChanged,
-          pitched: pitched,
-          sliceNotes: sliceNotes,
-          onSliceNotesChanged: onSliceNotesChanged,
-        ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildSlicePointsSection() {
+    return SlicePointsEditor(
+      slicePoints: slicePoints,
+      wavBytes: wavBytes,
+      pcmFrameCount: pcmFrameCount,
+      enabled: enabled,
+      onChanged: onSlicePointsChanged,
+      pitched: pitched,
+      sliceNotes: sliceNotes,
+      onSliceNotesChanged: onSliceNotesChanged,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _wideBreakpoint) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 340,
+                child: _buildInfoSection(),
+              ),
+              const SizedBox(width: 24),
+              Expanded(child: _buildSlicePointsSection()),
+            ],
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildInfoSection(),
+            const SizedBox(height: 16),
+            _buildSlicePointsSection(),
+          ],
+        );
+      },
     );
   }
 }

@@ -343,143 +343,158 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Upload a WAV file, or a SAMPLEx.UF2 file '
-                'from your Plinky. If you also provide the '
-                'PRESETS.UF2 file, slice points and other '
-                'metadata will be imported automatically.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              PlinkyButton(
-                onPressed: _isUploading || _isConverting ? null : _pickWavFile,
-                icon: Icons.audio_file,
-                label: _fileName != null && _sampleUf2Bytes == null
-                    ? _fileName!
-                    : 'Choose WAV file',
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Or upload from Plinky UF2 files:',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: PlinkyButton(
-                      onPressed: _isUploading || _isConverting
-                          ? null
-                          : _pickSampleUf2,
-                      icon: Icons.memory,
-                      label: _sampleUf2FileName ?? 'SAMPLEx.UF2',
+                  Text(
+                    'Upload a WAV file, or a SAMPLEx.UF2 file '
+                    'from your Plinky. If you also provide the '
+                    'PRESETS.UF2 file, slice points and other '
+                    'metadata will be imported automatically.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: PlinkyButton(
-                      onPressed: _isUploading || _isConverting
-                          ? null
-                          : _pickPresetsUf2,
-                      icon: Icons.settings,
-                      label: 'PRESETS.UF2',
+                  const SizedBox(height: 16),
+                  PlinkyButton(
+                    onPressed:
+                        _isUploading || _isConverting ? null : _pickWavFile,
+                    icon: Icons.audio_file,
+                    label: _fileName != null && _sampleUf2Bytes == null
+                        ? _fileName!
+                        : 'Choose WAV file',
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Or upload from Plinky UF2 files:',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: PlinkyButton(
+                          onPressed: _isUploading || _isConverting
+                              ? null
+                              : _pickSampleUf2,
+                          icon: Icons.memory,
+                          label: _sampleUf2FileName ?? 'SAMPLEx.UF2',
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: PlinkyButton(
+                          onPressed: _isUploading || _isConverting
+                              ? null
+                              : _pickPresetsUf2,
+                          icon: Icons.settings,
+                          label: 'PRESETS.UF2',
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_presetsUf2Bytes != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Metadata loaded from PRESETS.UF2',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
+                  ],
+                  if (_isConverting) ...[
+                    const SizedBox(height: 8),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Validating sample...'),
+                      ],
+                    ),
+                  ],
+                  if (_sampleTooLongWarning != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _sampleTooLongWarning!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SampleMetadataForm(
+            nameController: _nameController,
+            descriptionController: _descriptionController,
+            isPublic: _isPublic,
+            onIsPublicChanged: (value) =>
+                setState(() => _isPublic = value ?? true),
+            pitched: _pitched,
+            onPitchedChanged: (value) => setState(() => _pitched = value),
+            baseNote: _baseNote,
+            onBaseNoteChanged: (value) =>
+                setState(() => _baseNote = value),
+            fineTune: _fineTune,
+            onFineTuneChanged: (value) =>
+                setState(() => _fineTune = value),
+            slicePoints: _slicePoints,
+            onSlicePointsChanged: (points) =>
+                setState(() => _slicePoints = points),
+            sliceNotes: _sliceNotes,
+            onSliceNotesChanged: (notes) =>
+                setState(() => _sliceNotes = notes),
+            wavBytes: _wavBytes,
+            pcmFrameCount: _pcmFrameCount,
+            enabled: !_isUploading,
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'By uploading, you confirm that you own this '
+                    'sample or have the right to use and distribute '
+                    'it (e.g. under a Creative Commons licence or '
+                    'similar terms).',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  PlinkyButton(
+                    onPressed: _isUploading ||
+                            _wavBytes == null ||
+                            _sampleTooLongWarning != null
+                        ? null
+                        : _upload,
+                    icon:
+                        _isUploading ? Icons.hourglass_empty : Icons.upload,
+                    label: _isUploading ? 'Uploading...' : 'Upload',
                   ),
                 ],
               ),
-              if (_presetsUf2Bytes != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Metadata loaded from PRESETS.UF2',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ],
-              if (_isConverting) ...[
-                const SizedBox(height: 8),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text('Validating sample...'),
-                  ],
-                ),
-              ],
-              if (_sampleTooLongWarning != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _sampleTooLongWarning!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              SampleMetadataForm(
-                nameController: _nameController,
-                descriptionController: _descriptionController,
-                isPublic: _isPublic,
-                onIsPublicChanged: (value) =>
-                    setState(() => _isPublic = value ?? true),
-                pitched: _pitched,
-                onPitchedChanged: (value) =>
-                    setState(() => _pitched = value),
-                baseNote: _baseNote,
-                onBaseNoteChanged: (value) =>
-                    setState(() => _baseNote = value),
-                fineTune: _fineTune,
-                onFineTuneChanged: (value) =>
-                    setState(() => _fineTune = value),
-                slicePoints: _slicePoints,
-                onSlicePointsChanged: (points) =>
-                    setState(() => _slicePoints = points),
-                sliceNotes: _sliceNotes,
-                onSliceNotesChanged: (notes) =>
-                    setState(() => _sliceNotes = notes),
-                wavBytes: _wavBytes,
-                pcmFrameCount: _pcmFrameCount,
-                enabled: !_isUploading,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'By uploading, you confirm that you own this '
-                'sample or have the right to use and distribute '
-                'it (e.g. under a Creative Commons licence or '
-                'similar terms).',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              PlinkyButton(
-                onPressed:
-                    _isUploading ||
-                        _wavBytes == null ||
-                        _sampleTooLongWarning != null
-                    ? null
-                    : _upload,
-                icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
-                label: _isUploading ? 'Uploading...' : 'Upload',
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

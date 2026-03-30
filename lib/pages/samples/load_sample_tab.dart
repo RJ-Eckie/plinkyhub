@@ -366,33 +366,33 @@ class _LoadReviewView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SampleMetadataForm(
-                nameController: nameController,
-                descriptionController: descriptionController,
-                isPublic: isPublic,
-                onIsPublicChanged: (value) =>
-                    onIsPublicChanged(value ?? true),
-                pitched: pitched,
-                onPitchedChanged: onPitchedChanged,
-                baseNote: baseNote,
-                onBaseNoteChanged: onBaseNoteChanged,
-                fineTune: fineTune,
-                onFineTuneChanged: onFineTuneChanged,
-                slicePoints: slicePoints,
-                onSlicePointsChanged: onSlicePointsChanged,
-                sliceNotes: sliceNotes,
-                onSliceNotesChanged: onSliceNotesChanged,
-                wavBytes: wavBytes,
-                pcmFrameCount: pcmFrameCount,
-              ),
-              const SizedBox(height: 16),
-              Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SampleMetadataForm(
+            nameController: nameController,
+            descriptionController: descriptionController,
+            isPublic: isPublic,
+            onIsPublicChanged: (value) =>
+                onIsPublicChanged(value ?? true),
+            pitched: pitched,
+            onPitchedChanged: onPitchedChanged,
+            baseNote: baseNote,
+            onBaseNoteChanged: onBaseNoteChanged,
+            fineTune: fineTune,
+            onFineTuneChanged: onFineTuneChanged,
+            slicePoints: slicePoints,
+            onSlicePointsChanged: onSlicePointsChanged,
+            sliceNotes: sliceNotes,
+            onSliceNotesChanged: onSliceNotesChanged,
+            wavBytes: wavBytes,
+            pcmFrameCount: pcmFrameCount,
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Row(
                 children: [
                   Expanded(
                     child: PlinkyButton(
@@ -411,9 +411,9 @@ class _LoadReviewView extends StatelessWidget {
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
