@@ -23,7 +23,7 @@ class WaveformDrawer extends StatefulWidget {
     required this.onSamplesChanged,
     this.postEffectSamples,
     this.tool = DrawingTool.pencil,
-    this.height = 200,
+    this.height = 300,
     super.key,
   });
 

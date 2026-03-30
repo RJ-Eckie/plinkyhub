@@ -277,7 +277,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                 onPanEnd: (_) => _onDragEnd(),
                 onPanCancel: _onDragEnd,
                 child: SizedBox(
-                  height: 80,
+                  height: 200,
                   child: CustomPaint(
                     painter: SlicePointsPainter(
                       slicePoints: widget.slicePoints,
@@ -287,7 +287,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                       ).colorScheme.surfaceContainerHighest,
                       waveformPeaks: _waveformPeaks,
                     ),
-                    size: const Size(double.infinity, 80),
+                    size: const Size(double.infinity, 200),
                   ),
                 ),
               ),

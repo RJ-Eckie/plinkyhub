@@ -211,115 +211,242 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   @override
   Widget build(BuildContext context) {
     _updatePostEffectSamples();
+
+    final infoSection = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _DrawWavetableDescription(),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _nameController,
+          decoration: const InputDecoration(
+            labelText: 'Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _descriptionController,
+          decoration: const InputDecoration(
+            labelText: 'Description',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          title: const Text('Share with community'),
+          value: _isPublic,
+          onChanged: _isBusy
+              ? null
+              : (value) => setState(() => _isPublic = value),
+          contentPadding: EdgeInsets.zero,
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 8),
+          _ErrorMessageText(errorMessage: _errorMessage!),
+        ],
+        const SizedBox(height: 16),
+        if (_isGenerating)
+          const _GeneratingIndicator()
+        else
+          PlinkyButton(
+            onPressed: _isBusy ? null : _createAndUpload,
+            icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
+            label: _isUploading ? 'Uploading...' : 'Create & Upload',
+          ),
+        const SizedBox(height: 24),
+        WaveformEffectsPanel(
+          effects: _currentEffects,
+          enabled: !_isBusy,
+          onEffectsChanged: () {
+            setState(_updatePostEffectSamples);
+          },
+          onApply: _bakeEffects,
+        ),
+      ],
+    );
+
+    final editorSection = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SlotThumbnailSelector(
+          slots: _slots,
+          selectedSlot: _selectedSlot,
+          onSlotSelected: (index) {
+            setState(() {
+              _selectedSlot = index;
+              _updatePostEffectSamples();
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        _DrawingToolSelector(
+          selectedTool: _selectedTool,
+          onToolSelected: (tool) {
+            setState(() => _selectedTool = tool);
+          },
+        ),
+        const SizedBox(height: 8),
+        WaveformDrawer(
+          samples: _slots[_selectedSlot],
+          postEffectSamples: _postEffectSamples,
+          tool: _selectedTool,
+          onSamplesChanged: (updatedSamples) {
+            setState(() {
+              _slots[_selectedSlot] = updatedSamples;
+              _updatePostEffectSamples();
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        HarmonicEditor(
+          samples: _slots[_selectedSlot],
+          postEffectSamples: _postEffectSamples,
+          onSamplesChanged: (updatedSamples) {
+            setState(() {
+              _slots[_selectedSlot] = updatedSamples;
+              _updatePostEffectSamples();
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        _PresetButtons(
+          isBusy: _isBusy,
+          onPresetSelected: _applyPresetToSlot,
+        ),
+        const SizedBox(height: 8),
+        _BulkActions(
+          isBusy: _isBusy,
+          onCopyToAll: _copyToAllSlots,
+          onSineAll: () => _applyPresetToAll(generateSinePreset),
+        ),
+      ],
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _DrawWavetableDescription(),
-              const SizedBox(height: 12),
-              _SlotThumbnailSelector(
-                slots: _slots,
-                selectedSlot: _selectedSlot,
-                onSlotSelected: (index) {
-                  setState(() {
-                    _selectedSlot = index;
-                    _updatePostEffectSamples();
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              _DrawingToolSelector(
-                selectedTool: _selectedTool,
-                onToolSelected: (tool) {
-                  setState(() => _selectedTool = tool);
-                },
-              ),
-              const SizedBox(height: 8),
-              WaveformDrawer(
-                samples: _slots[_selectedSlot],
-                postEffectSamples: _postEffectSamples,
-                tool: _selectedTool,
-                onSamplesChanged: (updatedSamples) {
-                  setState(() {
-                    _slots[_selectedSlot] = updatedSamples;
-                    _updatePostEffectSamples();
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              HarmonicEditor(
-                samples: _slots[_selectedSlot],
-                postEffectSamples: _postEffectSamples,
-                onSamplesChanged: (updatedSamples) {
-                  setState(() {
-                    _slots[_selectedSlot] = updatedSamples;
-                    _updatePostEffectSamples();
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              _PresetButtons(
-                isBusy: _isBusy,
-                onPresetSelected: _applyPresetToSlot,
-              ),
-              const SizedBox(height: 8),
-              _BulkActions(
-                isBusy: _isBusy,
-                onCopyToAll: _copyToAllSlots,
-                onSineAll: () => _applyPresetToAll(generateSinePreset),
-              ),
-              const SizedBox(height: 16),
-              WaveformEffectsPanel(
-                effects: _currentEffects,
-                enabled: !_isBusy,
-                onEffectsChanged: () {
-                  setState(_updatePostEffectSamples);
-                },
-                onApply: _bakeEffects,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile(
-                title: const Text('Share with community'),
-                value: _isPublic,
-                onChanged: _isBusy
-                    ? null
-                    : (value) => setState(() => _isPublic = value),
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 8),
-                _ErrorMessageText(errorMessage: _errorMessage!),
-              ],
-              const SizedBox(height: 16),
-              if (_isGenerating)
-                const _GeneratingIndicator()
-              else
-                PlinkyButton(
-                  onPressed: _isBusy ? null : _createAndUpload,
-                  icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
-                  label: _isUploading ? 'Uploading...' : 'Create & Upload',
-                ),
-            ],
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= 1000) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 340, child: infoSection),
+                    const SizedBox(width: 32),
+                    Expanded(child: editorSection),
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _DrawWavetableDescription(),
+                  const SizedBox(height: 12),
+                  _SlotThumbnailSelector(
+                    slots: _slots,
+                    selectedSlot: _selectedSlot,
+                    onSlotSelected: (index) {
+                      setState(() {
+                        _selectedSlot = index;
+                        _updatePostEffectSamples();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _DrawingToolSelector(
+                    selectedTool: _selectedTool,
+                    onToolSelected: (tool) {
+                      setState(() => _selectedTool = tool);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  WaveformDrawer(
+                    samples: _slots[_selectedSlot],
+                    postEffectSamples: _postEffectSamples,
+                    tool: _selectedTool,
+                    onSamplesChanged: (updatedSamples) {
+                      setState(() {
+                        _slots[_selectedSlot] = updatedSamples;
+                        _updatePostEffectSamples();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  HarmonicEditor(
+                    samples: _slots[_selectedSlot],
+                    postEffectSamples: _postEffectSamples,
+                    onSamplesChanged: (updatedSamples) {
+                      setState(() {
+                        _slots[_selectedSlot] = updatedSamples;
+                        _updatePostEffectSamples();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _PresetButtons(
+                    isBusy: _isBusy,
+                    onPresetSelected: _applyPresetToSlot,
+                  ),
+                  const SizedBox(height: 8),
+                  _BulkActions(
+                    isBusy: _isBusy,
+                    onCopyToAll: _copyToAllSlots,
+                    onSineAll: () => _applyPresetToAll(generateSinePreset),
+                  ),
+                  const SizedBox(height: 16),
+                  WaveformEffectsPanel(
+                    effects: _currentEffects,
+                    enabled: !_isBusy,
+                    onEffectsChanged: () {
+                      setState(_updatePostEffectSamples);
+                    },
+                    onApply: _bakeEffects,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Share with community'),
+                    value: _isPublic,
+                    onChanged: _isBusy
+                        ? null
+                        : (value) => setState(() => _isPublic = value),
+                  ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    _ErrorMessageText(errorMessage: _errorMessage!),
+                  ],
+                  const SizedBox(height: 16),
+                  if (_isGenerating)
+                    const _GeneratingIndicator()
+                  else
+                    PlinkyButton(
+                      onPressed: _isBusy ? null : _createAndUpload,
+                      icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
+                      label: _isUploading ? 'Uploading...' : 'Create & Upload',
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),

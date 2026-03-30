@@ -13,7 +13,7 @@ class HarmonicEditor extends StatefulWidget {
     required this.samples,
     required this.onSamplesChanged,
     this.postEffectSamples,
-    this.height = 120,
+    this.height = 200,
     super.key,
   });
 
