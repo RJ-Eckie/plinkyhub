@@ -449,6 +449,14 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
                 ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: const Text('Share with community'),
+                value: _isPublic,
+                onChanged: _isUploading
+                    ? null
+                    : (value) => setState(() => _isPublic = value),
+              ),
               const SizedBox(height: 16),
               SampleModeSelector(
                 pitched: _pitched,
@@ -477,14 +485,6 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
                 sliceNotes: _sliceNotes,
                 onSliceNotesChanged: (notes) =>
                     setState(() => _sliceNotes = notes),
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Share with community'),
-                value: _isPublic,
-                onChanged: _isUploading
-                    ? null
-                    : (value) => setState(() => _isPublic = value),
               ),
               const SizedBox(height: 8),
               Text(

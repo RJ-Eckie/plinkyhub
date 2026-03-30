@@ -390,6 +390,12 @@ class _LoadReviewView extends StatelessWidget {
                 ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: const Text('Share with community'),
+                value: isPublic,
+                onChanged: onIsPublicChanged,
+              ),
               const SizedBox(height: 16),
               SampleModeSelector(
                 pitched: pitched,
@@ -415,12 +421,6 @@ class _LoadReviewView extends StatelessWidget {
                 pitched: pitched,
                 sliceNotes: sliceNotes,
                 onSliceNotesChanged: onSliceNotesChanged,
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Share with community'),
-                value: isPublic,
-                onChanged: onIsPublicChanged,
               ),
               const SizedBox(height: 16),
               Row(
