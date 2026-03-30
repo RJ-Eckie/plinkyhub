@@ -23,6 +23,7 @@ class SampleMetadataForm extends StatelessWidget {
     required this.onSliceNotesChanged,
     required this.wavBytes,
     required this.pcmFrameCount,
+    required this.sampleName,
     this.enabled = true,
     this.header,
     this.footer,
@@ -45,6 +46,7 @@ class SampleMetadataForm extends StatelessWidget {
   final ValueChanged<List<int>> onSliceNotesChanged;
   final Uint8List? wavBytes;
   final int? pcmFrameCount;
+  final String sampleName;
   final bool enabled;
   final Widget? header;
   final Widget? footer;
@@ -112,6 +114,7 @@ class SampleMetadataForm extends StatelessWidget {
       wavBytes: wavBytes,
       pcmFrameCount: pcmFrameCount,
       enabled: enabled,
+      sampleName: sampleName,
       onChanged: onSlicePointsChanged,
       pitched: pitched,
       sliceNotes: sliceNotes,

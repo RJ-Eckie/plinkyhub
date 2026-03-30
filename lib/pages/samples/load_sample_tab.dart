@@ -290,6 +290,9 @@ class _LoadSampleTabState extends ConsumerState<LoadSampleTab> {
           onSliceNotesChanged: (notes) => setState(() => _sliceNotes = notes),
           wavBytes: _wavBytes,
           pcmFrameCount: _pcmFrameCount,
+          sampleName:
+              '${ref.read(authenticationProvider).username ?? 'local'}'
+              '_${_nameController.text}',
           enabled: _step == _LoadStep.review,
           footer: _step == _LoadStep.review
               ? Row(

@@ -53,6 +53,7 @@ class PlayNotifier extends Notifier<PlayState> {
   Future<void> loadSample(
     String name,
     Uint8List wavBytes, {
+    String username = 'local',
     int baseMidi = 60,
     List<double> slicePoints = defaultSlicePoints,
     List<int> sliceNotes = defaultSliceNotes,
@@ -70,7 +71,10 @@ class PlayNotifier extends Notifier<PlayState> {
       }
 
       debugPrint('Loading sample (${wavBytes.length} bytes)...');
-      _audioSource = await SoLoud.instance.loadMem('sample.wav', wavBytes);
+      _audioSource = await SoLoud.instance.loadMem(
+        '${username}_$name.wav',
+        wavBytes,
+      );
       debugPrint('Sample loaded');
       state = state.copyWith(
         sampleWavBytes: wavBytes,

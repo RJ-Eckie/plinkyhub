@@ -1052,7 +1052,10 @@ class _SamplePreviewRowState extends State<_SamplePreviewRow> {
 
     if (_audioSource == null) {
       final wavBytes = plinkyPcmToWav(pcmData);
-      _audioSource = await soloud.loadMem('preview.wav', wavBytes);
+      _audioSource = await soloud.loadMem(
+        '${widget.label}.wav',
+        wavBytes,
+      );
     }
 
     final handle = await soloud.play(_audioSource!);

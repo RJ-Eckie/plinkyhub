@@ -13,6 +13,7 @@ class SlicePointsEditor extends StatefulWidget {
     required this.wavBytes,
     required this.enabled,
     required this.onChanged,
+    required this.sampleName,
     this.pcmFrameCount,
     this.pitched = false,
     this.sliceNotes = defaultSliceNotes,
@@ -24,6 +25,7 @@ class SlicePointsEditor extends StatefulWidget {
   final Uint8List? wavBytes;
   final bool enabled;
   final ValueChanged<List<double>> onChanged;
+  final String sampleName;
 
   /// Total number of PCM frames after conversion to Plinky format.
   /// When provided, the editor enforces a minimum gap of [minSliceSamples]
@@ -107,7 +109,10 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
         if (!soloud.isInitialized) {
           await soloud.init();
         }
-        _audioSource = await soloud.loadMem('sample.wav', wavBytes);
+        _audioSource = await soloud.loadMem(
+          '${widget.sampleName}.wav',
+          wavBytes,
+        );
         if (mounted) {
           setState(() => _loadingSliceIndex = null);
         } else {

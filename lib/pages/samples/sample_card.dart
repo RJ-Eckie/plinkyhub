@@ -279,6 +279,8 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                     wavBytes: _wavBytes,
                     pcmFrameCount: _pcmFrameCount,
                     enabled: isOwned,
+                    sampleName:
+                        '${widget.sample.username}_${widget.sample.name}',
                     onChanged: (points) {
                       setState(() => _slicePoints = points);
                     },

@@ -573,6 +573,9 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
         onSliceNotesChanged: (notes) => setState(() => _sliceNotes = notes),
         wavBytes: _wavBytes,
         pcmFrameCount: _pcmFrameCount,
+        sampleName:
+            '${ref.read(authenticationProvider).username ?? 'local'}'
+            '_${_nameController.text}',
         enabled: !_isUploading,
         footer: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

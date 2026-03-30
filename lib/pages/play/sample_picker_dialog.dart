@@ -52,6 +52,7 @@ class _SamplePickerDialogState extends ConsumerState<SamplePickerDialog> {
           .loadSample(
             sample.name,
             bytes,
+            username: sample.username,
             baseMidi: sample.baseNote,
             slicePoints: sample.slicePoints,
             sliceNotes: sample.sliceNotes,

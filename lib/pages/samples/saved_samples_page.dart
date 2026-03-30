@@ -33,7 +33,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
   @override
   void initState() {
     super.initState();
-    int initialIndex = 0;
+    var initialIndex = 0;
     if (widget.editSampleName != null) {
       initialIndex = SampleTab.create.index;
     } else if (widget.initialTab != null) {

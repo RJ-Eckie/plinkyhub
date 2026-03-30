@@ -44,6 +44,7 @@ class _PresetPickerDialogState extends ConsumerState<PresetPickerDialog> {
               .loadSample(
                 sample.name,
                 wavBytes,
+                username: sample.username,
                 baseMidi: sample.baseNote,
                 slicePoints: sample.slicePoints,
                 sliceNotes: sample.sliceNotes,
