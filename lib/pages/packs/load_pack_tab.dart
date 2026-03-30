@@ -264,11 +264,11 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       }
 
       setState(() {
-        _statusMessage = 'Reading WAVETABLE.UF2...';
+        _statusMessage = 'Reading WAVETAB.UF2...';
       });
       _wavetableUf2Bytes = await readFileFromDirectory(
         directory,
-        'WAVETABLE.UF2',
+        'WAVETAB.UF2',
       );
       if (_wavetableUf2Bytes != null && _isEmptyUf2(_wavetableUf2Bytes!)) {
         _wavetableUf2Bytes = null;

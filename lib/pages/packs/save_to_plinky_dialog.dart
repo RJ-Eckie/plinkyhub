@@ -268,10 +268,10 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       );
     }
 
-    // Write WAVETABLE.UF2 if the pack has one.
+    // Write WAVETAB.UF2 if the pack has one.
     if (widget.pack.wavetableId != null) {
       setState(() {
-        _statusMessage = 'Writing WAVETABLE.UF2...';
+        _statusMessage = 'Writing WAVETAB.UF2...';
       });
 
       final wavetableFilePath = await _fetchFilePath(
@@ -283,7 +283,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
           .download(wavetableFilePath);
       await writeFileToDirectory(
         directory,
-        'WAVETABLE.UF2',
+        'WAVETAB.UF2',
         wavetableBytes,
       );
     }

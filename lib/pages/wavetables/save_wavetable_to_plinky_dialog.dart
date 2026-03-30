@@ -49,9 +49,9 @@ class _SaveWavetableToPlinkyDialogState
           .downloadUf2(widget.wavetable.filePath);
 
       setState(() {
-        _statusMessage = 'Writing WAVETABLE.UF2...';
+        _statusMessage = 'Writing WAVETAB.UF2...';
       });
-      await writeFileToDirectory(directory, 'WAVETABLE.UF2', uf2Bytes);
+      await writeFileToDirectory(directory, 'WAVETAB.UF2', uf2Bytes);
 
       setState(() => _step = _DialogStep.done);
     } on Exception catch (error) {
