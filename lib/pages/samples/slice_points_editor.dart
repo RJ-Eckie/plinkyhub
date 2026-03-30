@@ -43,6 +43,8 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
   int _playingSlice = -1;
   bool _loadingAudio = false;
   List<(double, double)>? _waveformPeaks;
+  int _draggingIndex = -1;
+  bool _isNearLine = false;
 
   @override
   void initState() {
@@ -154,6 +156,73 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
     }
   }
 
+  static const double _hitPixels = 6;
+
+  bool _isNearSliceLine(double localX, double width) {
+    for (final point in widget.slicePoints) {
+      if ((point * width - localX).abs() < _hitPixels) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _onHover(PointerEvent event, double width) {
+    if (!widget.enabled || width <= 0) {
+      return;
+    }
+    final nearLine = _isNearSliceLine(event.localPosition.dx, width);
+    if (nearLine != _isNearLine) {
+      setState(() => _isNearLine = nearLine);
+    }
+  }
+
+  void _onDragDown(DragDownDetails details, double width) {
+    if (!widget.enabled || width <= 0) {
+      return;
+    }
+    final localX = details.localPosition.dx;
+    var closestIndex = -1;
+    var closestPixelDistance = double.infinity;
+    final points = widget.slicePoints;
+    for (var i = 0; i < points.length; i++) {
+      final pixelDistance = (points[i] * width - localX).abs();
+      if (pixelDistance < closestPixelDistance) {
+        closestPixelDistance = pixelDistance;
+        closestIndex = i;
+      }
+    }
+    if (closestIndex >= 0 && closestPixelDistance < _hitPixels) {
+      setState(() => _draggingIndex = closestIndex);
+    }
+  }
+
+  void _onDragUpdate(DragUpdateDetails details, double width) {
+    final i = _draggingIndex;
+    if (i < 0 || i >= widget.slicePoints.length || width <= 0) {
+      return;
+    }
+    final fractionX = (details.localPosition.dx / width).clamp(0.0, 1.0);
+    final gap = widget.pcmFrameCount != null
+        ? minSliceSamples / widget.pcmFrameCount!
+        : 0.0;
+    final min = i > 0 ? widget.slicePoints[i - 1] + gap : 0.0;
+    final max = i < 7 ? widget.slicePoints[i + 1] - gap : 1.0 - gap;
+    if (min > max) {
+      return;
+    }
+    final clamped = fractionX.clamp(min, max);
+    final updated = List<double>.from(widget.slicePoints);
+    updated[i] = double.parse(clamped.toStringAsFixed(3));
+    widget.onChanged(updated);
+  }
+
+  void _onDragEnd() {
+    if (_draggingIndex >= 0) {
+      setState(() => _draggingIndex = -1);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -161,9 +230,21 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
       children: [
         Row(
           children: [
-            Text(
-              'Slice points',
-              style: Theme.of(context).textTheme.titleSmall,
+            Text.rich(
+              TextSpan(
+                text: 'Slice points ',
+                style: Theme.of(context).textTheme.titleSmall,
+                children: [
+                  TextSpan(
+                    text: '(you can drag the lines)',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const Spacer(),
             TextButton(
@@ -175,19 +256,43 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
           ],
         ),
         const SizedBox(height: 4),
-        SizedBox(
-          height: 80,
-          child: CustomPaint(
-            painter: SlicePointsPainter(
-              slicePoints: widget.slicePoints,
-              color: Theme.of(context).colorScheme.primary,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest,
-              waveformPeaks: _waveformPeaks,
-            ),
-            size: const Size(double.infinity, 80),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return MouseRegion(
+              onHover: (event) =>
+                  _onHover(event, constraints.maxWidth),
+              onExit: (_) {
+                if (_isNearLine) {
+                  setState(() => _isNearLine = false);
+                }
+              },
+              cursor: _isNearLine || _draggingIndex >= 0
+                  ? SystemMouseCursors.resizeColumn
+                  : SystemMouseCursors.basic,
+              child: GestureDetector(
+                onPanDown: (details) =>
+                    _onDragDown(details, constraints.maxWidth),
+                onPanUpdate: (details) =>
+                    _onDragUpdate(details, constraints.maxWidth),
+                onPanEnd: (_) => _onDragEnd(),
+                onPanCancel: _onDragEnd,
+                child: SizedBox(
+                  height: 80,
+                  child: CustomPaint(
+                    painter: SlicePointsPainter(
+                      slicePoints: widget.slicePoints,
+                      color: Theme.of(context).colorScheme.primary,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      waveformPeaks: _waveformPeaks,
+                    ),
+                    size: const Size(double.infinity, 80),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 8),
         if (_loadingAudio)
