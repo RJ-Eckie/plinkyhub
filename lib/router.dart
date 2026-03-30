@@ -152,6 +152,16 @@ GoRouter createRouter(ProviderContainer container) {
         ),
       ),
       GoRoute(
+        path: '/:username/sample/:name/edit',
+        builder: (context, state) => _ItemPageShell(
+          child: SavedSamplesPage(
+            editSampleName: Uri.decodeComponent(
+              state.pathParameters['name']!,
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/:username/wavetable/:name',
         builder: (context, state) => _ItemPageShell(
           child: WavetablePage(

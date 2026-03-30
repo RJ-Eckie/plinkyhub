@@ -224,6 +224,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                   const Spacer(),
                   if (isOwned) ...[
                     IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      tooltip: 'Edit sample',
+                      onPressed: () => context.go(
+                        '/${sample.username}/sample/'
+                        '${Uri.encodeComponent(sample.name)}/edit',
+                      ),
+                    ),
+                    IconButton(
                       icon: Icon(
                         sample.isPublic ? Icons.public : Icons.public_off,
                         size: 20,

@@ -9,7 +9,9 @@ import 'package:plinkyhub/widgets/searchable_item_list.dart';
 import 'package:plinkyhub/widgets/sign_in_prompt.dart';
 
 class SavedSamplesPage extends ConsumerStatefulWidget {
-  const SavedSamplesPage({super.key});
+  const SavedSamplesPage({this.editSampleName, super.key});
+
+  final String? editSampleName;
 
   @override
   ConsumerState<SavedSamplesPage> createState() => _SavedSamplesPageState();
@@ -25,9 +27,13 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
     _tabController = TabController(
       length: 4,
       vsync: this,
+      initialIndex: widget.editSampleName != null ? 2 : 0,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(savedSamplesProvider.notifier).fetchPublicSamples();
+      if (widget.editSampleName != null) {
+        ref.read(savedSamplesProvider.notifier).fetchUserSamples();
+      }
     });
   }
 
@@ -42,6 +48,12 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
     final authenticationState = ref.watch(authenticationProvider);
     final savedSamplesState = ref.watch(savedSamplesProvider);
     final isSignedIn = authenticationState.user != null;
+
+    final editSample = widget.editSampleName != null
+        ? savedSamplesState.userSamples
+            .where((s) => s.name == widget.editSampleName)
+            .firstOrNull
+        : null;
 
     return Column(
       children: [
@@ -101,9 +113,15 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                 itemLabel: 'sample',
               ),
               if (isSignedIn)
-                UploadSampleTab(
-                  onUploaded: () => _tabController.animateTo(0),
-                )
+                if (widget.editSampleName != null &&
+                    editSample == null &&
+                    savedSamplesState.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  UploadSampleTab(
+                    sampleToEdit: editSample,
+                    onUploaded: () => _tabController.animateTo(0),
+                  )
               else
                 const SignInPrompt(
                   message: 'Sign in to create samples',
