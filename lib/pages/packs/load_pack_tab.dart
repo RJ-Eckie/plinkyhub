@@ -242,8 +242,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             // The firmware exports the full sample slot, but the actual
             // sample may be shorter. Trim to sampleLength from the
             // SampleInfo so slice point fractions stay correct.
-            final sampleInfo =
-                i < _sampleInfos.length ? _sampleInfos[i] : null;
+            final sampleInfo = i < _sampleInfos.length ? _sampleInfos[i] : null;
             if (sampleInfo != null &&
                 sampleInfo.sampleLength * 2 < pcmData.length) {
               pcmData = Uint8List.sublistView(

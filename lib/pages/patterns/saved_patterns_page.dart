@@ -32,11 +32,11 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
     super.initState();
     final initialIndex = widget.initialTab != null
         ? PatternTab.values
-            .firstWhere(
-              (t) => t.name == widget.initialTab,
-              orElse: () => PatternTab.my,
-            )
-            .index
+              .firstWhere(
+                (t) => t.name == widget.initialTab,
+                orElse: () => PatternTab.my,
+              )
+              .index
         : 0;
 
     _tabController = TabController(
@@ -57,7 +57,8 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
   @override
   void didUpdateWidget(SavedPatternsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
       final tab = PatternTab.values.firstWhere(
         (t) => t.name == widget.initialTab,
         orElse: () => PatternTab.my,

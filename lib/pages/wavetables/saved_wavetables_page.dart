@@ -35,11 +35,11 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
     super.initState();
     final initialIndex = widget.initialTab != null
         ? WavetableTab.values
-            .firstWhere(
-              (t) => t.name == widget.initialTab,
-              orElse: () => WavetableTab.my,
-            )
-            .index
+              .firstWhere(
+                (t) => t.name == widget.initialTab,
+                orElse: () => WavetableTab.my,
+              )
+              .index
         : 0;
 
     _tabController = TabController(
@@ -60,7 +60,8 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
   @override
   void didUpdateWidget(SavedWavetablesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
       final tab = WavetableTab.values.firstWhere(
         (t) => t.name == widget.initialTab,
         orElse: () => WavetableTab.my,

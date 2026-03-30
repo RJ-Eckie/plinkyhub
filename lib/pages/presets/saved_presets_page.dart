@@ -30,11 +30,11 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
     super.initState();
     final initialIndex = widget.initialTab != null
         ? PresetTab.values
-            .firstWhere(
-              (t) => t.name == widget.initialTab,
-              orElse: () => PresetTab.my,
-            )
-            .index
+              .firstWhere(
+                (t) => t.name == widget.initialTab,
+                orElse: () => PresetTab.my,
+              )
+              .index
         : 0;
 
     _tabController = TabController(
@@ -55,7 +55,8 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
   @override
   void didUpdateWidget(SavedPresetsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
       final tab = PresetTab.values.firstWhere(
         (t) => t.name == widget.initialTab,
         orElse: () => PresetTab.my,

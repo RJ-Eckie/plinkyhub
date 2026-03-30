@@ -238,9 +238,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                   TextSpan(
                     text: '(you can drag the lines)',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -259,8 +257,7 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
         LayoutBuilder(
           builder: (context, constraints) {
             return MouseRegion(
-              onHover: (event) =>
-                  _onHover(event, constraints.maxWidth),
+              onHover: (event) => _onHover(event, constraints.maxWidth),
               onExit: (_) {
                 if (_isNearLine) {
                   setState(() => _isNearLine = false);

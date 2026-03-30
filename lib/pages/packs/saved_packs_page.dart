@@ -34,11 +34,11 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
     super.initState();
     final initialIndex = widget.initialTab != null
         ? PackTab.values
-            .firstWhere(
-              (t) => t.name == widget.initialTab,
-              orElse: () => PackTab.my,
-            )
-            .index
+              .firstWhere(
+                (t) => t.name == widget.initialTab,
+                orElse: () => PackTab.my,
+              )
+              .index
         : 0;
 
     _tabController = TabController(
@@ -59,7 +59,8 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
   @override
   void didUpdateWidget(SavedPacksPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
       final tab = PackTab.values.firstWhere(
         (t) => t.name == widget.initialTab,
         orElse: () => PackTab.my,

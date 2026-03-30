@@ -84,7 +84,8 @@ class AboutPage extends StatelessWidget {
                   linkStyle,
                 ),
                 const TextSpan(
-                  text: ' for creating the new firmware and his '
+                  text:
+                      ' for creating the new firmware and his '
                       'in-depth knowledge of how everything works',
                 ),
               ],

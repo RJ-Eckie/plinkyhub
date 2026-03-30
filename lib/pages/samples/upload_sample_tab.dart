@@ -381,7 +381,8 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
       final wavStorageName = '${baseName}_$timestamp.wav';
       final pcmStorageName = '${baseName}_$timestamp.pcm';
 
-      final sample = widget.sampleToEdit?.copyWith(
+      final sample =
+          widget.sampleToEdit?.copyWith(
             name: _nameController.text.trim(),
             description: _descriptionController.text.trim(),
             isPublic: _isPublic,
@@ -417,7 +418,9 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
         // file changed.
         // Actually, let's keep it simple for now as per requirements.
       } else {
-        await ref.read(savedSamplesProvider.notifier).saveSample(
+        await ref
+            .read(savedSamplesProvider.notifier)
+            .saveSample(
               sample,
               wavBytes: _wavBytes!,
               pcmBytes: pcmBytes,
@@ -428,7 +431,9 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              widget.sampleToEdit != null ? 'Sample updated' : 'Sample uploaded',
+              widget.sampleToEdit != null
+                  ? 'Sample updated'
+                  : 'Sample uploaded',
             ),
           ),
         );
@@ -482,15 +487,17 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
                     ),
                     const SizedBox(height: 8),
                     PlinkyButton(
-                      onPressed:
-                          _isUploading || _isConverting ? null : _pickSampleUf2,
+                      onPressed: _isUploading || _isConverting
+                          ? null
+                          : _pickSampleUf2,
                       icon: Icons.memory,
                       label: _sampleUf2FileName ?? 'SAMPLEx.UF2',
                     ),
                     const SizedBox(height: 8),
                     PlinkyButton(
-                      onPressed:
-                          _isUploading || _isConverting ? null : _pickPresetsUf2,
+                      onPressed: _isUploading || _isConverting
+                          ? null
+                          : _pickPresetsUf2,
                       icon: Icons.settings,
                       label: 'PRESETS.UF2',
                     ),
@@ -591,8 +598,12 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
                   ? Icons.hourglass_empty
                   : (widget.sampleToEdit != null ? Icons.save : Icons.upload),
               label: _isUploading
-                  ? (widget.sampleToEdit != null ? 'Updating...' : 'Uploading...')
-                  : (widget.sampleToEdit != null ? 'Update Sample' : 'Upload Sample'),
+                  ? (widget.sampleToEdit != null
+                        ? 'Updating...'
+                        : 'Uploading...')
+                  : (widget.sampleToEdit != null
+                        ? 'Update Sample'
+                        : 'Upload Sample'),
             ),
           ],
         ),

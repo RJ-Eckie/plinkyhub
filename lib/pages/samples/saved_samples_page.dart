@@ -63,7 +63,8 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
   @override
   void didUpdateWidget(SavedSamplesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
       final tab = SampleTab.values.firstWhere(
         (t) => t.name == widget.initialTab,
         orElse: () => SampleTab.my,
@@ -96,8 +97,8 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
 
     final editSample = widget.editSampleName != null
         ? savedSamplesState.userSamples
-            .where((s) => s.name == widget.editSampleName)
-            .firstOrNull
+              .where((s) => s.name == widget.editSampleName)
+              .firstOrNull
         : null;
 
     return Column(
