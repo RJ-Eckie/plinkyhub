@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/samples/load_sample_tab.dart';
 import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/pages/samples/upload_sample_tab.dart';
@@ -8,10 +9,18 @@ import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
 import 'package:plinkyhub/widgets/sign_in_prompt.dart';
 
+enum SampleTab {
+  my,
+  community,
+  create,
+  load,
+}
+
 class SavedSamplesPage extends ConsumerStatefulWidget {
-  const SavedSamplesPage({this.editSampleName, super.key});
+  const SavedSamplesPage({this.editSampleName, this.initialTab, super.key});
 
   final String? editSampleName;
+  final String? initialTab;
 
   @override
   ConsumerState<SavedSamplesPage> createState() => _SavedSamplesPageState();
@@ -24,21 +33,57 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
   @override
   void initState() {
     super.initState();
+    int initialIndex = 0;
+    if (widget.editSampleName != null) {
+      initialIndex = SampleTab.create.index;
+    } else if (widget.initialTab != null) {
+      initialIndex = SampleTab.values
+          .firstWhere(
+            (t) => t.name == widget.initialTab,
+            orElse: () => SampleTab.my,
+          )
+          .index;
+    }
+
     _tabController = TabController(
-      length: 4,
+      length: SampleTab.values.length,
       vsync: this,
-      initialIndex: widget.editSampleName != null ? 2 : 0,
+      initialIndex: initialIndex,
     );
+    _tabController.addListener(_handleTabChange);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(savedSamplesProvider.notifier).fetchPublicSamples();
-      if (widget.editSampleName != null) {
+      if (widget.editSampleName != null || initialIndex == 0) {
         ref.read(savedSamplesProvider.notifier).fetchUserSamples();
       }
     });
   }
 
   @override
+  void didUpdateWidget(SavedSamplesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+      final tab = SampleTab.values.firstWhere(
+        (t) => t.name == widget.initialTab,
+        orElse: () => SampleTab.my,
+      );
+      if (_tabController.index != tab.index) {
+        _tabController.animateTo(tab.index);
+      }
+    }
+  }
+
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      final tabName = SampleTab.values[_tabController.index].name;
+      context.go('/samples/$tabName');
+    }
+  }
+
+  @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }

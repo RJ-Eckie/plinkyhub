@@ -47,6 +47,14 @@ GoRouter createRouter(ProviderContainer container) {
               GoRoute(
                 path: '/presets',
                 builder: (context, state) => const SavedPresetsPage(),
+                routes: [
+                  GoRoute(
+                    path: ':tab',
+                    builder: (context, state) => SavedPresetsPage(
+                      initialTab: state.pathParameters['tab'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -56,6 +64,14 @@ GoRouter createRouter(ProviderContainer container) {
               GoRoute(
                 path: '/packs',
                 builder: (context, state) => const SavedPacksPage(),
+                routes: [
+                  GoRoute(
+                    path: ':tab',
+                    builder: (context, state) => SavedPacksPage(
+                      initialTab: state.pathParameters['tab'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -65,6 +81,14 @@ GoRouter createRouter(ProviderContainer container) {
               GoRoute(
                 path: '/samples',
                 builder: (context, state) => const SavedSamplesPage(),
+                routes: [
+                  GoRoute(
+                    path: ':tab',
+                    builder: (context, state) => SavedSamplesPage(
+                      initialTab: state.pathParameters['tab'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -74,6 +98,14 @@ GoRouter createRouter(ProviderContainer container) {
               GoRoute(
                 path: '/wavetables',
                 builder: (context, state) => const SavedWavetablesPage(),
+                routes: [
+                  GoRoute(
+                    path: ':tab',
+                    builder: (context, state) => SavedWavetablesPage(
+                      initialTab: state.pathParameters['tab'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -83,6 +115,14 @@ GoRouter createRouter(ProviderContainer container) {
               GoRoute(
                 path: '/patterns',
                 builder: (context, state) => const SavedPatternsPage(),
+                routes: [
+                  GoRoute(
+                    path: ':tab',
+                    builder: (context, state) => SavedPatternsPage(
+                      initialTab: state.pathParameters['tab'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

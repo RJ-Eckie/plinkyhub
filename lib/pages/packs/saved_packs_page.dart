@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/packs/create_pack_tab.dart';
 import 'package:plinkyhub/pages/packs/load_pack_tab.dart';
 import 'package:plinkyhub/pages/packs/pack_card.dart';
@@ -8,8 +9,17 @@ import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
 import 'package:plinkyhub/widgets/sign_in_prompt.dart';
 
+enum PackTab {
+  my,
+  community,
+  create,
+  load,
+}
+
 class SavedPacksPage extends ConsumerStatefulWidget {
-  const SavedPacksPage({super.key});
+  const SavedPacksPage({this.initialTab, super.key});
+
+  final String? initialTab;
 
   @override
   ConsumerState<SavedPacksPage> createState() => _SavedPacksPageState();
@@ -22,17 +32,54 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
   @override
   void initState() {
     super.initState();
+    final initialIndex = widget.initialTab != null
+        ? PackTab.values
+            .firstWhere(
+              (t) => t.name == widget.initialTab,
+              orElse: () => PackTab.my,
+            )
+            .index
+        : 0;
+
     _tabController = TabController(
-      length: 4,
+      length: PackTab.values.length,
       vsync: this,
+      initialIndex: initialIndex,
     );
+    _tabController.addListener(_handleTabChange);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(savedPacksProvider.notifier).fetchPublicPacks();
+      if (initialIndex == 0) {
+        ref.read(savedPacksProvider.notifier).fetchUserPacks();
+      }
     });
   }
 
   @override
+  void didUpdateWidget(SavedPacksPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != null && widget.initialTab != oldWidget.initialTab) {
+      final tab = PackTab.values.firstWhere(
+        (t) => t.name == widget.initialTab,
+        orElse: () => PackTab.my,
+      );
+      if (_tabController.index != tab.index) {
+        _tabController.animateTo(tab.index);
+      }
+    }
+  }
+
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      final tabName = PackTab.values[_tabController.index].name;
+      context.go('/packs/$tabName');
+    }
+  }
+
+  @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
