@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:plinkyhub/widgets/terms_of_service_dialog.dart';
 import 'package:web/web.dart' as web;
@@ -7,6 +8,11 @@ class AboutPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final linkStyle = TextStyle(
+      color: Theme.of(context).colorScheme.primary,
+      decoration: TextDecoration.underline,
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -27,33 +33,120 @@ class AboutPage extends StatelessWidget {
             'that you play by touching.',
           ),
           const SizedBox(height: 16),
-          const Text('PlinkyHub is made by Lukas Klingsbo (spydon).'),
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: 'PlinkyHub is made by '),
+                _link(
+                  'Lukas Klingsbo (spydon)',
+                  'https://www.linkedin.com/in/spydon',
+                  linkStyle,
+                ),
+                const TextSpan(text: '.'),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'Special thanks to:',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          const Text(
-            '\u2022 mmalex and Making Sound Machines for creating '
-            'the amazing Plinky and Plinky+',
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '\u2022 '),
+                _link(
+                  'mmalex',
+                  'https://x.com/mmalex',
+                  linkStyle,
+                ),
+                const TextSpan(text: ' and '),
+                _link(
+                  'Making Sound Machines',
+                  'https://makingsoundmachines.com',
+                  linkStyle,
+                ),
+                const TextSpan(
+                  text: ' for creating the amazing Plinky and Plinky+',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '\u2022 RJ for creating the new firmware',
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '\u2022 '),
+                _link(
+                  'RJ',
+                  'https://github.com/RJ-Eckie',
+                  linkStyle,
+                ),
+                const TextSpan(
+                  text: ' for creating the new firmware and his '
+                      'in-depth knowledge of how everything works',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '\u2022 Orangetronic, miunau and wraybowling for the '
-            'original Plinky WebUSB editor',
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '\u2022 '),
+                _link(
+                  'Orangetronic',
+                  'https://github.com/Orangetronic',
+                  linkStyle,
+                ),
+                const TextSpan(text: ', '),
+                _link(
+                  'miunau',
+                  'https://github.com/miunau',
+                  linkStyle,
+                ),
+                const TextSpan(text: ' and '),
+                _link(
+                  'wraybowling',
+                  'https://github.com/wraybowling',
+                  linkStyle,
+                ),
+                const TextSpan(
+                  text: ' for the original Plinky WebUSB editor',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '\u2022 mmalex for the parameter icons',
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '\u2022 '),
+                _link(
+                  'mmalex',
+                  'https://x.com/mmalex',
+                  linkStyle,
+                ),
+                const TextSpan(text: ' for the parameter icons'),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '\u2022 Nathan Plante (Kilgore) for alpha testing and inspiration',
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '\u2022 '),
+                _link(
+                  'Nathan Plante (Kilgore)',
+                  'https://linktr.ee/nathanplante',
+                  linkStyle,
+                ),
+                const TextSpan(
+                  text: ' for alpha testing and inspiration',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -64,7 +157,7 @@ class AboutPage extends StatelessWidget {
           const Text(
             'PlinkyHub is an independent community project and is not '
             'affiliated with, endorsed by, or officially connected to '
-            'Plinky, plinkysynth.com, or any of its creators. '
+            'Plinky, plinkysynth.com, or any of its creators.\n'
             'All product names, trademarks, and registered trademarks '
             'are the property of their respective owners.',
           ),
@@ -141,6 +234,15 @@ class AboutPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  TextSpan _link(String text, String url, TextStyle style) {
+    return TextSpan(
+      text: text,
+      style: style,
+      recognizer: TapGestureRecognizer()
+        ..onTap = () => web.window.open(url, '_blank'),
     );
   }
 }
