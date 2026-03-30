@@ -71,12 +71,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
           .read(savedSamplesProvider.notifier)
           .downloadWav(widget.sample.filePath);
       int? frameCount;
-      try {
-        final pcm = wavToPlinkyPcm(bytes);
-        frameCount = pcm.length ~/ 2;
-      } on FormatException catch (e) {
-        // Preview still works without the constraint.
-        debugPrint('Failed to compute PCM frame count: $e');
+      if (widget.isOwned) {
+        try {
+          final pcm = wavToPlinkyPcm(bytes);
+          frameCount = pcm.length ~/ 2;
+        } on FormatException catch (e) {
+          // Preview still works without the constraint.
+          debugPrint('Failed to compute PCM frame count: $e');
+        }
       }
       if (mounted) {
         setState(() {
