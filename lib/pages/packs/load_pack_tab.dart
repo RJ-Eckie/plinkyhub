@@ -5,14 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:plinkyhub/models/category.dart';
-import 'package:plinkyhub/models/pack_slot_write.dart';
-import 'package:plinkyhub/models/pack_write.dart';
-import 'package:plinkyhub/models/pattern_write.dart';
+import 'package:plinkyhub/models/pack_upload_request.dart';
 import 'package:plinkyhub/models/preset.dart';
-import 'package:plinkyhub/models/preset_write.dart';
-import 'package:plinkyhub/models/sample_write.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
-import 'package:plinkyhub/models/wavetable_write.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/sound_service.dart';
@@ -352,13 +347,21 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _statusMessage = 'Uploading...';
     });
 
+    // Track uploaded storage paths for cleanup on failure.
+    final uploadedSamplePaths = <String>[];
+    final uploadedWavetablePaths = <String>[];
+    final uploadedPatternPaths = <String>[];
+
     try {
-      // Upload samples.
-      final sampleIdBySlot = <int, String>{};
+      // Phase 1: Upload all files to storage.
+
+      // Upload sample files.
+      final sampleUploads = <PackUploadSample>[];
       for (final entry in _samplePcmData.entries) {
         final slotIndex = entry.key;
         final pcmBytes = entry.value;
-        final name = _sampleNames[slotIndex]?.text ?? 'Sample $slotIndex';
+        final name =
+            _sampleNames[slotIndex]?.text.trim() ?? 'Sample $slotIndex';
 
         setState(() {
           _statusMessage = 'Uploading sample "$name"...';
@@ -377,6 +380,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               wavBytes,
               fileOptions: const FileOptions(upsert: true),
             );
+        uploadedSamplePaths.add(wavPath);
+
         await _supabase.storage
             .from('samples')
             .uploadBinary(
@@ -384,35 +389,31 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               pcmBytes,
               fileOptions: const FileOptions(upsert: true),
             );
+        uploadedSamplePaths.add(pcmPath);
 
         final info = slotIndex < _sampleInfos.length
             ? _sampleInfos[slotIndex]
             : null;
 
-        final description = _sampleDescriptions[slotIndex]?.text.trim() ?? '';
-
-        final sampleWrite = SampleWrite(
-          userId: userId,
-          name: name,
-          filePath: wavPath,
-          pcmFilePath: pcmPath,
-          description: description,
-          isPublic: _packIsPublic,
-          slicePoints: info?.slicePoints ?? List.of(defaultSlicePoints),
-          sliceNotes: info?.sliceNotes ?? List.of(defaultSliceNotes),
-          pitched: info?.pitched ?? false,
+        sampleUploads.add(
+          PackUploadSample(
+            slotIndex: slotIndex,
+            userId: userId,
+            name: name,
+            filePath: wavPath,
+            pcmFilePath: pcmPath,
+            description: _sampleDescriptions[slotIndex]?.text.trim() ?? '',
+            isPublic: _packIsPublic,
+            slicePoints:
+                info?.slicePoints ?? List<double>.of(defaultSlicePoints),
+            sliceNotes: info?.sliceNotes ?? List<int>.of(defaultSliceNotes),
+            pitched: info?.pitched ?? false,
+          ),
         );
-
-        final sampleResponse = await _supabase
-            .from('samples')
-            .insert(sampleWrite.toJson())
-            .select('id')
-            .single();
-        sampleIdBySlot[slotIndex] = sampleResponse['id'] as String;
       }
 
-      // Upload wavetable.
-      String? wavetableId;
+      // Upload wavetable file.
+      PackUploadWavetable? wavetableUpload;
       if (_includeWavetableInPack &&
           _wavetableUf2Bytes != null &&
           _wavetableUf2Bytes!.isNotEmpty) {
@@ -430,25 +431,19 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               _wavetableUf2Bytes!,
               fileOptions: const FileOptions(upsert: true),
             );
+        uploadedWavetablePaths.add(wavetablePath);
 
-        final wavetableWrite = WavetableWrite(
+        wavetableUpload = PackUploadWavetable(
           userId: userId,
           name: _wavetableNameController.text.trim(),
           filePath: wavetablePath,
           description: _wavetableDescriptionController.text.trim(),
           isPublic: _packIsPublic,
         );
-
-        final wavetableResponse = await _supabase
-            .from('wavetables')
-            .insert(wavetableWrite.toJson())
-            .select('id')
-            .single();
-        wavetableId = wavetableResponse['id'] as String;
       }
 
-      // Upload individual patterns.
-      final patternIdByIndex = <int, String>{};
+      // Upload pattern files.
+      final patternUploads = <PackUploadPattern>[];
       if (_includePatternsInPack) {
         for (final entry in _patternNames.entries) {
           final patternIndex = entry.key;
@@ -458,7 +453,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             _statusMessage = 'Uploading pattern "$name"...';
           });
 
-          // Extract this pattern's 4 quarters.
           final quarterStart = patternIndex * 4;
           final quarters = List<Uint8List?>.filled(
             _patternQuarters.length,
@@ -482,29 +476,29 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
                 patternBlob,
                 fileOptions: const FileOptions(upsert: true),
               );
+          uploadedPatternPaths.add(patternPath);
 
-          final description =
-              _patternDescriptions[patternIndex]?.text.trim() ?? '';
-
-          final patternWrite = PatternWrite(
-            userId: userId,
-            name: name,
-            filePath: patternPath,
-            description: description,
-            isPublic: _packIsPublic,
+          patternUploads.add(
+            PackUploadPattern(
+              patternIndex: patternIndex,
+              userId: userId,
+              name: name,
+              filePath: patternPath,
+              description:
+                  _patternDescriptions[patternIndex]?.text.trim() ?? '',
+              isPublic: _packIsPublic,
+            ),
           );
-
-          final patternResponse = await _supabase
-              .from('patterns')
-              .insert(patternWrite.toJson())
-              .select('id')
-              .single();
-          patternIdByIndex[patternIndex] = patternResponse['id'] as String;
         }
       }
 
-      // Upload presets.
-      final presetIdBySlot = <int, String>{};
+      // Phase 2: Insert all DB rows in a single transaction via RPC.
+      setState(() {
+        _statusMessage = 'Creating pack...';
+      });
+
+      // Build preset data.
+      final presetUploads = <PackUploadPreset>[];
       for (final entry in _presetNames.entries) {
         final slotIndex = entry.key;
         final presetBytes = _presetDataList[slotIndex];
@@ -513,102 +507,65 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         }
 
         final name = entry.value.text.trim();
-
-        setState(() {
-          _statusMessage = 'Uploading preset "$name"...';
-        });
-
         final preset = Preset(presetBytes.buffer);
-        final description = _presetDescriptions[slotIndex]?.text.trim() ?? '';
         final category = _presetCategories[slotIndex] ?? preset.category;
 
-        final presetWrite = PresetWrite(
-          userId: userId,
-          name: name.isNotEmpty ? name : preset.name,
-          category: category.name,
-          presetData: base64Encode(presetBytes),
-          description: description,
-          isPublic: _packIsPublic,
-        );
-
-        final presetResponse = await _supabase
-            .from('presets')
-            .insert(presetWrite.toJson())
-            .select('id')
-            .single();
-        presetIdBySlot[slotIndex] = presetResponse['id'] as String;
-      }
-
-      // Create pack.
-      setState(() {
-        _statusMessage = 'Creating pack...';
-      });
-
-      final packWrite = PackWrite(
-        userId: userId,
-        name: _packNameController.text.trim(),
-        description: _packDescriptionController.text.trim(),
-        youtubeUrl: _packYoutubeUrlController.text.trim(),
-        isPublic: _packIsPublic,
-        wavetableId: _includeWavetableInPack ? wavetableId : null,
-      );
-      final packResponse = await _supabase
-          .from('packs')
-          .insert(packWrite.toJson())
-          .select('id')
-          .single();
-      final packId = packResponse['id'] as String;
-
-      // Insert pack slots (presets: 0-31, patterns: 32-55, samples: 56-63).
-      final slotRows = <Map<String, dynamic>>[];
-
-      // Preset slots (0-31).
-      for (var i = 0; i < presetCount; i++) {
-        final presetId = presetIdBySlot[i];
-        if (presetId != null) {
-          slotRows.add(
-            PackSlotWrite(
-              packId: packId,
-              slotNumber: presetSlotStart + i,
-              presetId: presetId,
-            ).toJson(),
-          );
-        }
-      }
-
-      // Pattern slots (32-55).
-      for (final entry in patternIdByIndex.entries) {
-        slotRows.add(
-          PackSlotWrite(
-            packId: packId,
-            slotNumber: patternSlotStart + entry.key,
-            patternId: entry.value,
-          ).toJson(),
+        presetUploads.add(
+          PackUploadPreset(
+            slotIndex: slotIndex,
+            userId: userId,
+            name: name.isNotEmpty ? name : preset.name,
+            category: category.name,
+            presetData: base64Encode(presetBytes),
+            description: _presetDescriptions[slotIndex]?.text.trim() ?? '',
+            isPublic: _packIsPublic,
+          ),
         );
       }
 
-      // Sample slots (56-63): filled samples and explicit empties.
-      for (final entry in sampleIdBySlot.entries) {
-        slotRows.add(
-          PackSlotWrite(
-            packId: packId,
-            slotNumber: sampleSlotStart + entry.key,
-            sampleId: entry.value,
-          ).toJson(),
-        );
-      }
-      for (final emptySlot in _emptySampleSlots) {
-        slotRows.add(
-          PackSlotWrite(
-            packId: packId,
+      // Build pack slots (using slot_index references that the RPC
+      // resolves to actual IDs).
+      final slotUploads = <PackUploadSlot>[
+        for (final preset in presetUploads)
+          PackUploadSlot(
+            slotNumber: presetSlotStart + preset.slotIndex,
+            presetSlotIndex: preset.slotIndex,
+          ),
+        for (final pattern in patternUploads)
+          PackUploadSlot(
+            slotNumber: patternSlotStart + pattern.patternIndex,
+            patternIndex: pattern.patternIndex,
+          ),
+        for (final sample in sampleUploads)
+          PackUploadSlot(
+            slotNumber: sampleSlotStart + sample.slotIndex,
+            sampleSlotIndex: sample.slotIndex,
+          ),
+        for (final emptySlot in _emptySampleSlots)
+          PackUploadSlot(
             slotNumber: sampleSlotStart + emptySlot,
-          ).toJson(),
-        );
-      }
+          ),
+      ];
 
-      if (slotRows.isNotEmpty) {
-        await _supabase.from('pack_slots').insert(slotRows);
-      }
+      final request = PackUploadRequest(
+        packData: PackUploadPack(
+          userId: userId,
+          name: _packNameController.text.trim(),
+          description: _packDescriptionController.text.trim(),
+          youtubeUrl: _packYoutubeUrlController.text.trim(),
+          isPublic: _packIsPublic,
+        ),
+        samplesData: sampleUploads,
+        presetsData: presetUploads,
+        wavetableData: wavetableUpload,
+        patternsData: patternUploads,
+        packSlotsData: slotUploads,
+      );
+
+      await _supabase.rpc(
+        'create_pack_from_plinky',
+        params: request.toJson(),
+      );
 
       await ref.read(savedPacksProvider.notifier).fetchUserPacks();
 
@@ -626,12 +583,32 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       }
     } on Exception catch (error) {
       debugPrint('Failed to upload pack: $error');
+
+      // Clean up any uploaded storage files.
+      await _cleanupStorageFiles('samples', uploadedSamplePaths);
+      await _cleanupStorageFiles('wavetables', uploadedWavetablePaths);
+      await _cleanupStorageFiles('patterns', uploadedPatternPaths);
+
       if (mounted) {
         setState(() {
           _step = _LoadStep.error;
           _errorMessage = error.toString();
         });
       }
+    }
+  }
+
+  Future<void> _cleanupStorageFiles(
+    String bucket,
+    List<String> paths,
+  ) async {
+    if (paths.isEmpty) {
+      return;
+    }
+    try {
+      await _supabase.storage.from(bucket).remove(paths);
+    } on Exception catch (error) {
+      debugPrint('Failed to clean up $bucket files: $error');
     }
   }
 
