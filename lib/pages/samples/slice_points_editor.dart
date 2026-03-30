@@ -1,13 +1,15 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/samples/slice_note_dropdown.dart';
 import 'package:plinkyhub/pages/samples/slice_points_painter.dart';
+import 'package:plinkyhub/state/sound_service.dart';
 import 'package:plinkyhub/utils/wav.dart';
 
-class SlicePointsEditor extends StatefulWidget {
+class SlicePointsEditor extends ConsumerStatefulWidget {
   const SlicePointsEditor({
     required this.slicePoints,
     required this.wavBytes,
@@ -36,13 +38,12 @@ class SlicePointsEditor extends StatefulWidget {
   final ValueChanged<List<int>>? onSliceNotesChanged;
 
   @override
-  State<SlicePointsEditor> createState() => _SlicePointsEditorState();
+  ConsumerState<SlicePointsEditor> createState() => _SlicePointsEditorState();
 }
 
-class _SlicePointsEditorState extends State<SlicePointsEditor> {
+class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
   AudioSource? _audioSource;
-  SoundHandle? _activeHandle;
-  int _playingSlice = -1;
+  int? _playingSlice;
   int? _loadingSliceIndex;
   List<(double, double)>? _waveformPeaks;
   int _draggingIndex = -1;
@@ -58,7 +59,8 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
   void didUpdateWidget(SlicePointsEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.wavBytes != widget.wavBytes) {
-      _disposeAudio();
+      _audioSource = null;
+      _playingSlice = null;
       _computeWaveformPeaks();
     }
   }
@@ -74,18 +76,9 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
 
   @override
   void dispose() {
-    _disposeAudio();
-    super.dispose();
-  }
-
-  void _disposeAudio() {
-    final source = _audioSource;
-    if (source != null) {
-      SoLoud.instance.disposeSource(source);
-    }
     _audioSource = null;
-    _activeHandle = null;
-    _playingSlice = -1;
+    _playingSlice = null;
+    super.dispose();
   }
 
   Future<void> _playSlice(int sliceIndex) async {
@@ -95,21 +88,12 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
     }
 
     try {
-      final soloud = SoLoud.instance;
+      final soundService = ref.read(soundServiceProvider);
 
-      // Stop any currently playing slice
-      if (_activeHandle != null) {
-        await soloud.stop(_activeHandle!);
-        _activeHandle = null;
-      }
-
-      // Initialize engine and load audio if needed
+      // Load audio if needed
       if (_audioSource == null) {
         setState(() => _loadingSliceIndex = sliceIndex);
-        if (!soloud.isInitialized) {
-          await soloud.init();
-        }
-        _audioSource = await soloud.loadMem(
+        _audioSource = await soundService.loadSource(
           '${widget.sampleName}.wav',
           wavBytes,
         );
@@ -121,40 +105,32 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
       }
 
       final source = _audioSource!;
-      final totalDuration = soloud.getLength(source);
-
       final startFraction = widget.slicePoints[sliceIndex];
       final endFraction = sliceIndex < 7
           ? widget.slicePoints[sliceIndex + 1]
           : 1.0;
 
-      final startTime = totalDuration * startFraction;
+      await soundService.playSlice(
+        source,
+        startFraction: startFraction,
+        endFraction: endFraction,
+      );
+
+      final totalDuration = soundService.getLength(source);
       final sliceDuration = totalDuration * (endFraction - startFraction);
 
-      final handle = await soloud.play(source, paused: true);
-      soloud.seek(handle, startTime);
-      soloud.setPause(handle, false);
-      soloud.scheduleStop(handle, sliceDuration);
-
-      setState(() {
-        _activeHandle = handle;
-        _playingSlice = sliceIndex;
-      });
+      setState(() => _playingSlice = sliceIndex);
 
       // Reset playing state when the slice finishes
       await Future<void>.delayed(sliceDuration);
       if (mounted && _playingSlice == sliceIndex) {
-        setState(() {
-          _activeHandle = null;
-          _playingSlice = -1;
-        });
+        setState(() => _playingSlice = null);
       }
     } on Exception catch (error) {
       debugPrint('Failed to play slice: $error');
       if (mounted) {
         setState(() {
-          _activeHandle = null;
-          _playingSlice = -1;
+          _playingSlice = null;
           _loadingSliceIndex = null;
         });
       }

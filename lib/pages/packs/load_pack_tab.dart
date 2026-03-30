@@ -15,6 +15,7 @@ import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/models/wavetable_write.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
+import 'package:plinkyhub/state/sound_service.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
@@ -988,7 +989,7 @@ class _LoadReviewStep extends StatelessWidget {
   }
 }
 
-class _SamplePreviewRow extends StatefulWidget {
+class _SamplePreviewRow extends ConsumerStatefulWidget {
   const _SamplePreviewRow({
     required this.controller,
     required this.label,
@@ -1002,42 +1003,19 @@ class _SamplePreviewRow extends StatefulWidget {
   final VoidCallback? onEdit;
 
   @override
-  State<_SamplePreviewRow> createState() => _SamplePreviewRowState();
+  ConsumerState<_SamplePreviewRow> createState() => _SamplePreviewRowState();
 }
 
-class _SamplePreviewRowState extends State<_SamplePreviewRow> {
+class _SamplePreviewRowState extends ConsumerState<_SamplePreviewRow> {
   AudioSource? _audioSource;
-  SoundHandle? _activeHandle;
   bool _isPlaying = false;
 
-  @override
-  void dispose() {
-    _stopAndDispose();
-    super.dispose();
-  }
-
-  void _stopAndDispose() {
-    final handle = _activeHandle;
-    if (handle != null) {
-      SoLoud.instance.stop(handle);
-      _activeHandle = null;
-    }
-    final source = _audioSource;
-    if (source != null) {
-      SoLoud.instance.disposeSource(source);
-      _audioSource = null;
-    }
-  }
-
   Future<void> _togglePlayback() async {
-    final soloud = SoLoud.instance;
+    final soundService = ref.read(soundServiceProvider);
 
-    if (_isPlaying && _activeHandle != null) {
-      await soloud.stop(_activeHandle!);
-      setState(() {
-        _activeHandle = null;
-        _isPlaying = false;
-      });
+    if (_isPlaying) {
+      await soundService.stopPreview();
+      setState(() => _isPlaying = false);
       return;
     }
 
@@ -1046,31 +1024,21 @@ class _SamplePreviewRowState extends State<_SamplePreviewRow> {
       return;
     }
 
-    if (!soloud.isInitialized) {
-      await soloud.init();
-    }
-
     if (_audioSource == null) {
       final wavBytes = plinkyPcmToWav(pcmData);
-      _audioSource = await soloud.loadMem(
+      _audioSource = await soundService.loadSource(
         '${widget.label}.wav',
         wavBytes,
       );
     }
 
-    final handle = await soloud.play(_audioSource!);
-    setState(() {
-      _activeHandle = handle;
-      _isPlaying = true;
-    });
+    await soundService.play(_audioSource!);
+    setState(() => _isPlaying = true);
 
-    final duration = soloud.getLength(_audioSource!);
+    final duration = soundService.getLength(_audioSource!);
     await Future<void>.delayed(duration);
     if (mounted && _isPlaying) {
-      setState(() {
-        _activeHandle = null;
-        _isPlaying = false;
-      });
+      setState(() => _isPlaying = false);
     }
   }
 
