@@ -213,19 +213,6 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
 
       final slotIndex = _parseSlotIndexFromFilename(_sampleUf2FileName!);
 
-      final wavBytes = plinkyPcmToWav(pcmBytes);
-      final frameCount = pcmBytes.length ~/ 2;
-
-      String? warning;
-      if (pcmBytes.length > maxPcmBytes) {
-        final durationSeconds = pcmBytes.length ~/ 2 / plinkySampleRate;
-        const maxSeconds = maxPcmBytes ~/ 2 / plinkySampleRate;
-        warning =
-            'Sample is too long (~${durationSeconds}s). '
-            'Plinky supports up to ~${maxSeconds}s per slot '
-            'at 31,250 Hz.';
-      }
-
       ParsedSampleInfo? sampleInfo;
       if (_presetsUf2Bytes != null) {
         try {
@@ -237,6 +224,27 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
         } on FormatException {
           // Ignore PRESETS.UF2 parse errors.
         }
+      }
+
+      // The firmware exports the full sample slot (up to 4 MB), but the
+      // actual sample may be shorter. Trim to sampleLength so that the
+      // fractional slice points align with the displayed waveform.
+      final trimmedPcm = sampleInfo != null &&
+              sampleInfo.sampleLength * 2 < pcmBytes.length
+          ? Uint8List.sublistView(pcmBytes, 0, sampleInfo.sampleLength * 2)
+          : pcmBytes;
+
+      final wavBytes = plinkyPcmToWav(trimmedPcm);
+      final frameCount = trimmedPcm.length ~/ 2;
+
+      String? warning;
+      if (trimmedPcm.length > maxPcmBytes) {
+        final durationSeconds = trimmedPcm.length ~/ 2 / plinkySampleRate;
+        const maxSeconds = maxPcmBytes ~/ 2 / plinkySampleRate;
+        warning =
+            'Sample is too long (~${durationSeconds}s). '
+            'Plinky supports up to ~${maxSeconds}s per slot '
+            'at 31,250 Hz.';
       }
 
       if (mounted) {

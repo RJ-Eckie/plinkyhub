@@ -238,7 +238,20 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         );
         if (sampleBytes != null && sampleBytes.isNotEmpty) {
           try {
-            final pcmData = uf2ToData(sampleBytes);
+            var pcmData = uf2ToData(sampleBytes);
+            // The firmware exports the full sample slot, but the actual
+            // sample may be shorter. Trim to sampleLength from the
+            // SampleInfo so slice point fractions stay correct.
+            final sampleInfo =
+                i < _sampleInfos.length ? _sampleInfos[i] : null;
+            if (sampleInfo != null &&
+                sampleInfo.sampleLength * 2 < pcmData.length) {
+              pcmData = Uint8List.sublistView(
+                pcmData,
+                0,
+                sampleInfo.sampleLength * 2,
+              );
+            }
             if (pcmData.isNotEmpty && !_isSilentPcm(pcmData)) {
               _samplePcmData[i] = pcmData;
             } else {

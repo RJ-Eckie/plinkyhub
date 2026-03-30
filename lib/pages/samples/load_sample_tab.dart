@@ -124,12 +124,20 @@ class _LoadSampleTabState extends ConsumerState<LoadSampleTab> {
         }
       }
 
-      final wavBytes = plinkyPcmToWav(pcmData);
-      final frameCount = pcmData.length ~/ 2;
+      // The firmware exports the full sample slot (up to 4 MB), but the
+      // actual sample may be shorter. Trim to sampleLength so that the
+      // fractional slice points align with the displayed waveform.
+      final trimmedPcm = sampleInfo != null &&
+              sampleInfo.sampleLength * 2 < pcmData.length
+          ? Uint8List.sublistView(pcmData, 0, sampleInfo.sampleLength * 2)
+          : pcmData;
+
+      final wavBytes = plinkyPcmToWav(trimmedPcm);
+      final frameCount = trimmedPcm.length ~/ 2;
 
       if (mounted) {
         setState(() {
-          _pcmBytes = pcmData;
+          _pcmBytes = trimmedPcm;
           _wavBytes = wavBytes;
           _pcmFrameCount = frameCount;
           _nameController.text = 'Sample $_selectedSlot';
