@@ -1,7 +1,7 @@
 -- Widen slot_number range to accommodate presets (0-31),
 -- patterns (32-55), and samples (56-63).
 ALTER TABLE pack_slots
-  DROP CONSTRAINT pack_slots_slot_number_check;
+  DROP CONSTRAINT bank_slots_slot_number_check;
 
 ALTER TABLE pack_slots
   ADD CONSTRAINT pack_slots_slot_number_check
