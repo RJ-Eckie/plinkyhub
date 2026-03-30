@@ -87,6 +87,8 @@ _PackUploadSample _$PackUploadSampleFromJson(Map<String, dynamic> json) =>
               ?.map((e) => (e as num).toInt())
               .toList() ??
           const [],
+      contentHash: json['content_hash'] as String?,
+      existingId: json['existing_id'] as String?,
     );
 
 Map<String, dynamic> _$PackUploadSampleToJson(_PackUploadSample instance) =>
@@ -103,6 +105,8 @@ Map<String, dynamic> _$PackUploadSampleToJson(_PackUploadSample instance) =>
       'fine_tune': instance.fineTune,
       'pitched': instance.pitched,
       'slice_notes': instance.sliceNotes,
+      'content_hash': instance.contentHash,
+      'existing_id': instance.existingId,
     };
 
 _PackUploadPreset _$PackUploadPresetFromJson(Map<String, dynamic> json) =>
@@ -114,6 +118,8 @@ _PackUploadPreset _$PackUploadPresetFromJson(Map<String, dynamic> json) =>
       presetData: json['preset_data'] as String,
       description: json['description'] as String? ?? '',
       isPublic: json['is_public'] as bool? ?? false,
+      contentHash: json['content_hash'] as String?,
+      existingId: json['existing_id'] as String?,
     );
 
 Map<String, dynamic> _$PackUploadPresetToJson(_PackUploadPreset instance) =>
@@ -125,6 +131,8 @@ Map<String, dynamic> _$PackUploadPresetToJson(_PackUploadPreset instance) =>
       'preset_data': instance.presetData,
       'description': instance.description,
       'is_public': instance.isPublic,
+      'content_hash': instance.contentHash,
+      'existing_id': instance.existingId,
     };
 
 _PackUploadWavetable _$PackUploadWavetableFromJson(Map<String, dynamic> json) =>
@@ -134,6 +142,8 @@ _PackUploadWavetable _$PackUploadWavetableFromJson(Map<String, dynamic> json) =>
       filePath: json['file_path'] as String,
       description: json['description'] as String? ?? '',
       isPublic: json['is_public'] as bool? ?? false,
+      contentHash: json['content_hash'] as String?,
+      existingId: json['existing_id'] as String?,
     );
 
 Map<String, dynamic> _$PackUploadWavetableToJson(
@@ -144,6 +154,8 @@ Map<String, dynamic> _$PackUploadWavetableToJson(
   'file_path': instance.filePath,
   'description': instance.description,
   'is_public': instance.isPublic,
+  'content_hash': instance.contentHash,
+  'existing_id': instance.existingId,
 };
 
 _PackUploadPattern _$PackUploadPatternFromJson(Map<String, dynamic> json) =>
@@ -154,6 +166,8 @@ _PackUploadPattern _$PackUploadPatternFromJson(Map<String, dynamic> json) =>
       filePath: json['file_path'] as String,
       description: json['description'] as String? ?? '',
       isPublic: json['is_public'] as bool? ?? false,
+      contentHash: json['content_hash'] as String?,
+      existingId: json['existing_id'] as String?,
     );
 
 Map<String, dynamic> _$PackUploadPatternToJson(_PackUploadPattern instance) =>
@@ -164,6 +178,8 @@ Map<String, dynamic> _$PackUploadPatternToJson(_PackUploadPattern instance) =>
       'file_path': instance.filePath,
       'description': instance.description,
       'is_public': instance.isPublic,
+      'content_hash': instance.contentHash,
+      'existing_id': instance.existingId,
     };
 
 _PackUploadSlot _$PackUploadSlotFromJson(Map<String, dynamic> json) =>

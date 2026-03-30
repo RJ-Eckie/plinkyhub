@@ -11,6 +11,7 @@ import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/sound_service.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
@@ -19,6 +20,14 @@ import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum _LoadStep { select, review, uploading, done, error }
+
+/// Info about a public entry that matches content loaded from Plinky.
+class MatchedEntry {
+  const MatchedEntry({required this.id, required this.name});
+
+  final String id;
+  final String name;
+}
 
 class LoadPackTab extends ConsumerStatefulWidget {
   const LoadPackTab({this.onLoaded, super.key});
@@ -65,6 +74,18 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   bool _includeWavetableInPack = true;
   bool _includePatternsInPack = true;
 
+  // Content hashes computed from Plinky data.
+  final _presetHashes = <int, String>{};
+  final _sampleHashes = <int, String>{};
+  String? _wavetableHash;
+  final _patternHashes = <int, String>{};
+
+  // Matched existing public entries (slot/pattern index -> entry).
+  final _matchedPresets = <int, MatchedEntry>{};
+  final _matchedSamples = <int, MatchedEntry>{};
+  MatchedEntry? _matchedWavetable;
+  final _matchedPatterns = <int, MatchedEntry>{};
+
   SupabaseClient get _supabase => Supabase.instance.client;
 
   @override
@@ -73,22 +94,29 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     _packNameController.addListener(_updateDerivedNames);
   }
 
-  /// Updates names of items that don't have a device name
+  /// Updates names of items that don't have a device name or matched entry
   /// to match the pack name with an appended number.
   void _updateDerivedNames() {
     final packName = _packNameController.text.trim();
     for (final entry in _presetNames.entries) {
-      if (!_presetsWithDeviceName.contains(entry.key)) {
+      if (!_presetsWithDeviceName.contains(entry.key) &&
+          !_matchedPresets.containsKey(entry.key)) {
         entry.value.text = packName.isEmpty
             ? ''
             : '$packName - ${entry.key + 1}';
       }
     }
     for (final entry in _sampleNames.entries) {
-      entry.value.text = packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+      if (!_matchedSamples.containsKey(entry.key)) {
+        entry.value.text =
+            packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+      }
     }
     for (final entry in _patternNames.entries) {
-      entry.value.text = packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+      if (!_matchedPatterns.containsKey(entry.key)) {
+        entry.value.text =
+            packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+      }
     }
   }
 
@@ -166,6 +194,14 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _wavetableDescriptionController.clear();
       _includeWavetableInPack = true;
       _includePatternsInPack = true;
+      _presetHashes.clear();
+      _sampleHashes.clear();
+      _wavetableHash = null;
+      _patternHashes.clear();
+      _matchedPresets.clear();
+      _matchedSamples.clear();
+      _matchedWavetable = null;
+      _matchedPatterns.clear();
     });
   }
 
@@ -322,6 +358,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       }
       _includePatternsInPack = _patternNames.isNotEmpty;
 
+      // Compute content hashes and find existing public matches.
+      setState(() {
+        _statusMessage = 'Checking for existing content...';
+      });
+      await _computeHashesAndFindMatches(parsed);
+
       setState(() {
         _step = _LoadStep.review;
       });
@@ -333,6 +375,142 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           _errorMessage = error.toString();
         });
       }
+    }
+  }
+
+  Future<void> _computeHashesAndFindMatches(ParsedFlashImage parsed) async {
+    _presetHashes.clear();
+    _sampleHashes.clear();
+    _wavetableHash = null;
+    _patternHashes.clear();
+    _matchedPresets.clear();
+    _matchedSamples.clear();
+    _matchedWavetable = null;
+    _matchedPatterns.clear();
+
+    // Compute hashes for presets.
+    for (final entry in _presetNames.entries) {
+      final presetBytes = _presetDataList[entry.key];
+      if (presetBytes != null) {
+        _presetHashes[entry.key] = computeContentHash(presetBytes);
+      }
+    }
+
+    // Compute hashes for samples.
+    for (final entry in _samplePcmData.entries) {
+      _sampleHashes[entry.key] = computeContentHash(entry.value);
+    }
+
+    // Compute hash for wavetable.
+    if (_wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty) {
+      _wavetableHash = computeContentHash(_wavetableUf2Bytes!);
+    }
+
+    // Compute hashes for patterns.
+    for (final patternIndex in _patternNames.keys) {
+      final quarterStart = patternIndex * 4;
+      final quarters = List<Uint8List?>.filled(
+        _patternQuarters.length,
+        null,
+      );
+      for (var q = 0; q < 4; q++) {
+        final index = quarterStart + q;
+        if (index < _patternQuarters.length) {
+          quarters[index] = _patternQuarters[index];
+        }
+      }
+      final patternBlob = serializePatternQuarters(quarters);
+      _patternHashes[patternIndex] = computeContentHash(patternBlob);
+    }
+
+    // Query for existing public matches.
+    await Future.wait([
+      _findMatches(
+        'presets',
+        _presetHashes,
+        _matchedPresets,
+      ),
+      _findMatches(
+        'samples',
+        _sampleHashes,
+        _matchedSamples,
+      ),
+      _findMatches(
+        'patterns',
+        _patternHashes,
+        _matchedPatterns,
+      ),
+      _findWavetableMatch(),
+    ]);
+
+    // Set names from matched entries.
+    for (final entry in _matchedPresets.entries) {
+      _presetNames[entry.key]?.text = entry.value.name;
+      _presetsWithDeviceName.add(entry.key);
+    }
+    for (final entry in _matchedSamples.entries) {
+      _sampleNames[entry.key]?.text = entry.value.name;
+    }
+    if (_matchedWavetable != null) {
+      _wavetableNameController.text = _matchedWavetable!.name;
+    }
+    for (final entry in _matchedPatterns.entries) {
+      _patternNames[entry.key]?.text = entry.value.name;
+    }
+  }
+
+  Future<void> _findMatches(
+    String table,
+    Map<int, String> hashes,
+    Map<int, MatchedEntry> matches,
+  ) async {
+    if (hashes.isEmpty) {
+      return;
+    }
+
+    final uniqueHashes = hashes.values.toSet().toList();
+    final results = await _supabase
+        .from(table)
+        .select('id, name, content_hash')
+        .eq('is_public', true)
+        .inFilter('content_hash', uniqueHashes);
+
+    final hashToEntry = <String, MatchedEntry>{};
+    for (final row in results) {
+      final hash = row['content_hash'] as String?;
+      if (hash != null) {
+        hashToEntry[hash] = MatchedEntry(
+          id: row['id'] as String,
+          name: row['name'] as String,
+        );
+      }
+    }
+
+    for (final entry in hashes.entries) {
+      final matched = hashToEntry[entry.value];
+      if (matched != null) {
+        matches[entry.key] = matched;
+      }
+    }
+  }
+
+  Future<void> _findWavetableMatch() async {
+    if (_wavetableHash == null) {
+      return;
+    }
+
+    final results = await _supabase
+        .from('wavetables')
+        .select('id, name, content_hash')
+        .eq('is_public', true)
+        .eq('content_hash', _wavetableHash!)
+        .limit(1);
+
+    if (results.isNotEmpty) {
+      _matchedWavetable = MatchedEntry(
+        id: results.first['id'] as String,
+        name: results.first['name'] as String,
+      );
     }
   }
 
@@ -355,10 +533,26 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     try {
       // Phase 1: Upload all files to storage.
 
-      // Upload sample files.
+      // Upload sample files (skip matched entries).
       final sampleUploads = <PackUploadSample>[];
       for (final entry in _samplePcmData.entries) {
         final slotIndex = entry.key;
+        final matched = _matchedSamples[slotIndex];
+
+        if (matched != null) {
+          sampleUploads.add(
+            PackUploadSample(
+              slotIndex: slotIndex,
+              userId: userId,
+              name: matched.name,
+              filePath: '',
+              pcmFilePath: '',
+              existingId: matched.id,
+            ),
+          );
+          continue;
+        }
+
         final pcmBytes = entry.value;
         final name =
             _sampleNames[slotIndex]?.text.trim() ?? 'Sample $slotIndex';
@@ -408,45 +602,71 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
                 info?.slicePoints ?? List<double>.of(defaultSlicePoints),
             sliceNotes: info?.sliceNotes ?? List<int>.of(defaultSliceNotes),
             pitched: info?.pitched ?? false,
+            contentHash: _sampleHashes[slotIndex],
           ),
         );
       }
 
-      // Upload wavetable file.
+      // Upload wavetable file (skip if matched).
       PackUploadWavetable? wavetableUpload;
       if (_includeWavetableInPack &&
           _wavetableUf2Bytes != null &&
           _wavetableUf2Bytes!.isNotEmpty) {
-        setState(() {
-          _statusMessage = 'Uploading wavetable...';
-        });
+        if (_matchedWavetable != null) {
+          wavetableUpload = PackUploadWavetable(
+            userId: userId,
+            name: _matchedWavetable!.name,
+            filePath: '',
+            existingId: _matchedWavetable!.id,
+          );
+        } else {
+          setState(() {
+            _statusMessage = 'Uploading wavetable...';
+          });
 
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final wavetablePath = '$userId/wavetable_$timestamp.uf2';
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final wavetablePath = '$userId/wavetable_$timestamp.uf2';
 
-        await _supabase.storage
-            .from('wavetables')
-            .uploadBinary(
-              wavetablePath,
-              _wavetableUf2Bytes!,
-              fileOptions: const FileOptions(upsert: true),
-            );
-        uploadedWavetablePaths.add(wavetablePath);
+          await _supabase.storage
+              .from('wavetables')
+              .uploadBinary(
+                wavetablePath,
+                _wavetableUf2Bytes!,
+                fileOptions: const FileOptions(upsert: true),
+              );
+          uploadedWavetablePaths.add(wavetablePath);
 
-        wavetableUpload = PackUploadWavetable(
-          userId: userId,
-          name: _wavetableNameController.text.trim(),
-          filePath: wavetablePath,
-          description: _wavetableDescriptionController.text.trim(),
-          isPublic: _packIsPublic,
-        );
+          wavetableUpload = PackUploadWavetable(
+            userId: userId,
+            name: _wavetableNameController.text.trim(),
+            filePath: wavetablePath,
+            description: _wavetableDescriptionController.text.trim(),
+            isPublic: _packIsPublic,
+            contentHash: _wavetableHash,
+          );
+        }
       }
 
-      // Upload pattern files.
+      // Upload pattern files (skip matched entries).
       final patternUploads = <PackUploadPattern>[];
       if (_includePatternsInPack) {
         for (final entry in _patternNames.entries) {
           final patternIndex = entry.key;
+          final matched = _matchedPatterns[patternIndex];
+
+          if (matched != null) {
+            patternUploads.add(
+              PackUploadPattern(
+                patternIndex: patternIndex,
+                userId: userId,
+                name: matched.name,
+                filePath: '',
+                existingId: matched.id,
+              ),
+            );
+            continue;
+          }
+
           final name = entry.value.text.trim();
 
           setState(() {
@@ -487,6 +707,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               description:
                   _patternDescriptions[patternIndex]?.text.trim() ?? '',
               isPublic: _packIsPublic,
+              contentHash: _patternHashes[patternIndex],
             ),
           );
         }
@@ -497,10 +718,26 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         _statusMessage = 'Creating pack...';
       });
 
-      // Build preset data.
+      // Build preset data (skip matched entries).
       final presetUploads = <PackUploadPreset>[];
       for (final entry in _presetNames.entries) {
         final slotIndex = entry.key;
+        final matched = _matchedPresets[slotIndex];
+
+        if (matched != null) {
+          presetUploads.add(
+            PackUploadPreset(
+              slotIndex: slotIndex,
+              userId: userId,
+              name: matched.name,
+              category: '',
+              presetData: '',
+              existingId: matched.id,
+            ),
+          );
+          continue;
+        }
+
         final presetBytes = _presetDataList[slotIndex];
         if (presetBytes == null) {
           continue;
@@ -519,6 +756,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             presetData: base64Encode(presetBytes),
             description: _presetDescriptions[slotIndex]?.text.trim() ?? '',
             isPublic: _packIsPublic,
+            contentHash: _presetHashes[slotIndex],
           ),
         );
       }
@@ -649,6 +887,10 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               includePatterns: _includePatternsInPack,
               onIncludePatternsChanged: (value) =>
                   setState(() => _includePatternsInPack = value),
+              matchedPresets: _matchedPresets,
+              matchedSamples: _matchedSamples,
+              matchedWavetable: _matchedWavetable,
+              matchedPatterns: _matchedPatterns,
               onBack: _reset,
               onSave: _uploadAll,
               onChanged: () => setState(() {}),
@@ -737,6 +979,10 @@ class _LoadReviewStep extends StatelessWidget {
     required this.patternDescriptions,
     required this.includePatterns,
     required this.onIncludePatternsChanged,
+    required this.matchedPresets,
+    required this.matchedSamples,
+    required this.matchedWavetable,
+    required this.matchedPatterns,
     required this.onBack,
     required this.onSave,
     required this.onChanged,
@@ -763,6 +1009,10 @@ class _LoadReviewStep extends StatelessWidget {
   final Map<int, TextEditingController> patternDescriptions;
   final bool includePatterns;
   final ValueChanged<bool> onIncludePatternsChanged;
+  final Map<int, MatchedEntry> matchedPresets;
+  final Map<int, MatchedEntry> matchedSamples;
+  final MatchedEntry? matchedWavetable;
+  final Map<int, MatchedEntry> matchedPatterns;
   final VoidCallback onBack;
   final VoidCallback onSave;
   final VoidCallback onChanged;
@@ -839,10 +1089,13 @@ class _LoadReviewStep extends StatelessWidget {
                 controller: sampleNames[slotIndex]!,
                 label: 'Sample $slotIndex',
                 pcmData: samplePcmData[slotIndex],
-                onEdit: () => _showSampleEditDialog(
-                  context,
-                  slotIndex,
-                ),
+                isMatched: matchedSamples.containsKey(slotIndex),
+                onEdit: matchedSamples.containsKey(slotIndex)
+                    ? null
+                    : () => _showSampleEditDialog(
+                          context,
+                          slotIndex,
+                        ),
               )
             else
               _EmptySlotRow(
@@ -864,7 +1117,10 @@ class _LoadReviewStep extends StatelessWidget {
             _NamedItemRow(
               controller: wavetableNameController,
               label: 'Wavetable name',
-              onEdit: () => _showWavetableEditDialog(context),
+              isMatched: matchedWavetable != null,
+              onEdit: matchedWavetable != null
+                  ? null
+                  : () => _showWavetableEditDialog(context),
             ),
         ],
         if (patternNames.isNotEmpty) ...[
@@ -883,10 +1139,13 @@ class _LoadReviewStep extends StatelessWidget {
               _NamedItemRow(
                 controller: patternNames[patternIndex]!,
                 label: 'Pattern ${patternIndex + 1}',
-                onEdit: () => _showPatternEditDialog(
-                  context,
-                  patternIndex,
-                ),
+                isMatched: matchedPatterns.containsKey(patternIndex),
+                onEdit: matchedPatterns.containsKey(patternIndex)
+                    ? null
+                    : () => _showPatternEditDialog(
+                          context,
+                          patternIndex,
+                        ),
               ),
         ],
         if (presetNames.isNotEmpty) ...[
@@ -900,10 +1159,13 @@ class _LoadReviewStep extends StatelessWidget {
             _NamedItemRow(
               controller: presetNames[slotIndex]!,
               label: 'Preset ${slotIndex + 1}',
-              onEdit: () => _showPresetEditDialog(
-                context,
-                slotIndex,
-              ),
+              isMatched: matchedPresets.containsKey(slotIndex),
+              onEdit: matchedPresets.containsKey(slotIndex)
+                  ? null
+                  : () => _showPresetEditDialog(
+                        context,
+                        slotIndex,
+                      ),
             ),
         ],
         const SizedBox(height: 16),
@@ -990,12 +1252,14 @@ class _SamplePreviewRow extends ConsumerStatefulWidget {
     required this.controller,
     required this.label,
     this.pcmData,
+    this.isMatched = false,
     this.onEdit,
   });
 
   final TextEditingController controller;
   final String label;
   final Uint8List? pcmData;
+  final bool isMatched;
   final VoidCallback? onEdit;
 
   @override
@@ -1047,10 +1311,17 @@ class _SamplePreviewRowState extends ConsumerState<_SamplePreviewRow> {
           Expanded(
             child: TextField(
               controller: widget.controller,
+              readOnly: widget.isMatched,
               decoration: InputDecoration(
                 labelText: widget.label,
                 border: const OutlineInputBorder(),
                 isDense: true,
+                suffixIcon: widget.isMatched
+                    ? const Tooltip(
+                        message: 'Existing public content will be reused',
+                        child: Icon(Icons.link, size: 18),
+                      )
+                    : null,
               ),
             ),
           ),
@@ -1108,11 +1379,13 @@ class _NamedItemRow extends StatelessWidget {
   const _NamedItemRow({
     required this.controller,
     required this.label,
+    this.isMatched = false,
     this.onEdit,
   });
 
   final TextEditingController controller;
   final String label;
+  final bool isMatched;
   final VoidCallback? onEdit;
 
   @override
@@ -1124,10 +1397,17 @@ class _NamedItemRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              readOnly: isMatched,
               decoration: InputDecoration(
                 labelText: label,
                 border: const OutlineInputBorder(),
                 isDense: true,
+                suffixIcon: isMatched
+                    ? const Tooltip(
+                        message: 'Existing public content will be reused',
+                        child: Icon(Icons.link, size: 18),
+                      )
+                    : null,
               ),
             ),
           ),

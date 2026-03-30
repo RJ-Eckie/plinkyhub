@@ -47,6 +47,8 @@ abstract class PackUploadSample with _$PackUploadSample {
     @Default(0) int fineTune,
     @Default(false) bool pitched,
     @Default([]) List<int> sliceNotes,
+    String? contentHash,
+    String? existingId,
   }) = _PackUploadSample;
 
   factory PackUploadSample.fromJson(Map<String, dynamic> json) =>
@@ -63,6 +65,8 @@ abstract class PackUploadPreset with _$PackUploadPreset {
     required String presetData,
     @Default('') String description,
     @Default(false) bool isPublic,
+    String? contentHash,
+    String? existingId,
   }) = _PackUploadPreset;
 
   factory PackUploadPreset.fromJson(Map<String, dynamic> json) =>
@@ -77,6 +81,8 @@ abstract class PackUploadWavetable with _$PackUploadWavetable {
     required String filePath,
     @Default('') String description,
     @Default(false) bool isPublic,
+    String? contentHash,
+    String? existingId,
   }) = _PackUploadWavetable;
 
   factory PackUploadWavetable.fromJson(Map<String, dynamic> json) =>
@@ -92,6 +98,8 @@ abstract class PackUploadPattern with _$PackUploadPattern {
     required String filePath,
     @Default('') String description,
     @Default(false) bool isPublic,
+    String? contentHash,
+    String? existingId,
   }) = _PackUploadPattern;
 
   factory PackUploadPattern.fromJson(Map<String, dynamic> json) =>
