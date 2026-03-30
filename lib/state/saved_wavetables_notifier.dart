@@ -126,6 +126,12 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
     }
   }
 
+  bool _nameExists(String name, {String? excludeId}) {
+    return state.userWavetables.any(
+      (w) => w.name == name && w.id != excludeId,
+    );
+  }
+
   Future<void> saveWavetable(
     SavedWavetable wavetable, {
     required Uint8List uf2Bytes,
@@ -133,6 +139,12 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
+    }
+
+    if (_nameExists(wavetable.name)) {
+      throw Exception(
+        'You already have a wavetable named "${wavetable.name}"',
+      );
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -166,6 +178,12 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
   }
 
   Future<void> updateWavetable(SavedWavetable wavetable) async {
+    if (_nameExists(wavetable.name, excludeId: wavetable.id)) {
+      throw Exception(
+        'You already have a wavetable named "${wavetable.name}"',
+      );
+    }
+
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final write = WavetableWrite(

@@ -124,6 +124,12 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     }
   }
 
+  bool _nameExists(String name, {String? excludeId}) {
+    return state.userSamples.any(
+      (s) => s.name == name && s.id != excludeId,
+    );
+  }
+
   Future<void> saveSample(
     SavedSample sample, {
     required Uint8List wavBytes,
@@ -132,6 +138,12 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
+    }
+
+    if (_nameExists(sample.name)) {
+      throw Exception(
+        'You already have a sample named "${sample.name}"',
+      );
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -178,6 +190,12 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
   }
 
   Future<void> updateSample(SavedSample sample) async {
+    if (_nameExists(sample.name, excludeId: sample.id)) {
+      throw Exception(
+        'You already have a sample named "${sample.name}"',
+      );
+    }
+
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final write = SampleWrite(

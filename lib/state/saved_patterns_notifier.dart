@@ -124,6 +124,12 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
     }
   }
 
+  bool _nameExists(String name, {String? excludeId}) {
+    return state.userPatterns.any(
+      (p) => p.name == name && p.id != excludeId,
+    );
+  }
+
   Future<void> savePattern(
     SavedPattern pattern, {
     required Uint8List fileBytes,
@@ -131,6 +137,12 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
+    }
+
+    if (_nameExists(pattern.name)) {
+      throw Exception(
+        'You already have a pattern named "${pattern.name}"',
+      );
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -164,6 +176,12 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
   }
 
   Future<void> updatePattern(SavedPattern pattern) async {
+    if (_nameExists(pattern.name, excludeId: pattern.id)) {
+      throw Exception(
+        'You already have a pattern named "${pattern.name}"',
+      );
+    }
+
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final write = PatternWrite(

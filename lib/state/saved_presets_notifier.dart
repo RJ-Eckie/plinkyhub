@@ -135,6 +135,12 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     }
   }
 
+  bool _nameExists(String name, {String? excludeId}) {
+    return state.userPresets.any(
+      (p) => p.name == name && p.id != excludeId,
+    );
+  }
+
   Future<void> savePreset(
     Preset preset, {
     String description = '',
@@ -144,6 +150,12 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
+    }
+
+    if (_nameExists(preset.name)) {
+      throw Exception(
+        'You already have a preset named "${preset.name}"',
+      );
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -177,6 +189,12 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     final existing = state.userPresets.where((p) => p.id == id).firstOrNull;
     if (existing == null) {
       return;
+    }
+
+    if (_nameExists(preset.name, excludeId: id)) {
+      throw Exception(
+        'You already have a preset named "${preset.name}"',
+      );
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);

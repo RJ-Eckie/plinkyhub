@@ -135,6 +135,12 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     }
   }
 
+  bool _nameExists(String name, {String? excludeId}) {
+    return state.userPacks.any(
+      (p) => p.name == name && p.id != excludeId,
+    );
+  }
+
   Future<void> savePack(
     String name, {
     required List<PackSlotEntry> slots,
@@ -146,6 +152,12 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
+    }
+
+    if (_nameExists(name)) {
+      throw Exception(
+        'You already have a pack named "$name"',
+      );
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -183,6 +195,12 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     String? description,
     bool? isPublic,
   }) async {
+    if (name != null && _nameExists(name, excludeId: id)) {
+      throw Exception(
+        'You already have a pack named "$name"',
+      );
+    }
+
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final updates = <String, dynamic>{};
@@ -243,6 +261,12 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     String? wavetableId,
     String youtubeUrl = '',
   }) async {
+    if (_nameExists(name, excludeId: id)) {
+      throw Exception(
+        'You already have a pack named "$name"',
+      );
+    }
+
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final userId = ref.read(authenticationProvider).user?.id;
