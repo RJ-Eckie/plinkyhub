@@ -166,6 +166,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                   UploadSampleTab(
                     sampleToEdit: editSample,
                     onUploaded: () => _tabController.animateTo(0),
+                    onClear: () => context.go('/samples/create'),
                   )
               else
                 const SignInPrompt(

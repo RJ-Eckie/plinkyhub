@@ -13,10 +13,16 @@ import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class UploadSampleTab extends ConsumerStatefulWidget {
-  const UploadSampleTab({this.onUploaded, this.sampleToEdit, super.key});
+  const UploadSampleTab({
+    this.onUploaded,
+    this.sampleToEdit,
+    this.onClear,
+    super.key,
+  });
 
   final VoidCallback? onUploaded;
   final SavedSample? sampleToEdit;
+  final VoidCallback? onClear;
 
   @override
   ConsumerState<UploadSampleTab> createState() => _UploadSampleTabState();
@@ -81,6 +87,28 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
           _isConverting = false;
           _sampleTooLongWarning = 'Failed to load existing WAV file.';
         });
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(UploadSampleTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.sampleToEdit != oldWidget.sampleToEdit) {
+      if (widget.sampleToEdit != null) {
+        final sample = widget.sampleToEdit!;
+        _nameController.text = sample.name;
+        _descriptionController.text = sample.description;
+        _isPublic = sample.isPublic;
+        _baseNote = sample.baseNote;
+        _fineTune = sample.fineTune;
+        _pitched = sample.pitched;
+        _slicePoints = List.of(sample.slicePoints);
+        _sliceNotes = List.of(sample.sliceNotes);
+        _fileName = sample.filePath.split('/').last;
+        _loadExistingWav();
+      } else if (oldWidget.sampleToEdit != null) {
+        _resetForm();
       }
     }
   }
@@ -325,16 +353,8 @@ class _UploadSampleTabState extends ConsumerState<UploadSampleTab> {
   }
 
   void _clearSample() {
-    setState(() {
-      _wavBytes = null;
-      _fileName = null;
-      _sampleUf2Bytes = null;
-      _sampleUf2FileName = null;
-      _presetsUf2Bytes = null;
-      _isConverting = false;
-      _pcmFrameCount = null;
-      _sampleTooLongWarning = null;
-    });
+    _resetForm();
+    widget.onClear?.call();
   }
 
   int _parseSlotIndexFromFilename(String filename) {
