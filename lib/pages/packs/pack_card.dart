@@ -27,7 +27,9 @@ class PackCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final filledSlots = pack.slots.length;
+    final filledSlots = pack.slots
+        .where((slot) => slot.presetId != null)
+        .length;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
