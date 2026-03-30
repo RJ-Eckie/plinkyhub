@@ -52,6 +52,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     text: '',
   );
   final _packDescriptionController = TextEditingController();
+  final _packYoutubeUrlController = TextEditingController();
   bool _packIsPublic = true;
   final _presetNames = <int, TextEditingController>{};
   final _presetDescriptions = <int, TextEditingController>{};
@@ -101,6 +102,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     _packNameController.removeListener(_updateDerivedNames);
     _packNameController.dispose();
     _packDescriptionController.dispose();
+    _packYoutubeUrlController.dispose();
     _wavetableNameController.dispose();
     _wavetableDescriptionController.dispose();
     for (final controller in _patternNames.values) {
@@ -155,6 +157,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _wavetableUf2Bytes = null;
       _packNameController.text = '';
       _packDescriptionController.clear();
+      _packYoutubeUrlController.clear();
       _packIsPublic = true;
       _presetNames.clear();
       _presetDescriptions.clear();
@@ -545,6 +548,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         userId: userId,
         name: _packNameController.text.trim(),
         description: _packDescriptionController.text.trim(),
+        youtubeUrl: _packYoutubeUrlController.text.trim(),
         isPublic: _packIsPublic,
         wavetableId: _includeWavetableInPack ? wavetableId : null,
       );
@@ -652,6 +656,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               emptySampleSlots: _emptySampleSlots,
               packNameController: _packNameController,
               packDescriptionController: _packDescriptionController,
+              packYoutubeUrlController: _packYoutubeUrlController,
               packIsPublic: _packIsPublic,
               onPackIsPublicChanged: (value) =>
                   setState(() => _packIsPublic = value),
@@ -743,6 +748,7 @@ class _LoadReviewStep extends StatelessWidget {
     required this.emptySampleSlots,
     required this.packNameController,
     required this.packDescriptionController,
+    required this.packYoutubeUrlController,
     required this.packIsPublic,
     required this.onPackIsPublicChanged,
     required this.wavetableNameController,
@@ -768,6 +774,7 @@ class _LoadReviewStep extends StatelessWidget {
   final Set<int> emptySampleSlots;
   final TextEditingController packNameController;
   final TextEditingController packDescriptionController;
+  final TextEditingController packYoutubeUrlController;
   final bool packIsPublic;
   final ValueChanged<bool> onPackIsPublicChanged;
   final TextEditingController wavetableNameController;
@@ -821,7 +828,18 @@ class _LoadReviewStep extends StatelessWidget {
             labelText: 'Description',
             border: OutlineInputBorder(),
           ),
-          maxLines: 3,
+          minLines: 3,
+          maxLines: null,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: packYoutubeUrlController,
+          decoration: const InputDecoration(
+            labelText: 'YouTube URL (optional)',
+            hintText: 'https://www.youtube.com/watch?v=...',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.play_circle_outline),
+          ),
         ),
         SwitchListTile(
           title: const Text('Share with community'),
