@@ -337,7 +337,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
 
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete sample?'),
         content: Text(
           'Are you sure you want to delete '
@@ -345,16 +345,17 @@ class _SampleCardState extends ConsumerState<SampleCard> {
         ),
         actions: [
           PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             icon: Icons.close,
             label: 'Cancel',
           ),
           PlinkyButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               ref
                   .read(savedSamplesProvider.notifier)
                   .deleteSample(widget.sample.id);
+              Navigator.of(context).maybePop();
             },
             icon: Icons.delete,
             label: 'Delete',

@@ -134,7 +134,7 @@ class PresetCard extends ConsumerWidget {
 
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete preset?'),
         content: Text(
           'Are you sure you want to delete '
@@ -142,14 +142,15 @@ class PresetCard extends ConsumerWidget {
         ),
         actions: [
           PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             icon: Icons.close,
             label: 'Cancel',
           ),
           PlinkyButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               ref.read(savedPresetsProvider.notifier).deletePreset(preset.id);
+              Navigator.of(context).maybePop();
             },
             icon: Icons.delete,
             label: 'Delete',

@@ -791,8 +791,9 @@ class _LoadReviewStep extends StatelessWidget {
         Text(
           'Found ${presetNames.length} presets, '
           '${sampleNames.length} samples'
-          '${patternNames.isNotEmpty ? ', ${patternNames.length} patterns' : ''}'
-          '${hasWavetable ? ' and a wavetable' : ''} '
+          '${patternNames.isNotEmpty ? ', '
+                    '${patternNames.length} patterns' : ''} '
+          '${hasWavetable ? 'and a wavetable ' : ''}'
           'on the Plinky.\n\n'
           'Review the names and sharing '
           'settings below, then save.',

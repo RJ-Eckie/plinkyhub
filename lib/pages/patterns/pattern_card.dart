@@ -120,7 +120,7 @@ class PatternCard extends ConsumerWidget {
 
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete pattern?'),
         content: Text(
           'Are you sure you want to delete '
@@ -128,16 +128,17 @@ class PatternCard extends ConsumerWidget {
         ),
         actions: [
           PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             icon: Icons.close,
             label: 'Cancel',
           ),
           PlinkyButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               ref
                   .read(savedPatternsProvider.notifier)
                   .deletePattern(pattern.id);
+              Navigator.of(context).maybePop();
             },
             icon: Icons.delete,
             label: 'Delete',

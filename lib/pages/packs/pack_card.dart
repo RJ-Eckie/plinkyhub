@@ -200,7 +200,7 @@ class PackCard extends ConsumerWidget {
   void _confirmDelete(BuildContext context, WidgetRef ref) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete pack?'),
         content: Text(
           'Are you sure you want to delete '
@@ -208,14 +208,15 @@ class PackCard extends ConsumerWidget {
         ),
         actions: [
           PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             icon: Icons.close,
             label: 'Cancel',
           ),
           PlinkyButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               ref.read(savedPacksProvider.notifier).deletePack(pack.id);
+              Navigator.of(context).maybePop();
             },
             icon: Icons.delete,
             label: 'Delete',
