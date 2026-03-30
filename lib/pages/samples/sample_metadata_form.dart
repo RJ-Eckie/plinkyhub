@@ -24,6 +24,8 @@ class SampleMetadataForm extends StatelessWidget {
     required this.wavBytes,
     required this.pcmFrameCount,
     this.enabled = true,
+    this.header,
+    this.footer,
     super.key,
   });
 
@@ -44,6 +46,8 @@ class SampleMetadataForm extends StatelessWidget {
   final Uint8List? wavBytes;
   final int? pcmFrameCount;
   final bool enabled;
+  final Widget? header;
+  final Widget? footer;
 
   static const double _wideBreakpoint = 800;
 
@@ -52,6 +56,10 @@ class SampleMetadataForm extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (header != null) ...[
+          header!,
+          const SizedBox(height: 16),
+        ],
         TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -89,6 +97,10 @@ class SampleMetadataForm extends StatelessWidget {
             onBaseNoteChanged: onBaseNoteChanged,
             onFineTuneChanged: onFineTuneChanged,
           ),
+        ],
+        if (footer != null) ...[
+          const SizedBox(height: 16),
+          footer!,
         ],
       ],
     );

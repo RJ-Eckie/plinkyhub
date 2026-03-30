@@ -295,22 +295,6 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
           },
         ),
         const SizedBox(height: 8),
-        if (_loadingAudio)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 8),
-                Text('Loading audio...'),
-              ],
-            ),
-          ),
         for (var i = 0; i < 8; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
@@ -323,22 +307,26 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-                const SizedBox(width: 4),
-                IconButton.filled(
-                  icon: Icon(
-                    _playingSlice == i ? Icons.stop : Icons.play_arrow,
-                    size: 18,
-                  ),
-                  onPressed: widget.wavBytes != null && !_loadingAudio
-                      ? () => _playSlice(i)
-                      : null,
-                  tooltip: 'Preview slice ${i + 1}',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: _loadingAudio
+                      ? const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : IconButton.filled(
+                          icon: Icon(
+                            _playingSlice == i ? Icons.stop : Icons.play_arrow,
+                            size: 18,
+                          ),
+                          onPressed: widget.wavBytes != null
+                              ? () => _playSlice(i)
+                              : null,
+                          tooltip: 'Preview slice ${i + 1}',
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                        ),
                 ),
                 Expanded(
                   child: Slider(

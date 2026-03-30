@@ -125,8 +125,8 @@ class _LoadSampleTabState extends ConsumerState<LoadSampleTab> {
       // The firmware exports the full sample slot (up to 4 MB), but the
       // actual sample may be shorter. Trim to sampleLength so that the
       // fractional slice points align with the displayed waveform.
-      final trimmedPcm = sampleInfo != null &&
-              sampleInfo.sampleLength * 2 < pcmData.length
+      final trimmedPcm =
+          sampleInfo != null && sampleInfo.sampleLength * 2 < pcmData.length
           ? Uint8List.sublistView(pcmData, 0, sampleInfo.sampleLength * 2)
           : pcmData;
 
@@ -216,34 +216,109 @@ class _LoadSampleTabState extends ConsumerState<LoadSampleTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (_step == _LoadStep.instructions || _step == _LoadStep.review) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: SampleMetadataForm(
+          header: _step == _LoadStep.instructions
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const TunnelOfLightsInstructions(
+                      itemType: 'sample',
+                      isLoading: true,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<int>(
+                      initialValue: _selectedSlot,
+                      decoration: const InputDecoration(
+                        labelText: 'Sample slot',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: List.generate(
+                        sampleCount,
+                        (index) => DropdownMenuItem(
+                          value: index,
+                          child: Text('Sample $index'),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedSlot = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    PlinkyButton(
+                      onPressed: _readFromPlinky,
+                      icon: Icons.usb,
+                      label: 'Select Plinky drive',
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Sample $_selectedSlot loaded',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    PlinkyButton(
+                      onPressed: _reset,
+                      icon: Icons.clear,
+                      label: 'Clear',
+                    ),
+                  ],
+                ),
+          nameController: _nameController,
+          descriptionController: _descriptionController,
+          isPublic: _isPublic,
+          onIsPublicChanged: (value) =>
+              setState(() => _isPublic = value ?? true),
+          pitched: _pitched,
+          onPitchedChanged: (value) => setState(() => _pitched = value),
+          baseNote: _baseNote,
+          onBaseNoteChanged: (value) => setState(() => _baseNote = value),
+          fineTune: _fineTune,
+          onFineTuneChanged: (value) => setState(() => _fineTune = value),
+          slicePoints: _slicePoints,
+          onSlicePointsChanged: (points) =>
+              setState(() => _slicePoints = points),
+          sliceNotes: _sliceNotes,
+          onSliceNotesChanged: (notes) => setState(() => _sliceNotes = notes),
+          wavBytes: _wavBytes,
+          pcmFrameCount: _pcmFrameCount,
+          enabled: _step == _LoadStep.review,
+          footer: _step == _LoadStep.review
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: PlinkyButton(
+                        onPressed: _reset,
+                        icon: Icons.arrow_back,
+                        label: 'Back',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: PlinkyButton(
+                        onPressed: _upload,
+                        icon: Icons.upload,
+                        label: 'Upload',
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+        ),
+      );
+    }
+
     return switch (_step) {
-      _LoadStep.instructions => _LoadInstructionsView(
-        selectedSlot: _selectedSlot,
-        onSlotChanged: (value) => setState(() => _selectedSlot = value),
-        onReadFromPlinky: _readFromPlinky,
-      ),
       _LoadStep.reading => Center(
         child: SaveProgressView(statusMessage: _statusMessage),
-      ),
-      _LoadStep.review => _LoadReviewView(
-        nameController: _nameController,
-        descriptionController: _descriptionController,
-        pitched: _pitched,
-        onPitchedChanged: (value) => setState(() => _pitched = value),
-        baseNote: _baseNote,
-        onBaseNoteChanged: (value) => setState(() => _baseNote = value),
-        fineTune: _fineTune,
-        onFineTuneChanged: (value) => setState(() => _fineTune = value),
-        slicePoints: _slicePoints,
-        onSlicePointsChanged: (points) => setState(() => _slicePoints = points),
-        sliceNotes: _sliceNotes,
-        onSliceNotesChanged: (notes) => setState(() => _sliceNotes = notes),
-        wavBytes: _wavBytes,
-        pcmFrameCount: _pcmFrameCount,
-        isPublic: _isPublic,
-        onIsPublicChanged: (value) => setState(() => _isPublic = value),
-        onBack: _reset,
-        onUpload: _upload,
       ),
       _LoadStep.uploading => Center(
         child: SaveProgressView(statusMessage: _statusMessage),
@@ -258,164 +333,8 @@ class _LoadSampleTabState extends ConsumerState<LoadSampleTab> {
         errorMessage: _errorMessage,
         onRetry: _reset,
       ),
+      _ => const SizedBox.shrink(),
     };
-  }
-}
-
-class _LoadInstructionsView extends StatelessWidget {
-  const _LoadInstructionsView({
-    required this.selectedSlot,
-    required this.onSlotChanged,
-    required this.onReadFromPlinky,
-  });
-
-  final int selectedSlot;
-  final ValueChanged<int> onSlotChanged;
-  final VoidCallback onReadFromPlinky;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const TunnelOfLightsInstructions(
-                itemType: 'sample',
-                isLoading: true,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
-                initialValue: selectedSlot,
-                decoration: const InputDecoration(
-                  labelText: 'Sample slot',
-                  border: OutlineInputBorder(),
-                ),
-                items: List.generate(
-                  sampleCount,
-                  (index) => DropdownMenuItem(
-                    value: index,
-                    child: Text('Sample $index'),
-                  ),
-                ),
-                onChanged: (value) {
-                  if (value != null) {
-                    onSlotChanged(value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              PlinkyButton(
-                onPressed: onReadFromPlinky,
-                icon: Icons.usb,
-                label: 'Select Plinky drive',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadReviewView extends StatelessWidget {
-  const _LoadReviewView({
-    required this.nameController,
-    required this.descriptionController,
-    required this.pitched,
-    required this.onPitchedChanged,
-    required this.baseNote,
-    required this.onBaseNoteChanged,
-    required this.fineTune,
-    required this.onFineTuneChanged,
-    required this.slicePoints,
-    required this.onSlicePointsChanged,
-    required this.sliceNotes,
-    required this.onSliceNotesChanged,
-    required this.wavBytes,
-    required this.pcmFrameCount,
-    required this.isPublic,
-    required this.onIsPublicChanged,
-    required this.onBack,
-    required this.onUpload,
-  });
-
-  final TextEditingController nameController;
-  final TextEditingController descriptionController;
-  final bool pitched;
-  final ValueChanged<bool> onPitchedChanged;
-  final int baseNote;
-  final ValueChanged<int> onBaseNoteChanged;
-  final int fineTune;
-  final ValueChanged<int> onFineTuneChanged;
-  final List<double> slicePoints;
-  final ValueChanged<List<double>> onSlicePointsChanged;
-  final List<int> sliceNotes;
-  final ValueChanged<List<int>> onSliceNotesChanged;
-  final Uint8List? wavBytes;
-  final int? pcmFrameCount;
-  final bool isPublic;
-  final ValueChanged<bool> onIsPublicChanged;
-  final VoidCallback onBack;
-  final VoidCallback onUpload;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SampleMetadataForm(
-            nameController: nameController,
-            descriptionController: descriptionController,
-            isPublic: isPublic,
-            onIsPublicChanged: (value) =>
-                onIsPublicChanged(value ?? true),
-            pitched: pitched,
-            onPitchedChanged: onPitchedChanged,
-            baseNote: baseNote,
-            onBaseNoteChanged: onBaseNoteChanged,
-            fineTune: fineTune,
-            onFineTuneChanged: onFineTuneChanged,
-            slicePoints: slicePoints,
-            onSlicePointsChanged: onSlicePointsChanged,
-            sliceNotes: sliceNotes,
-            onSliceNotesChanged: onSliceNotesChanged,
-            wavBytes: wavBytes,
-            pcmFrameCount: pcmFrameCount,
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: PlinkyButton(
-                      onPressed: onBack,
-                      icon: Icons.arrow_back,
-                      label: 'Back',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: PlinkyButton(
-                      onPressed: onUpload,
-                      icon: Icons.upload,
-                      label: 'Upload',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
