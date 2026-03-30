@@ -90,56 +90,67 @@ class _SlicePointsEditorState extends State<SlicePointsEditor> {
       return;
     }
 
-    final soloud = SoLoud.instance;
+    try {
+      final soloud = SoLoud.instance;
 
-    // Stop any currently playing slice
-    if (_activeHandle != null) {
-      await soloud.stop(_activeHandle!);
-      _activeHandle = null;
-    }
-
-    // Initialize engine and load audio if needed
-    if (_audioSource == null) {
-      setState(() => _loadingAudio = true);
-      if (!soloud.isInitialized) {
-        await soloud.init();
-      }
-      _audioSource = await soloud.loadMem('sample.wav', wavBytes);
-      if (mounted) {
-        setState(() => _loadingAudio = false);
-      } else {
-        return;
-      }
-    }
-
-    final source = _audioSource!;
-    final totalDuration = soloud.getLength(source);
-
-    final startFraction = widget.slicePoints[sliceIndex];
-    final endFraction = sliceIndex < 7
-        ? widget.slicePoints[sliceIndex + 1]
-        : 1.0;
-
-    final startTime = totalDuration * startFraction;
-    final sliceDuration = totalDuration * (endFraction - startFraction);
-
-    final handle = await soloud.play(source, paused: true);
-    soloud.seek(handle, startTime);
-    soloud.setPause(handle, false);
-    soloud.scheduleStop(handle, sliceDuration);
-
-    setState(() {
-      _activeHandle = handle;
-      _playingSlice = sliceIndex;
-    });
-
-    // Reset playing state when the slice finishes
-    await Future<void>.delayed(sliceDuration);
-    if (mounted && _playingSlice == sliceIndex) {
-      setState(() {
+      // Stop any currently playing slice
+      if (_activeHandle != null) {
+        await soloud.stop(_activeHandle!);
         _activeHandle = null;
-        _playingSlice = -1;
+      }
+
+      // Initialize engine and load audio if needed
+      if (_audioSource == null) {
+        setState(() => _loadingAudio = true);
+        if (!soloud.isInitialized) {
+          await soloud.init();
+        }
+        _audioSource = await soloud.loadMem('sample.wav', wavBytes);
+        if (mounted) {
+          setState(() => _loadingAudio = false);
+        } else {
+          return;
+        }
+      }
+
+      final source = _audioSource!;
+      final totalDuration = soloud.getLength(source);
+
+      final startFraction = widget.slicePoints[sliceIndex];
+      final endFraction = sliceIndex < 7
+          ? widget.slicePoints[sliceIndex + 1]
+          : 1.0;
+
+      final startTime = totalDuration * startFraction;
+      final sliceDuration = totalDuration * (endFraction - startFraction);
+
+      final handle = await soloud.play(source, paused: true);
+      soloud.seek(handle, startTime);
+      soloud.setPause(handle, false);
+      soloud.scheduleStop(handle, sliceDuration);
+
+      setState(() {
+        _activeHandle = handle;
+        _playingSlice = sliceIndex;
       });
+
+      // Reset playing state when the slice finishes
+      await Future<void>.delayed(sliceDuration);
+      if (mounted && _playingSlice == sliceIndex) {
+        setState(() {
+          _activeHandle = null;
+          _playingSlice = -1;
+        });
+      }
+    } on Exception catch (error) {
+      debugPrint('Failed to play slice: $error');
+      if (mounted) {
+        setState(() {
+          _activeHandle = null;
+          _playingSlice = -1;
+          _loadingAudio = false;
+        });
+      }
     }
   }
 
