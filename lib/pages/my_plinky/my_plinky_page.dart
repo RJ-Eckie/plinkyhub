@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/state/sound_service.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
@@ -26,12 +27,77 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   String? _errorMessage;
 
   // Parsed device data.
-  final _presets = <int, Preset>{};
-  final _samplePcmData = <int, Uint8List>{};
-  final _sampleNames = <int, String>{};
-  final _emptySampleSlots = <int>{};
-  bool _hasWavetable = false;
+  List<Uint8List?> _presetDataList = [];
+  List<ParsedSampleInfo?> _sampleInfos = [];
+
+  Map<int, Uint8List> _samplePcmData = {};
+  Set<int> _emptySampleSlots = {};
+  Uint8List? _wavetableUf2Bytes;
+
+  // Editable controllers and state.
+  final _presetNames = <int, TextEditingController>{};
+  final _presetDescriptions = <int, TextEditingController>{};
+  final _presetCategories = <int, PresetCategory>{};
+  final _sampleNames = <int, TextEditingController>{};
+  final _sampleDescriptions = <int, TextEditingController>{};
+  final _wavetableNameController = TextEditingController(text: 'Wavetable');
+  final _wavetableDescriptionController = TextEditingController();
+  final _patternNames = <int, TextEditingController>{};
+  final _patternDescriptions = <int, TextEditingController>{};
   final _nonEmptyPatternIndices = <int>[];
+
+  @override
+  void dispose() {
+    for (final controller in _presetNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _presetDescriptions.values) {
+      controller.dispose();
+    }
+    for (final controller in _sampleNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _sampleDescriptions.values) {
+      controller.dispose();
+    }
+    _wavetableNameController.dispose();
+    _wavetableDescriptionController.dispose();
+    for (final controller in _patternNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _patternDescriptions.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _disposeControllers() {
+    for (final controller in _presetNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _presetDescriptions.values) {
+      controller.dispose();
+    }
+    for (final controller in _sampleNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _sampleDescriptions.values) {
+      controller.dispose();
+    }
+    for (final controller in _patternNames.values) {
+      controller.dispose();
+    }
+    for (final controller in _patternDescriptions.values) {
+      controller.dispose();
+    }
+    _presetNames.clear();
+    _presetDescriptions.clear();
+    _presetCategories.clear();
+    _sampleNames.clear();
+    _sampleDescriptions.clear();
+    _patternNames.clear();
+    _patternDescriptions.clear();
+  }
 
   Future<void> _connectToPlinky() async {
     final directory = await showDirectoryPicker();
@@ -58,24 +124,11 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       setState(() => _statusMessage = 'Parsing presets...');
       final parsed = parseFlashImage(flashImage);
-
-      // Parse presets.
-      _presets.clear();
-      for (var i = 0; i < presetCount; i++) {
-        final presetBytes = parsed.presets[i];
-        if (presetBytes == null) {
-          continue;
-        }
-        final preset = Preset(presetBytes.buffer);
-        if (!preset.isEmpty) {
-          _presets[i] = preset;
-        }
-      }
-
+      _presetDataList = parsed.presets;
+      _sampleInfos = parsed.sampleInfos;
       // Read samples.
-      _samplePcmData.clear();
-      _sampleNames.clear();
-      _emptySampleSlots.clear();
+      _samplePcmData = {};
+      _emptySampleSlots = {};
       for (var i = 0; i < sampleCount; i++) {
         setState(() => _statusMessage = 'Reading SAMPLE$i.UF2...');
         final sampleBytes = await readFileFromDirectory(
@@ -86,7 +139,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
           try {
             var pcmData = uf2ToData(sampleBytes);
             final sampleInfo =
-                i < parsed.sampleInfos.length ? parsed.sampleInfos[i] : null;
+                i < _sampleInfos.length ? _sampleInfos[i] : null;
             if (sampleInfo != null &&
                 sampleInfo.sampleLength * 2 < pcmData.length) {
               pcmData = Uint8List.sublistView(
@@ -97,7 +150,6 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
             }
             if (pcmData.isNotEmpty && !_isSilentPcm(pcmData)) {
               _samplePcmData[i] = pcmData;
-              _sampleNames[i] = 'Sample ${i + 1}';
             } else {
               _emptySampleSlots.add(i);
             }
@@ -111,19 +163,59 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       // Read wavetable.
       setState(() => _statusMessage = 'Reading WAVETAB.UF2...');
-      final wavetableBytes = await readFileFromDirectory(
+      _wavetableUf2Bytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
       );
-      _hasWavetable = wavetableBytes != null &&
-          wavetableBytes.isNotEmpty &&
-          !wavetableBytes.every((b) => b == 0) &&
-          !wavetableBytes.every((b) => b == 0xFF);
+      if (_wavetableUf2Bytes != null &&
+          (_wavetableUf2Bytes!.every((b) => b == 0) ||
+              _wavetableUf2Bytes!.every((b) => b == 0xFF))) {
+        _wavetableUf2Bytes = null;
+      }
 
-      // Pattern indices.
+      // Build editable controllers from parsed data.
+      _disposeControllers();
+
+      for (var i = 0; i < presetCount; i++) {
+        final presetBytes = _presetDataList[i];
+        if (presetBytes == null) {
+          continue;
+        }
+        final preset = Preset(presetBytes.buffer);
+        if (preset.isEmpty) {
+          _presetDataList[i] = null;
+          continue;
+        }
+        _presetNames[i] = TextEditingController(
+          text: preset.name.isNotEmpty ? preset.name : 'Preset ${i + 1}',
+        );
+        _presetDescriptions[i] = TextEditingController();
+        _presetCategories[i] = preset.category;
+      }
+
+      for (final slotIndex in _samplePcmData.keys) {
+        _sampleNames[slotIndex] = TextEditingController(
+          text: 'Sample ${slotIndex + 1}',
+        );
+        _sampleDescriptions[slotIndex] = TextEditingController();
+      }
+
+      final hasWavetable =
+          _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty;
+      if (hasWavetable) {
+        _wavetableNameController.text = 'Wavetable';
+        _wavetableDescriptionController.clear();
+      }
+
       _nonEmptyPatternIndices
         ..clear()
         ..addAll(parsed.nonEmptyPatternIndices);
+      for (final patternIndex in _nonEmptyPatternIndices) {
+        _patternNames[patternIndex] = TextEditingController(
+          text: 'Pattern ${patternIndex + 1}',
+        );
+        _patternDescriptions[patternIndex] = TextEditingController();
+      }
 
       setState(() {
         _state = _LoadState.loaded;
@@ -154,6 +246,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     }
     return false;
   }
+
+  bool get _hasWavetable =>
+      _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -261,104 +356,177 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Row(
+                children: [
+                  Text(
+                    'My Plinky',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const Spacer(),
+                  PlinkyButton(
+                    onPressed: _connectToPlinky,
+                    icon: Icons.refresh,
+                    label: 'Reload',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(
-                'My Plinky',
-                style: theme.textTheme.headlineSmall,
+                'Found ${_presetNames.length} presets, '
+                '${_sampleNames.length} samples'
+                '${_nonEmptyPatternIndices.isNotEmpty ? ', '
+                        '${_nonEmptyPatternIndices.length} patterns' : ''} '
+                '${_hasWavetable ? 'and a wavetable ' : ''}'
+                'on the Plinky.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              const Spacer(),
-              PlinkyButton(
-                onPressed: _connectToPlinky,
-                icon: Icons.refresh,
-                label: 'Reload',
+              const SizedBox(height: 16),
+              Text(
+                'Preset Slots',
+                style: theme.textTheme.titleMedium,
               ),
+              const SizedBox(height: 8),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisExtent: 64,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: 32,
+                itemBuilder: (context, index) {
+                  final row = index ~/ 4;
+                  final column = index % 4;
+                  final slotIndex = column * 8 + row;
+                  final hasPreset = _presetNames.containsKey(slotIndex);
+                  final presetBytes = _presetDataList[slotIndex];
+                  final preset = presetBytes != null
+                      ? Preset(presetBytes.buffer)
+                      : null;
+                  return _PresetSlotCard(
+                    slotNumber: slotIndex,
+                    name: _presetNames[slotIndex]?.text,
+                    category: _presetCategories[slotIndex],
+                    hasPreset: hasPreset,
+                    onTap: hasPreset
+                        ? () => _showPresetEditDialog(slotIndex, preset!)
+                        : null,
+                  );
+                },
+              ),
+              if (_sampleNames.isNotEmpty ||
+                  _emptySampleSlots.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Samples',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                for (final slotIndex in [
+                  ..._sampleNames.keys,
+                  ..._emptySampleSlots,
+                ]..sort())
+                  if (_sampleNames.containsKey(slotIndex))
+                    _SamplePreviewRow(
+                      controller: _sampleNames[slotIndex]!,
+                      label: 'Sample $slotIndex',
+                      pcmData: _samplePcmData[slotIndex],
+                      onEdit: () => _showSampleEditDialog(slotIndex),
+                    )
+                  else
+                    _EmptySlotRow(label: 'Sample $slotIndex'),
+              ],
+              if (_hasWavetable) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Wavetable',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _NamedItemRow(
+                  controller: _wavetableNameController,
+                  label: 'Wavetable name',
+                  onEdit: _showWavetableEditDialog,
+                ),
+              ],
+              if (_nonEmptyPatternIndices.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Patterns',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                for (final patternIndex
+                    in _patternNames.keys.toList()..sort())
+                  _NamedItemRow(
+                    controller: _patternNames[patternIndex]!,
+                    label: 'Pattern ${patternIndex + 1}',
+                    onEdit: () => _showPatternEditDialog(patternIndex),
+                  ),
+              ],
+              const SizedBox(height: 16),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Preset Slots',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisExtent: 64,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: 32,
-            itemBuilder: (context, index) {
-              // Column-major order: same as Create Pack tab.
-              final row = index ~/ 4;
-              final column = index % 4;
-              final slotIndex = column * 8 + row;
-              final preset = _presets[slotIndex];
-              return _PresetSlotCard(
-                slotNumber: slotIndex,
-                preset: preset,
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Samples',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          for (var i = 0; i < sampleCount; i++)
-            if (_samplePcmData.containsKey(i))
-              _SampleRow(
-                label: 'Sample ${i + 1}',
-                name: _sampleNames[i] ?? '',
-                pcmData: _samplePcmData[i],
-              )
-            else
-              _EmptySlotRow(label: 'Sample ${i + 1}'),
-          const SizedBox(height: 16),
-          Text(
-            'Wavetable',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _hasWavetable ? 'Present' : 'None',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: _hasWavetable
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Patterns',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (_nonEmptyPatternIndices.isEmpty)
-            Text(
-              'None',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final patternIndex in _nonEmptyPatternIndices)
-                  Chip(label: Text('Pattern ${patternIndex + 1}')),
-              ],
-            ),
-          const SizedBox(height: 16),
-        ],
+        ),
+      ),
+    );
+  }
+
+  void _showPresetEditDialog(int slotIndex, Preset preset) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => _PresetEditDialog(
+        nameController: _presetNames[slotIndex]!,
+        descriptionController: _presetDescriptions[slotIndex]!,
+        category: _presetCategories[slotIndex] ?? PresetCategory.none,
+        preset: preset,
+        onCategoryChanged: (value) {
+          _presetCategories[slotIndex] = value;
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  void _showSampleEditDialog(int slotIndex) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => _NameDescriptionEditDialog(
+        title: 'Edit Sample',
+        nameController: _sampleNames[slotIndex]!,
+        descriptionController: _sampleDescriptions[slotIndex]!,
+      ),
+    );
+  }
+
+  void _showWavetableEditDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => _NameDescriptionEditDialog(
+        title: 'Edit Wavetable',
+        nameController: _wavetableNameController,
+        descriptionController: _wavetableDescriptionController,
+      ),
+    );
+  }
+
+  void _showPatternEditDialog(int patternIndex) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => _NameDescriptionEditDialog(
+        title: 'Edit Pattern',
+        nameController: _patternNames[patternIndex]!,
+        descriptionController: _patternDescriptions[patternIndex]!,
       ),
     );
   }
@@ -367,23 +535,27 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 class _PresetSlotCard extends StatelessWidget {
   const _PresetSlotCard({
     required this.slotNumber,
-    this.preset,
+    required this.hasPreset, this.name,
+    this.category,
+    this.onTap,
   });
 
   final int slotNumber;
-  final Preset? preset;
+  final String? name;
+  final PresetCategory? category;
+  final bool hasPreset;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isEmpty = preset == null;
-    final categoryLabel = preset?.category.label ?? '';
+    final categoryLabel = category?.label ?? '';
 
     return Card(
-      color: isEmpty ? null : theme.colorScheme.primaryContainer,
+      color: hasPreset ? theme.colorScheme.primaryContainer : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: isEmpty ? null : () => _showPresetDetails(context),
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Column(
@@ -393,14 +565,14 @@ class _PresetSlotCard extends StatelessWidget {
                 '${slotNumber + 1}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isEmpty
-                      ? theme.colorScheme.onSurfaceVariant
-                      : theme.colorScheme.onPrimaryContainer,
+                  color: hasPreset
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (!isEmpty) ...[
+              if (hasPreset) ...[
                 Text(
-                  preset!.name.isNotEmpty ? preset!.name : '-',
+                  name?.isNotEmpty == true ? name! : '-',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
@@ -424,62 +596,122 @@ class _PresetSlotCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  void _showPresetDetails(BuildContext context) {
-    if (preset == null) {
-      return;
-    }
-    final theme = Theme.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          preset!.name.isNotEmpty
-              ? preset!.name
-              : 'Preset ${slotNumber + 1}',
+class _PresetEditDialog extends StatelessWidget {
+  const _PresetEditDialog({
+    required this.nameController,
+    required this.descriptionController,
+    required this.category,
+    required this.preset,
+    required this.onCategoryChanged,
+  });
+
+  final TextEditingController nameController;
+  final TextEditingController descriptionController;
+  final PresetCategory category;
+  final Preset preset;
+  final ValueChanged<PresetCategory> onCategoryChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Preset'),
+      content: SizedBox(
+        width: 400,
+        child: StatefulBuilder(
+          builder: (context, setDialogState) {
+            var currentCategory = category;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<PresetCategory>(
+                  initialValue: currentCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: PresetCategory.values
+                      .map(
+                        (category) => DropdownMenuItem(
+                          value: category,
+                          child: Text(
+                            category.label.isEmpty ? 'None' : category.label,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      currentCategory = value;
+                      onCategoryChanged(value);
+                      setDialogState(() {});
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _PresetInfoSection(preset: preset),
+              ],
+            );
+          },
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (preset!.category.label.isNotEmpty)
-              _DetailRow(
-                label: 'Category',
-                value: preset!.category.label,
-              ),
-            _DetailRow(
-              label: 'Scale',
-              value: preset!.scale.displayName,
-            ),
-            _DetailRow(
-              label: 'Octave offset',
-              value: '${preset!.octaveOffset}',
-            ),
-            if (preset!.usesSample)
-              _DetailRow(
-                label: 'Sample slot',
-                value: '${preset!.sampleSlot}',
-              ),
-            if (preset!.arp)
-              Text(
-                'Arpeggiator enabled',
-                style: theme.textTheme.bodyMedium,
-              ),
-            if (preset!.latch)
-              Text(
-                'Latch enabled',
-                style: theme.textTheme.bodyMedium,
-              ),
-          ],
-        ),
-        actions: [
-          PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Icons.close,
-            label: 'Close',
-          ),
-        ],
       ),
+      actions: [
+        PlinkyButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icons.check,
+          label: 'Done',
+        ),
+      ],
+    );
+  }
+}
+
+class _PresetInfoSection extends StatelessWidget {
+  const _PresetInfoSection({required this.preset});
+
+  final Preset preset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Details', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        _DetailRow(label: 'Scale', value: preset.scale.displayName),
+        _DetailRow(label: 'Octave offset', value: '${preset.octaveOffset}'),
+        if (preset.usesSample)
+          _DetailRow(label: 'Sample slot', value: '${preset.sampleSlot}'),
+        if (preset.arp)
+          Text(
+            'Arpeggiator enabled',
+            style: theme.textTheme.bodyMedium,
+          ),
+        if (preset.latch)
+          Text(
+            'Latch enabled',
+            style: theme.textTheme.bodyMedium,
+          ),
+      ],
     );
   }
 }
@@ -509,22 +741,24 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-class _SampleRow extends ConsumerStatefulWidget {
-  const _SampleRow({
+class _SamplePreviewRow extends ConsumerStatefulWidget {
+  const _SamplePreviewRow({
+    required this.controller,
     required this.label,
-    required this.name,
     this.pcmData,
+    this.onEdit,
   });
 
+  final TextEditingController controller;
   final String label;
-  final String name;
   final Uint8List? pcmData;
+  final VoidCallback? onEdit;
 
   @override
-  ConsumerState<_SampleRow> createState() => _SampleRowState();
+  ConsumerState<_SamplePreviewRow> createState() => _SamplePreviewRowState();
 }
 
-class _SampleRowState extends ConsumerState<_SampleRow> {
+class _SamplePreviewRowState extends ConsumerState<_SamplePreviewRow> {
   AudioSource? _audioSource;
   bool _isPlaying = false;
 
@@ -562,21 +796,17 @@ class _SampleRowState extends ConsumerState<_SampleRow> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           Expanded(
-            child: InputDecorator(
+            child: TextField(
+              controller: widget.controller,
               decoration: InputDecoration(
                 labelText: widget.label,
                 border: const OutlineInputBorder(),
                 isDense: true,
-              ),
-              child: Text(
-                widget.name,
-                style: theme.textTheme.bodyMedium,
               ),
             ),
           ),
@@ -588,6 +818,14 @@ class _SampleRowState extends ConsumerState<_SampleRow> {
               ),
               tooltip: _isPlaying ? 'Stop' : 'Play',
               onPressed: _togglePlayback,
+            ),
+          if (widget.onEdit != null)
+            Tooltip(
+              message: 'Edit details',
+              child: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: widget.onEdit,
+              ),
             ),
         ],
       ),
@@ -618,6 +856,97 @@ class _EmptySlotRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _NamedItemRow extends StatelessWidget {
+  const _NamedItemRow({
+    required this.controller,
+    required this.label,
+    this.onEdit,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final VoidCallback? onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: label,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          if (onEdit != null)
+            Tooltip(
+              message: 'Edit details',
+              child: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: onEdit,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NameDescriptionEditDialog extends StatelessWidget {
+  const _NameDescriptionEditDialog({
+    required this.title,
+    required this.nameController,
+    required this.descriptionController,
+  });
+
+  final String title;
+  final TextEditingController nameController;
+  final TextEditingController descriptionController;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(title),
+      content: SizedBox(
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        PlinkyButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icons.check,
+          label: 'Done',
+        ),
+      ],
     );
   }
 }
