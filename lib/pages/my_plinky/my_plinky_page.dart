@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -8,10 +9,9 @@ import 'package:plinkyhub/pages/packs/pattern_section.dart';
 import 'package:plinkyhub/pages/packs/preset_slots_grid.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_section.dart';
-import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
+import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
-import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -65,11 +65,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
     setState(() {
       _state = _PageState.loading;
-      _statusMessage = 'Reading PRESETS.UF2...';
+      _statusMessage = 'Reading files from Plinky...';
       _errorMessage = null;
     });
 
     try {
+      // Read all files on the main thread (File System Access API
+      // requires it), then send raw bytes to an isolate for parsing.
       final presetsUf2Bytes = await readFileFromDirectory(
         directory,
         'PRESETS.UF2',
@@ -80,62 +82,19 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         );
       }
 
-      final flashImage = uf2ToData(presetsUf2Bytes);
-
-      setState(() => _statusMessage = 'Parsing presets...');
-      final parsed = parseFlashImage(flashImage);
-      _parsedFlashImage = parsed;
-
-      // Parse device presets and compute hashes.
-      _devicePresets.clear();
-      final presetHashes = <int, String>{};
-      for (var i = 0; i < presetCount; i++) {
-        final presetBytes = parsed.presets[i];
-        if (presetBytes == null) {
-          continue;
-        }
-        final preset = Preset(presetBytes.buffer);
-        if (!preset.isEmpty) {
-          _devicePresets[i] = preset;
-          presetHashes[i] = computeContentHash(presetBytes);
-        }
-      }
-
-      // Read and hash samples.
-      _deviceSampleSlots.clear();
-      final sampleHashes = <int, String>{};
+      final sampleUf2s = <Uint8List?>[];
       for (var i = 0; i < sampleCount; i++) {
-        setState(() => _statusMessage = 'Reading SAMPLE$i.UF2...');
-        final sampleBytes = await readFileFromDirectory(
-          directory,
-          'SAMPLE$i.UF2',
+        setState(
+          () => _statusMessage = 'Reading SAMPLE$i.UF2...',
         );
-        if (sampleBytes != null && sampleBytes.isNotEmpty) {
-          try {
-            var pcmData = uf2ToData(sampleBytes);
-            final sampleInfo = i < parsed.sampleInfos.length
-                ? parsed.sampleInfos[i]
-                : null;
-            if (sampleInfo != null &&
-                sampleInfo.sampleLength * 2 < pcmData.length) {
-              pcmData = Uint8List.sublistView(
-                pcmData,
-                0,
-                sampleInfo.sampleLength * 2,
-              );
-            }
-            if (pcmData.isNotEmpty && !_isSilentPcm(pcmData)) {
-              _deviceSampleSlots.add(i);
-              sampleHashes[i] = computeContentHash(pcmData);
-            }
-          } on FormatException {
-            // Skip corrupt sample.
-          }
-        }
+        sampleUf2s.add(
+          await readFileFromDirectory(directory, 'SAMPLE$i.UF2'),
+        );
       }
 
-      // Read wavetable.
-      setState(() => _statusMessage = 'Reading WAVETAB.UF2...');
+      setState(
+        () => _statusMessage = 'Reading WAVETAB.UF2...',
+      );
       var wavetableBytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
@@ -144,35 +103,47 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         directory,
         'wavetab.uf2',
       );
-      String? wavetableHash;
-      _deviceHasWavetable = wavetableBytes != null &&
-          !wavetableBytes.every((b) => b == 0) &&
-          !wavetableBytes.every((b) => b == 0xFF);
-      if (_deviceHasWavetable) {
-        wavetableHash = computeContentHash(wavetableBytes!);
-      }
 
-      // Compute pattern hashes.
-      _devicePatternIndices
-        ..clear()
-        ..addAll(parsed.nonEmptyPatternIndices);
-      final patternHashes = <int, String>{};
-      for (final patternIndex in _devicePatternIndices) {
-        final quarterStart = patternIndex * 4;
-        final quarters = List<Uint8List?>.filled(
-          parsed.patternQuarters.length,
-          null,
-        );
-        for (var q = 0; q < 4; q++) {
-          final index = quarterStart + q;
-          if (index < parsed.patternQuarters.length) {
-            quarters[index] = parsed.patternQuarters[index];
+      // Offload all CPU-heavy parsing to a separate isolate.
+      setState(() => _statusMessage = 'Processing...');
+      final input = PlinkyDeviceInput(
+        presetsUf2: presetsUf2Bytes,
+        sampleUf2s: sampleUf2s,
+        wavetableBytes: wavetableBytes,
+      );
+      final result = await Isolate.run(
+        () => parsePlinkyDevice(input),
+      );
+
+      // Store parsed flash image for save-back merging.
+      _parsedFlashImage = ParsedFlashImage(
+        presets: result.presets,
+        sampleInfos: result.sampleInfos,
+        rawSampleInfos: result.rawSampleInfos,
+        patternQuarters: result.patternQuarters,
+      );
+
+      // Populate device state from parsed results.
+      _devicePresets.clear();
+      for (var i = 0; i < presetCount; i++) {
+        final presetBytes = result.presets[i];
+        if (presetBytes != null) {
+          final preset = Preset(presetBytes.buffer);
+          if (!preset.isEmpty) {
+            _devicePresets[i] = preset;
           }
         }
-        final patternBlob = serializePatternQuarters(quarters);
-        patternHashes[patternIndex] =
-            computeContentHash(patternBlob);
       }
+
+      _deviceSampleSlots
+        ..clear()
+        ..addAll(result.samplePcmData.keys);
+
+      _deviceHasWavetable = result.deviceHasWavetable;
+
+      _devicePatternIndices
+        ..clear()
+        ..addAll(result.nonEmptyPatternIndices);
 
       // Match content hashes against saved entries.
       setState(() => _statusMessage = 'Matching saved content...');
@@ -183,11 +154,23 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       final matchedPatterns = <int, _MatchedEntry>{};
 
       await Future.wait([
-        _findMatches('presets', presetHashes, matchedPresets),
-        _findMatches('samples', sampleHashes, matchedSamples),
-        _findMatches('patterns', patternHashes, matchedPatterns),
-        if (wavetableHash != null)
-          _findWavetableMatch(wavetableHash).then(
+        _findMatches(
+          'presets',
+          result.presetHashes,
+          matchedPresets,
+        ),
+        _findMatches(
+          'samples',
+          result.sampleHashes,
+          matchedSamples,
+        ),
+        _findMatches(
+          'patterns',
+          result.patternHashes,
+          matchedPatterns,
+        ),
+        if (result.wavetableHash != null)
+          _findWavetableMatch(result.wavetableHash!).then(
             (entry) => matchedWavetable = entry,
           ),
       ]);
@@ -254,21 +237,6 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         });
       }
     }
-  }
-
-  bool _isSilentPcm(Uint8List pcmData) {
-    if (pcmData.every((byte) => byte == 0) ||
-        pcmData.every((byte) => byte == 0xFF)) {
-      return true;
-    }
-    if (pcmData.length >= 2) {
-      final view = Int16List.view(pcmData.buffer);
-      final firstSample = view[0];
-      if (view.every((sample) => sample == firstSample)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   Future<void> _findMatches(
