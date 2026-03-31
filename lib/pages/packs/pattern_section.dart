@@ -92,9 +92,6 @@ class _PatternTile extends ConsumerWidget {
     }
 
     return Card(
-      color: hasDevicePattern || isLinked
-          ? theme.colorScheme.primaryContainer
-          : null,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _showPatternPicker(context, ref),
@@ -114,9 +111,6 @@ class _PatternTile extends ConsumerWidget {
                     '${patternIndex + 1}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: hasDevicePattern || isLinked
-                          ? theme.colorScheme.onPrimaryContainer
-                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (hasDevicePattern && isLinked) ...[
@@ -124,20 +118,17 @@ class _PatternTile extends ConsumerWidget {
                     Icon(
                       Icons.link,
                       size: 12,
-                      color: theme.colorScheme.onPrimaryContainer,
+                      color: theme.colorScheme.primary,
                     ),
                   ],
                 ],
               ),
-              if (hasDevicePattern || isLinked)
-                Text(
-                  displayName,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
+              Text(
+                displayName,
+                style: theme.textTheme.bodySmall,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ],
           ),
         ),

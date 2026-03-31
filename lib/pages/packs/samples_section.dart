@@ -66,7 +66,7 @@ class SamplesSection extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        sample?.name ?? '-',
+                        sample?.name ?? 'Empty',
                         style: theme.textTheme.bodySmall,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
