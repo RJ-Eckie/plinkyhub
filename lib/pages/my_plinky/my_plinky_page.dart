@@ -3,17 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/preset.dart';
-import 'package:plinkyhub/models/saved_pattern.dart';
-import 'package:plinkyhub/models/saved_preset.dart';
-import 'package:plinkyhub/models/saved_wavetable.dart';
-import 'package:plinkyhub/pages/packs/pattern_picker_dialog.dart';
-import 'package:plinkyhub/pages/packs/preset_picker_dialog.dart';
+import 'package:plinkyhub/pages/packs/pattern_section.dart';
+import 'package:plinkyhub/pages/packs/preset_slots_grid.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
-import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
-import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/state/saved_patterns_notifier.dart';
-import 'package:plinkyhub/state/saved_presets_notifier.dart';
-import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/pages/packs/wavetable_section.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
@@ -48,7 +41,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         (_) => (presetId: null, sampleId: null, patternId: null),
       );
   String? _wavetableId;
-  String? _patternId;
+  final Map<int, String?> _patternIds = {};
 
   // Whether the device had a wavetable / patterns.
   bool _deviceHasWavetable = false;
@@ -134,9 +127,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       // Read wavetable.
       setState(() => _statusMessage = 'Reading WAVETAB.UF2...');
-      final wavetableBytes = await readFileFromDirectory(
+      var wavetableBytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
+      );
+      wavetableBytes ??= await readFileFromDirectory(
+        directory,
+        'wavetab.uf2',
       );
       String? wavetableHash;
       _deviceHasWavetable = wavetableBytes != null &&
@@ -229,7 +226,11 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       }
 
       _wavetableId = matchedWavetable?.id;
-      _patternId = matchedPatterns.values.firstOrNull?.id;
+      _patternIds.clear();
+      for (final patternIndex in _devicePatternIndices) {
+        _patternIds[patternIndex] =
+            matchedPatterns[patternIndex]?.id;
+      }
 
       setState(() {
         _state = _PageState.loaded;
@@ -444,67 +445,47 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            'Preset Slots',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisExtent: 64,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: 32,
-            itemBuilder: (context, index) {
-              final row = index ~/ 4;
-              final column = index % 4;
-              final slotIndex = column * 8 + row;
-              return _PlinkySlotTile(
-                slotNumber: slotIndex,
-                devicePreset: _devicePresets[slotIndex],
-                presetId: _slots[slotIndex].presetId,
-                sampleId: _slots[slotIndex].sampleId,
-                onPresetChanged: (presetId) {
-                  setState(() {
-                    _slots[slotIndex] = (
-                      presetId: presetId,
-                      sampleId: _slots[slotIndex].sampleId,
-                      patternId: _slots[slotIndex].patternId,
-                    );
-                  });
-                },
-                onSampleChanged: (sampleId) {
-                  setState(() {
-                    _slots[slotIndex] = (
-                      presetId: _slots[slotIndex].presetId,
-                      sampleId: sampleId,
-                      patternId: _slots[slotIndex].patternId,
-                    );
-                  });
-                },
-              );
+          PresetSlotsGrid(
+            slots: _slots,
+            devicePresets: _devicePresets,
+            onPresetChanged: (slotIndex, presetId) {
+              setState(() {
+                _slots[slotIndex] = (
+                  presetId: presetId,
+                  sampleId: _slots[slotIndex].sampleId,
+                  patternId: _slots[slotIndex].patternId,
+                );
+              });
+            },
+            onSampleChanged: (slotIndex, sampleId) {
+              setState(() {
+                _slots[slotIndex] = (
+                  presetId: _slots[slotIndex].presetId,
+                  sampleId: sampleId,
+                  patternId: _slots[slotIndex].patternId,
+                );
+              });
             },
           ),
           const SizedBox(height: 16),
           SamplesSection(slots: _slots),
           const SizedBox(height: 16),
-          _WavetableSection(
+          PatternSection(
+            patternIds: _patternIds,
+            devicePatternIndices:
+                _devicePatternIndices.toSet(),
+            onPatternChanged: (patternIndex, patternId) {
+              setState(() {
+                _patternIds[patternIndex] = patternId;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          WavetableSection(
             wavetableId: _wavetableId,
             deviceHasWavetable: _deviceHasWavetable,
             onChanged: (wavetableId) =>
                 setState(() => _wavetableId = wavetableId),
-          ),
-          const SizedBox(height: 16),
-          _PatternSection(
-            patternId: _patternId,
-            devicePatternCount: _devicePatternIndices.length,
-            onChanged: (patternId) =>
-                setState(() => _patternId = patternId),
           ),
           const SizedBox(height: 16),
         ],
@@ -518,341 +499,4 @@ class _MatchedEntry {
 
   final String id;
   final String name;
-}
-
-/// A slot tile that shows the device preset name from PRESETS.UF2
-/// as the primary label, with a link icon when matched to a saved
-/// entry, and a popup menu to pick or clear presets/samples.
-class _PlinkySlotTile extends ConsumerWidget {
-  const _PlinkySlotTile({
-    required this.slotNumber,
-    required this.devicePreset,
-    required this.presetId,
-    required this.sampleId,
-    required this.onPresetChanged,
-    required this.onSampleChanged,
-  });
-
-  final int slotNumber;
-  final Preset? devicePreset;
-  final String? presetId;
-  final String? sampleId;
-  final ValueChanged<String?> onPresetChanged;
-  final ValueChanged<String?> onSampleChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final hasDevicePreset = devicePreset != null;
-    final isLinked = presetId != null;
-
-    // Show device name as primary, or linked name if no device
-    // preset but a saved one is picked.
-    String displayName;
-    if (hasDevicePreset) {
-      displayName = devicePreset!.name.isNotEmpty
-          ? devicePreset!.name
-          : 'Preset ${slotNumber + 1}';
-    } else if (isLinked) {
-      final presets = ref.watch(
-        savedPresetsProvider
-            .select((state) => state.userPresets),
-      );
-      displayName = presets
-              .where((preset) => preset.id == presetId)
-              .firstOrNull
-              ?.name ??
-          '(unknown)';
-    } else {
-      displayName = 'Empty';
-    }
-
-    final categoryLabel = devicePreset?.category.label ?? '';
-
-    return Card(
-      color: hasDevicePreset || isLinked
-          ? theme.colorScheme.primaryContainer
-          : null,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _showPresetPicker(context, ref),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${slotNumber + 1}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: hasDevicePreset || isLinked
-                          ? theme.colorScheme.onPrimaryContainer
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (isLinked) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.link,
-                      size: 12,
-                      color:
-                          theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ],
-                ],
-              ),
-              if (hasDevicePreset || isLinked) ...[
-                Text(
-                  displayName,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color:
-                        theme.colorScheme.onPrimaryContainer,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                if (categoryLabel.isNotEmpty)
-                  Text(
-                    categoryLabel,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme
-                          .colorScheme.onPrimaryContainer
-                          .withValues(alpha: 0.7),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showPresetPicker(BuildContext context, WidgetRef ref) {
-    final presets = ref.read(
-      savedPresetsProvider.select((state) => state.userPresets),
-    );
-    final currentUserId =
-        ref.read(authenticationProvider).user?.id;
-    showDialog<SavedPreset>(
-      context: context,
-      builder: (context) => PresetPickerDialog(
-        presets: presets,
-        currentUserId: currentUserId,
-      ),
-    ).then((selected) {
-      if (selected != null) {
-        onPresetChanged(selected.id);
-        if (selected.sampleId != null) {
-          onSampleChanged(selected.sampleId);
-        }
-      }
-    });
-  }
-}
-
-class _WavetableSection extends ConsumerWidget {
-  const _WavetableSection({
-    required this.wavetableId,
-    required this.deviceHasWavetable,
-    required this.onChanged,
-  });
-
-  final String? wavetableId;
-  final bool deviceHasWavetable;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final wavetablesState = ref.watch(savedWavetablesProvider);
-    final wavetableName = wavetableId != null
-        ? wavetablesState.userWavetables
-                  .where(
-                    (wavetable) => wavetable.id == wavetableId,
-                  )
-                  .firstOrNull
-                  ?.name ??
-              wavetablesState.publicWavetables
-                  .where(
-                    (wavetable) => wavetable.id == wavetableId,
-                  )
-                  .firstOrNull
-                  ?.name
-        : null;
-
-    final isLinked = wavetableId != null;
-    final statusText = isLinked
-        ? wavetableName ?? '(unknown)'
-        : deviceHasWavetable
-            ? 'Present on device (not linked)'
-            : 'None';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Wavetable',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            if (isLinked)
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Icon(
-                  Icons.link,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            Expanded(
-              child: Text(
-                statusText,
-                style:
-                    Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            if (wavetableId != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                tooltip: 'Remove wavetable',
-                onPressed: () => onChanged(null),
-              ),
-            PlinkyButton(
-              onPressed: () async {
-                final authState =
-                    ref.read(authenticationProvider);
-                final allWavetables = {
-                  ...wavetablesState.userWavetables,
-                  ...wavetablesState.publicWavetables,
-                }.toList();
-                final selected =
-                    await showDialog<SavedWavetable>(
-                  context: context,
-                  builder: (context) =>
-                      WavetablePickerDialog(
-                    wavetables: allWavetables,
-                    currentUserId: authState.user?.id,
-                  ),
-                );
-                if (selected != null) {
-                  onChanged(selected.id);
-                }
-              },
-              icon: Icons.waves,
-              label: 'Choose',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _PatternSection extends ConsumerWidget {
-  const _PatternSection({
-    required this.patternId,
-    required this.devicePatternCount,
-    required this.onChanged,
-  });
-
-  final String? patternId;
-  final int devicePatternCount;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final patternsState = ref.watch(savedPatternsProvider);
-    final patternName = patternId != null
-        ? patternsState.userPatterns
-                  .where(
-                    (pattern) => pattern.id == patternId,
-                  )
-                  .firstOrNull
-                  ?.name ??
-              patternsState.publicPatterns
-                  .where(
-                    (pattern) => pattern.id == patternId,
-                  )
-                  .firstOrNull
-                  ?.name
-        : null;
-
-    final isLinked = patternId != null;
-    final statusText = isLinked
-        ? patternName ?? '(unknown)'
-        : devicePatternCount > 0
-            ? '$devicePatternCount on device (not linked)'
-            : 'None';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Patterns',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            if (isLinked)
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Icon(
-                  Icons.link,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            Expanded(
-              child: Text(
-                statusText,
-                style:
-                    Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            if (patternId != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                tooltip: 'Remove patterns',
-                onPressed: () => onChanged(null),
-              ),
-            PlinkyButton(
-              onPressed: () async {
-                final authState =
-                    ref.read(authenticationProvider);
-                final allPatterns = {
-                  ...patternsState.userPatterns,
-                  ...patternsState.publicPatterns,
-                }.toList();
-                final selected =
-                    await showDialog<SavedPattern>(
-                  context: context,
-                  builder: (context) => PatternPickerDialog(
-                    patterns: allPatterns,
-                    currentUserId: authState.user?.id,
-                  ),
-                );
-                if (selected != null) {
-                  onChanged(selected.id);
-                }
-              },
-              icon: Icons.grid_view,
-              label: 'Choose',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 }

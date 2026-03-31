@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
-import 'package:plinkyhub/models/saved_pattern.dart';
-import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/pages/packs/pack_sharing_check.dart';
-import 'package:plinkyhub/pages/packs/pack_slot_tile.dart';
-import 'package:plinkyhub/pages/packs/pattern_picker_dialog.dart';
+import 'package:plinkyhub/pages/packs/pattern_section.dart';
+import 'package:plinkyhub/pages/packs/preset_slots_grid.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
-import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
+import 'package:plinkyhub/pages/packs/wavetable_section.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
-import 'package:plinkyhub/state/saved_patterns_notifier.dart';
-import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -34,7 +30,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
       );
   String? _editingPackId;
   String? _wavetableId;
-  String? _patternId;
+  final Map<int, String?> _patternIds = {};
 
   @override
   void dispose() {
@@ -51,10 +47,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _youtubeUrlController.text = pack.youtubeUrl;
     _isPublic = pack.isPublic;
     _wavetableId = pack.wavetableId;
-    _patternId = pack.slots
-        .where((slot) => slot.patternId != null)
-        .map((slot) => slot.patternId)
-        .firstOrNull;
+    _patternIds.clear();
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null, patternId: null);
     }
@@ -64,6 +57,9 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         sampleId: slot.sampleId,
         patternId: slot.patternId,
       );
+      if (slot.patternId != null) {
+        _patternIds[slot.slotNumber] = slot.patternId;
+      }
     }
   }
 
@@ -74,7 +70,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _youtubeUrlController.clear();
     _isPublic = false;
     _wavetableId = null;
-    _patternId = null;
+    _patternIds.clear();
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null, patternId: null);
     }
@@ -158,64 +154,43 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
             onChanged: (value) => setState(() => _isPublic = value),
           ),
           const SizedBox(height: 16),
-          Text(
-            'Preset Slots',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisExtent: 64,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: 32,
-            itemBuilder: (context, index) {
-              // Column-major order: 1-8 first column, 9-16 second,
-              // etc.
-              final row = index ~/ 4;
-              final column = index % 4;
-              final slotIndex = column * 8 + row;
-              return PackSlotTile(
-                slotNumber: slotIndex,
-                presetId: _slots[slotIndex].presetId,
-                sampleId: _slots[slotIndex].sampleId,
-                onPresetChanged: (presetId) {
-                  setState(() {
-                    _slots[slotIndex] = (
-                      presetId: presetId,
-                      sampleId: _slots[slotIndex].sampleId,
-                      patternId: _slots[slotIndex].patternId,
-                    );
-                  });
-                },
-                onSampleChanged: (sampleId) {
-                  setState(() {
-                    _slots[slotIndex] = (
-                      presetId: _slots[slotIndex].presetId,
-                      sampleId: sampleId,
-                      patternId: _slots[slotIndex].patternId,
-                    );
-                  });
-                },
-              );
+          PresetSlotsGrid(
+            slots: _slots,
+            onPresetChanged: (slotIndex, presetId) {
+              setState(() {
+                _slots[slotIndex] = (
+                  presetId: presetId,
+                  sampleId: _slots[slotIndex].sampleId,
+                  patternId: _slots[slotIndex].patternId,
+                );
+              });
+            },
+            onSampleChanged: (slotIndex, sampleId) {
+              setState(() {
+                _slots[slotIndex] = (
+                  presetId: _slots[slotIndex].presetId,
+                  sampleId: sampleId,
+                  patternId: _slots[slotIndex].patternId,
+                );
+              });
             },
           ),
           const SizedBox(height: 16),
           SamplesSection(slots: _slots),
           const SizedBox(height: 16),
-          _WavetableSection(
+          PatternSection(
+            patternIds: _patternIds,
+            onPatternChanged: (patternIndex, patternId) {
+              setState(() {
+                _patternIds[patternIndex] = patternId;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          WavetableSection(
             wavetableId: _wavetableId,
             onChanged: (wavetableId) =>
                 setState(() => _wavetableId = wavetableId),
-          ),
-          const SizedBox(height: 16),
-          _PatternSection(
-            patternId: _patternId,
-            onChanged: (patternId) => setState(() => _patternId = patternId),
           ),
           const SizedBox(height: 16),
           Center(
@@ -271,14 +246,16 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
       ));
     }
 
-    // Pattern slot (32) for manual pack creation.
-    if (_patternId != null) {
-      slots.add((
-        slotNumber: patternSlotStart,
-        presetId: null,
-        sampleId: null,
-        patternId: _patternId,
-      ));
+    // Pattern slots.
+    for (final entry in _patternIds.entries) {
+      if (entry.value != null) {
+        slots.add((
+          slotNumber: patternSlotStart + entry.key,
+          presetId: null,
+          sampleId: null,
+          patternId: entry.value,
+        ));
+      }
     }
 
     // Sample slots (56-63) from unique samples in presets.
@@ -362,155 +339,5 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     }
 
     setState(_resetForm);
-  }
-}
-
-class _WavetableSection extends ConsumerWidget {
-  const _WavetableSection({
-    required this.wavetableId,
-    required this.onChanged,
-  });
-
-  final String? wavetableId;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final wavetablesState = ref.watch(savedWavetablesProvider);
-    final wavetableName = wavetableId != null
-        ? wavetablesState.userWavetables
-                  .where((wavetable) => wavetable.id == wavetableId)
-                  .firstOrNull
-                  ?.name ??
-              wavetablesState.publicWavetables
-                  .where(
-                    (wavetable) => wavetable.id == wavetableId,
-                  )
-                  .firstOrNull
-                  ?.name
-        : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Wavetable',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                wavetableName ?? 'None',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            if (wavetableId != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                tooltip: 'Remove wavetable',
-                onPressed: () => onChanged(null),
-              ),
-            PlinkyButton(
-              onPressed: () async {
-                final authState = ref.read(authenticationProvider);
-                final allWavetables = {
-                  ...wavetablesState.userWavetables,
-                  ...wavetablesState.publicWavetables,
-                }.toList();
-                final selected = await showDialog<SavedWavetable>(
-                  context: context,
-                  builder: (context) => WavetablePickerDialog(
-                    wavetables: allWavetables,
-                    currentUserId: authState.user?.id,
-                  ),
-                );
-                if (selected != null) {
-                  onChanged(selected.id);
-                }
-              },
-              icon: Icons.waves,
-              label: 'Choose',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _PatternSection extends ConsumerWidget {
-  const _PatternSection({
-    required this.patternId,
-    required this.onChanged,
-  });
-
-  final String? patternId;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final patternsState = ref.watch(savedPatternsProvider);
-    final patternName = patternId != null
-        ? patternsState.userPatterns
-                  .where((pattern) => pattern.id == patternId)
-                  .firstOrNull
-                  ?.name ??
-              patternsState.publicPatterns
-                  .where(
-                    (pattern) => pattern.id == patternId,
-                  )
-                  .firstOrNull
-                  ?.name
-        : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Patterns',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                patternName ?? 'None',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            if (patternId != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                tooltip: 'Remove patterns',
-                onPressed: () => onChanged(null),
-              ),
-            PlinkyButton(
-              onPressed: () async {
-                final authState = ref.read(authenticationProvider);
-                final allPatterns = {
-                  ...patternsState.userPatterns,
-                  ...patternsState.publicPatterns,
-                }.toList();
-                final selected = await showDialog<SavedPattern>(
-                  context: context,
-                  builder: (context) => PatternPickerDialog(
-                    patterns: allPatterns,
-                    currentUserId: authState.user?.id,
-                  ),
-                );
-                if (selected != null) {
-                  onChanged(selected.id);
-                }
-              },
-              icon: Icons.grid_view,
-              label: 'Choose',
-            ),
-          ],
-        ),
-      ],
-    );
   }
 }

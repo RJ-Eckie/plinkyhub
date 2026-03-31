@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/packs/preset_picker_dialog.dart';
@@ -15,6 +16,7 @@ class PackSlotTile extends ConsumerWidget {
     required this.sampleId,
     required this.onPresetChanged,
     required this.onSampleChanged,
+    this.devicePreset,
     super.key,
   });
 
@@ -23,6 +25,7 @@ class PackSlotTile extends ConsumerWidget {
   final String? sampleId;
   final ValueChanged<String?> onPresetChanged;
   final ValueChanged<String?> onSampleChanged;
+  final Preset? devicePreset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,14 +37,27 @@ class PackSlotTile extends ConsumerWidget {
       savedSamplesProvider.select((state) => state.userSamples),
     );
 
-    final presetName = presetId != null
-        ? presets.where((preset) => preset.id == presetId).firstOrNull?.name ??
-              '(unknown)'
-        : 'Empty';
+    final hasDevicePreset = devicePreset != null;
+    final isLinked = presetId != null;
+
+    String presetName;
+    if (hasDevicePreset) {
+      presetName = devicePreset!.name.isNotEmpty
+          ? devicePreset!.name
+          : 'Preset ${slotNumber + 1}';
+    } else if (isLinked) {
+      presetName =
+          presets.where((preset) => preset.id == presetId).firstOrNull?.name ??
+              '(unknown)';
+    } else {
+      presetName = 'Empty';
+    }
+
     final sampleName = sampleId != null
         ? samples.where((sample) => sample.id == sampleId).firstOrNull?.name ??
               '(unknown)'
-        : 'None';
+        : null;
+    final categoryLabel = devicePreset?.category.label ?? '';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -56,11 +72,25 @@ class PackSlotTile extends ConsumerWidget {
             children: [
               SizedBox(
                 width: 28,
-                child: Text(
-                  '${slotNumber + 1}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${slotNumber + 1}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (hasDevicePreset && isLinked)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 2),
+                        child: Icon(
+                          Icons.link,
+                          size: 12,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Expanded(
@@ -73,14 +103,24 @@ class PackSlotTile extends ConsumerWidget {
                       style: theme.textTheme.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      sampleName,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 10,
+                    if (categoryLabel.isNotEmpty)
+                      Text(
+                        categoryLabel,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    else if (sampleName != null)
+                      Text(
+                        sampleName,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
                   ],
                 ),
               ),
