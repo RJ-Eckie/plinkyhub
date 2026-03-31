@@ -343,9 +343,13 @@ class _SampleCardState extends ConsumerState<SampleCard> {
 
   Future<void> _confirmDelete(BuildContext context) async {
     final referencingPacks = await findPacksUsingSample(ref, widget.sample.id);
-    final referencingPresets =
-        await findPresetsUsingSample(ref, widget.sample.id);
-    if (!context.mounted) return;
+    final referencingPresets = await findPresetsUsingSample(
+      ref,
+      widget.sample.id,
+    );
+    if (!context.mounted) {
+      return;
+    }
     if (referencingPacks.isNotEmpty || referencingPresets.isNotEmpty) {
       showItemUsageDialog(
         context,

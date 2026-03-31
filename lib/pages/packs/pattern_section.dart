@@ -44,8 +44,7 @@ class PatternSection extends StatelessWidget {
             final patternIndex = column * 6 + row;
             return _PatternTile(
               patternIndex: patternIndex,
-              hasDevicePattern:
-                  devicePatternIndices.contains(patternIndex),
+              hasDevicePattern: devicePatternIndices.contains(patternIndex),
               patternId: patternIds[patternIndex],
               onChanged: (patternId) =>
                   onPatternChanged(patternIndex, patternId),
@@ -80,7 +79,8 @@ class _PatternTile extends ConsumerWidget {
       final patterns = ref.watch(
         savedPatternsProvider.select((state) => state.userPatterns),
       );
-      displayName = patterns
+      displayName =
+          patterns
               .where((pattern) => pattern.id == patternId)
               .firstOrNull
               ?.name ??

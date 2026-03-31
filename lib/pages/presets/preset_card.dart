@@ -185,7 +185,9 @@ class PresetCard extends ConsumerWidget {
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final referencingPacks = await findPacksUsingPreset(ref, preset.id);
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      return;
+    }
     if (referencingPacks.isNotEmpty) {
       showItemUsageDialog(
         context,

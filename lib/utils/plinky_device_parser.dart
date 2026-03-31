@@ -192,10 +192,10 @@ ParsedSamplesPhase parseSamplesPhase(SamplesPhaseInput input) {
     }
     try {
       var pcmData = uf2ToData(sampleUf2);
-      final sampleInfo =
-          i < input.sampleInfos.length ? input.sampleInfos[i] : null;
-      if (sampleInfo != null &&
-          sampleInfo.sampleLength * 2 < pcmData.length) {
+      final sampleInfo = i < input.sampleInfos.length
+          ? input.sampleInfos[i]
+          : null;
+      if (sampleInfo != null && sampleInfo.sampleLength * 2 < pcmData.length) {
         pcmData = Uint8List.sublistView(
           pcmData,
           0,
@@ -222,12 +222,14 @@ ParsedSamplesPhase parseSamplesPhase(SamplesPhaseInput input) {
 
 /// Phase 3: Check wavetable — detects presence and computes hash.
 ParsedWavetablePhase parseWavetablePhase(Uint8List? wavetableBytes) {
-  final deviceHasWavetable = wavetableBytes != null &&
+  final deviceHasWavetable =
+      wavetableBytes != null &&
       wavetableBytes.isNotEmpty &&
       !wavetableBytes.every((b) => b == 0) &&
       !wavetableBytes.every((b) => b == 0xFF);
-  final wavetableHash =
-      deviceHasWavetable ? computeContentHash(wavetableBytes) : null;
+  final wavetableHash = deviceHasWavetable
+      ? computeContentHash(wavetableBytes)
+      : null;
 
   return ParsedWavetablePhase(
     deviceHasWavetable: deviceHasWavetable,

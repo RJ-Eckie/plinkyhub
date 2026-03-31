@@ -260,8 +260,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                 _SampleSelector(
                   samples: samples,
                   selectedSampleId: selectedSampleId,
-                  currentUserId:
-                      ref.read(authenticationProvider).user?.id,
+                  currentUserId: ref.read(authenticationProvider).user?.id,
                   onChanged: (value) {
                     setDialogState(
                       () => selectedSampleId = value,
@@ -594,10 +593,10 @@ class _SampleSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final selectedName = selectedSampleId != null
         ? samples
-              .where((s) => s.id == selectedSampleId)
-              .map((s) => s.name.isEmpty ? '(unnamed)' : s.name)
-              .firstOrNull ??
-            'Unknown sample'
+                  .where((s) => s.id == selectedSampleId)
+                  .map((s) => s.name.isEmpty ? '(unnamed)' : s.name)
+                  .firstOrNull ??
+              'Unknown sample'
         : 'No sample';
 
     return InputDecorator(

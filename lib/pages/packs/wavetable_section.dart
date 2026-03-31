@@ -36,8 +36,8 @@ class WavetableSection extends ConsumerWidget {
     final statusText = isLinked
         ? wavetableName ?? '(unknown)'
         : deviceHasWavetable
-            ? 'Present on device (not linked)'
-            : 'None';
+        ? 'Present on device (not linked)'
+        : 'None';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

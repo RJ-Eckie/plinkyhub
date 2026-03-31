@@ -109,15 +109,15 @@ class _SavePresetToPlinkyDialogState
         width: 400,
         child: switch (_step) {
           _DialogStep.slotSelection => _SlotSelectionView(
-              selectedSlot: _selectedSlot,
-              onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
-            ),
+            selectedSlot: _selectedSlot,
+            onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
+          ),
           _DialogStep.instructions => const TunnelOfLightsInstructions(
-              itemType: 'preset',
-            ),
+            itemType: 'preset',
+          ),
           _DialogStep.progress => SaveProgressView(
-              statusMessage: _statusMessage,
-            ),
+            statusMessage: _statusMessage,
+          ),
           _DialogStep.done => const SaveDoneView(itemType: 'preset'),
           _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
@@ -129,15 +129,13 @@ class _SavePresetToPlinkyDialogState
             label: 'Cancel',
           ),
           PlinkyButton(
-            onPressed: () =>
-                setState(() => _step = _DialogStep.instructions),
+            onPressed: () => setState(() => _step = _DialogStep.instructions),
             label: 'Next',
           ),
         ],
         _DialogStep.instructions => [
           PlinkyButton(
-            onPressed: () =>
-                setState(() => _step = _DialogStep.slotSelection),
+            onPressed: () => setState(() => _step = _DialogStep.slotSelection),
             label: 'Back',
           ),
           PlinkyButton(

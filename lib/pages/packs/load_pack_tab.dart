@@ -108,14 +108,16 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     }
     for (final entry in _sampleNames.entries) {
       if (!_matchedSamples.containsKey(entry.key)) {
-        entry.value.text =
-            packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+        entry.value.text = packName.isEmpty
+            ? ''
+            : '$packName - ${entry.key + 1}';
       }
     }
     for (final entry in _patternNames.entries) {
       if (!_matchedPatterns.containsKey(entry.key)) {
-        entry.value.text =
-            packName.isEmpty ? '' : '$packName - ${entry.key + 1}';
+        entry.value.text = packName.isEmpty
+            ? ''
+            : '$packName - ${entry.key + 1}';
       }
     }
   }
@@ -328,10 +330,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _patternNames.clear();
       _patternDescriptions.clear();
       for (final patternIndex in result.nonEmptyPatternIndices) {
-        _patternNames[patternIndex] =
-            TextEditingController(text: '');
-        _patternDescriptions[patternIndex] =
-            TextEditingController();
+        _patternNames[patternIndex] = TextEditingController(text: '');
+        _patternDescriptions[patternIndex] = TextEditingController();
       }
       _includePatternsInPack = _patternNames.isNotEmpty;
 
@@ -1039,9 +1039,9 @@ class _LoadReviewStep extends StatelessWidget {
                 onEdit: matchedSamples.containsKey(slotIndex)
                     ? null
                     : () => _showSampleEditDialog(
-                          context,
-                          slotIndex,
-                        ),
+                        context,
+                        slotIndex,
+                      ),
               )
             else
               _EmptySlotRow(
@@ -1089,9 +1089,9 @@ class _LoadReviewStep extends StatelessWidget {
                 onEdit: matchedPatterns.containsKey(patternIndex)
                     ? null
                     : () => _showPatternEditDialog(
-                          context,
-                          patternIndex,
-                        ),
+                        context,
+                        patternIndex,
+                      ),
               ),
         ],
         if (presetNames.isNotEmpty) ...[
@@ -1109,9 +1109,9 @@ class _LoadReviewStep extends StatelessWidget {
               onEdit: matchedPresets.containsKey(slotIndex)
                   ? null
                   : () => _showPresetEditDialog(
-                        context,
-                        slotIndex,
-                      ),
+                      context,
+                      slotIndex,
+                    ),
             ),
         ],
         const SizedBox(height: 16),

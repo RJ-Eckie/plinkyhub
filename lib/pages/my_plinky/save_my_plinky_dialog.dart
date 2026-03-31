@@ -31,8 +31,7 @@ class SaveMyPlinkyDialog extends ConsumerStatefulWidget {
   final ParsedFlashImage parsedFlashImage;
 
   @override
-  ConsumerState<SaveMyPlinkyDialog> createState() =>
-      _SaveMyPlinkyDialogState();
+  ConsumerState<SaveMyPlinkyDialog> createState() => _SaveMyPlinkyDialogState();
 }
 
 class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
@@ -89,8 +88,9 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
           .inFilter('id', linkedPresetIds.toList());
       for (final row in response as List) {
         final map = row as Map<String, dynamic>;
-        presetDataMap[map['id'] as String] =
-            Uint8List.fromList(base64Decode(map['preset_data'] as String));
+        presetDataMap[map['id'] as String] = Uint8List.fromList(
+          base64Decode(map['preset_data'] as String),
+        );
       }
     }
 
@@ -147,11 +147,13 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
 
       samplePcmData[slotIndex] = pcmBytes;
 
-      final slicePoints = (metadata['slice_points'] as List?)
+      final slicePoints =
+          (metadata['slice_points'] as List?)
               ?.map((value) => (value as num).toDouble())
               .toList() ??
           List.of(defaultSlicePoints);
-      final sliceNotes = (metadata['slice_notes'] as List?)
+      final sliceNotes =
+          (metadata['slice_notes'] as List?)
               ?.map((value) => (value as num).toInt())
               .toList() ??
           List.of(defaultSliceNotes);
@@ -211,8 +213,7 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
         final quarters = deserializePatternQuarters(patternBlob);
         final baseIndex = patternIndex * 4;
         for (var q = 0; q < 4; q++) {
-          if (baseIndex + q < patternQuarters.length &&
-              q < quarters.length) {
+          if (baseIndex + q < patternQuarters.length && q < quarters.length) {
             patternQuarters[baseIndex + q] = quarters[q];
           }
         }
@@ -293,13 +294,13 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
         width: 400,
         child: switch (_step) {
           _DialogStep.confirm => const Text(
-              'This will write your linked presets, samples, patterns, '
-              'and wavetable to the connected Plinky. '
-              'Unlinked slots will be preserved as-is.',
-            ),
+            'This will write your linked presets, samples, patterns, '
+            'and wavetable to the connected Plinky. '
+            'Unlinked slots will be preserved as-is.',
+          ),
           _DialogStep.progress => SaveProgressView(
-              statusMessage: _statusMessage,
-            ),
+            statusMessage: _statusMessage,
+          ),
           _DialogStep.done => const SaveDoneView(itemType: 'changes'),
           _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },

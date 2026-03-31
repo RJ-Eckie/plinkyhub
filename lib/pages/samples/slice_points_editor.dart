@@ -165,8 +165,9 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
   void _resumeSlice() {
     final soundService = ref.read(soundServiceProvider);
     soundService.setPaused(paused: false);
-    _playbackStartTime =
-        DateTime.now().subtract(_pausedElapsed ?? Duration.zero);
+    _playbackStartTime = DateTime.now().subtract(
+      _pausedElapsed ?? Duration.zero,
+    );
     _pausedElapsed = null;
     if (!_progressTicker.isActive) {
       _progressTicker.start();
@@ -393,9 +394,7 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
                         )
                       : IconButton.filled(
                           icon: Icon(
-                            _playingSlice == i
-                                ? Icons.pause
-                                : Icons.play_arrow,
+                            _playingSlice == i ? Icons.pause : Icons.play_arrow,
                             size: 18,
                           ),
                           onPressed: widget.wavBytes != null

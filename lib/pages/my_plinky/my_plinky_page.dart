@@ -29,10 +29,10 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   String? _errorMessage;
 
   // Directory handle from the initial connect.
-  FileSystemDirectoryHandle? _directory;
+  late FileSystemDirectoryHandle? _directory;
 
   // Parsed flash image from device (preserved for save-back merging).
-  ParsedFlashImage? _parsedFlashImage;
+  late ParsedFlashImage? _parsedFlashImage;
 
   // Device data: preset name/category from PRESETS.UF2 per slot.
   final _devicePresets = <int, Preset>{};
@@ -41,8 +41,8 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   final _deviceSampleSlots = <int>{};
 
   // Linked saved entry IDs (null = not linked).
-  final List<({String? presetId, String? sampleId, String? patternId})>
-      _slots = List.generate(
+  final List<({String? presetId, String? sampleId, String? patternId})> _slots =
+      List.generate(
         32,
         (_) => (presetId: null, sampleId: null, patternId: null),
       );
@@ -205,11 +205,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         // Find matched sample for this preset's sample slot.
         final preset = _devicePresets[slotIndex];
         if (preset != null && preset.usesSample) {
-          final presetRaw =
-              preset.parameterById('P_SAMPLE')?.value;
+          final presetRaw = preset.parameterById('P_SAMPLE')?.value;
           if (presetRaw != null) {
-            for (final rawEntry
-                in sampleSlotRawValues.entries) {
+            for (final rawEntry in sampleSlotRawValues.entries) {
               if ((presetRaw - rawEntry.value).abs() < 2) {
                 sampleId = matchedSamples[rawEntry.key]?.id;
                 break;
@@ -228,8 +226,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       _wavetableId = matchedWavetable?.id;
       _patternIds.clear();
       for (final patternIndex in _devicePatternIndices) {
-        _patternIds[patternIndex] =
-            matchedPatterns[patternIndex]?.id;
+        _patternIds[patternIndex] = matchedPatterns[patternIndex]?.id;
       }
 
       setState(() {
@@ -324,14 +321,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
               Text(
                 'Connect your Plinky in Tunnel of Lights mode '
                 "to see what's on it.",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
-                    ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               const Text('1. Turn off your Plinky'),
@@ -472,8 +464,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
           const SizedBox(height: 16),
           PatternSection(
             patternIds: _patternIds,
-            devicePatternIndices:
-                _devicePatternIndices.toSet(),
+            devicePatternIndices: _devicePatternIndices.toSet(),
             onPatternChanged: (patternIndex, patternId) {
               setState(() {
                 _patternIds[patternIndex] = patternId;

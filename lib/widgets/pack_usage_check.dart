@@ -112,9 +112,10 @@ void showItemUsageDialog(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'This $itemType is used in ${references.join(' and ')}. '
+            'This $itemType is used in '
+            '${references.join(' and ')}. '
             'Remove it from '
-            '${references.length == 1 && (packs.length + presets.length) == 1 ? 'it' : 'them'}'
+            '${references.length == 1 && packs.length + presets.length == 1 ? 'it' : 'them'}'
             ' first before deleting.',
           ),
           const SizedBox(height: 12),

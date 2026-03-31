@@ -48,7 +48,7 @@ class PackSlotTile extends ConsumerWidget {
     } else if (isLinked) {
       presetName =
           presets.where((preset) => preset.id == presetId).firstOrNull?.name ??
-              '(unknown)';
+          '(unknown)';
     } else {
       presetName = 'Empty';
     }
