@@ -17,17 +17,15 @@ import 'package:plinkyhub/pages/user_profile_page.dart';
 import 'package:plinkyhub/pages/users/users_page.dart';
 import 'package:plinkyhub/pages/wavetables/saved_wavetables_page.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_page.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
-
-/// The default route shown when the app starts.
-const initialRoute = '/my-plinky';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createRouter(ProviderContainer container) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: initialRoute,
+    initialLocation: AppRoute.initial.path,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -38,7 +36,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/my-plinky',
+                path: AppRoute.myPlinky.path,
                 builder: (context, state) => const MyPlinkyPage(),
               ),
             ],
@@ -47,7 +45,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/editor',
+                path: AppRoute.editor.path,
                 builder: (context, state) => EditorPage(
                   presetData: state.uri.queryParameters['p'],
                 ),
@@ -58,7 +56,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/presets',
+                path: AppRoute.presets.path,
                 builder: (context, state) => const SavedPresetsPage(),
                 routes: [
                   GoRoute(
@@ -75,7 +73,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/packs',
+                path: AppRoute.packs.path,
                 builder: (context, state) => const SavedPacksPage(),
                 routes: [
                   GoRoute(
@@ -92,7 +90,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/samples',
+                path: AppRoute.samples.path,
                 builder: (context, state) => const SavedSamplesPage(),
                 routes: [
                   GoRoute(
@@ -109,7 +107,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/wavetables',
+                path: AppRoute.wavetables.path,
                 builder: (context, state) => const SavedWavetablesPage(),
                 routes: [
                   GoRoute(
@@ -126,7 +124,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/patterns',
+                path: AppRoute.patterns.path,
                 builder: (context, state) => const SavedPatternsPage(),
                 routes: [
                   GoRoute(
@@ -143,7 +141,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/users',
+                path: AppRoute.users.path,
                 builder: (context, state) => const UsersPage(),
               ),
             ],
@@ -152,7 +150,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/profile',
+                path: AppRoute.profile.path,
                 builder: (context, state) => const UserProfilePage(),
               ),
             ],
@@ -161,7 +159,7 @@ GoRouter createRouter(ProviderContainer container) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/about',
+                path: AppRoute.about.path,
                 builder: (context, state) => const AboutPage(),
               ),
             ],
@@ -264,18 +262,7 @@ class _ItemPageShell extends ConsumerWidget {
           NavigationSidebar(
             selectedIndex: -1,
             onDestinationSelected: (index) {
-              final paths = [
-                '/my-plinky',
-                '/editor',
-                '/presets',
-                '/packs',
-                '/samples',
-                '/wavetables',
-                '/patterns',
-                '/users',
-                '/profile',
-                '/about',
-              ];
+              final paths = AppRoute.tabPaths;
               if (index >= 0 && index < paths.length) {
                 context.go(paths[index]);
               }
@@ -292,7 +279,7 @@ class _ItemPageShell extends ConsumerWidget {
                       if (Navigator.of(context).canPop()) {
                         Navigator.of(context).pop();
                       } else {
-                        context.go(initialRoute);
+                        context.go(AppRoute.initial.path);
                       }
                     },
                   ),

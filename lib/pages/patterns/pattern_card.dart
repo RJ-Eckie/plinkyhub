@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -29,8 +30,7 @@ class PatternCard extends ConsumerWidget {
       child: InkWell(
         onTap: pattern.username.isNotEmpty
             ? () => context.go(
-                '/${pattern.username}/pattern/'
-                '${Uri.encodeComponent(pattern.name)}',
+                AppRoute.patterns.itemPage(pattern.username, pattern.name),
               )
             : null,
         child: Padding(
@@ -107,10 +107,11 @@ class PatternCard extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    final referencingPacks = findPacksUsingPattern(ref, pattern.id);
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final referencingPacks = await findPacksUsingPattern(ref, pattern.id);
+    if (!context.mounted) return;
     if (referencingPacks.isNotEmpty) {
-      showPackUsageDialog(
+      showItemUsageDialog(
         context,
         itemType: 'pattern',
         packs: referencingPacks,

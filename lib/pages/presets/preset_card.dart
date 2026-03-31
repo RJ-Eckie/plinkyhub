@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/presets/save_preset_to_plinky_dialog.dart';
 import 'package:plinkyhub/pages/presets/star_button.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
@@ -46,8 +47,7 @@ class PresetCard extends ConsumerWidget {
       child: InkWell(
         onTap: preset.username.isNotEmpty
             ? () => context.go(
-                '/${preset.username}/preset/'
-                '${Uri.encodeComponent(preset.name)}',
+                AppRoute.presets.itemPage(preset.username, preset.name),
               )
             : null,
         child: Padding(
@@ -91,8 +91,10 @@ class PresetCard extends ConsumerWidget {
                 GestureDetector(
                   onTap: sample.username.isNotEmpty
                       ? () => context.go(
-                          '/${sample.username}/sample/'
-                          '${Uri.encodeComponent(sample.name)}',
+                          AppRoute.samples.itemPage(
+                            sample.username,
+                            sample.name,
+                          ),
                         )
                       : null,
                   child: Row(
@@ -181,10 +183,11 @@ class PresetCard extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    final referencingPacks = findPacksUsingPreset(ref, preset.id);
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final referencingPacks = await findPacksUsingPreset(ref, preset.id);
+    if (!context.mounted) return;
     if (referencingPacks.isNotEmpty) {
-      showPackUsageDialog(
+      showItemUsageDialog(
         context,
         itemType: 'preset',
         packs: referencingPacks,

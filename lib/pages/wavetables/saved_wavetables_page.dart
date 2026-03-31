@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/wavetables/draw_wavetable_tab.dart';
 import 'package:plinkyhub/pages/wavetables/upload_wavetable_tab.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
@@ -75,7 +76,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
       final tabName = WavetableTab.values[_tabController.index].name;
-      context.go('/wavetables/$tabName');
+      context.go(AppRoute.wavetables.tab(tabName));
     }
   }
 

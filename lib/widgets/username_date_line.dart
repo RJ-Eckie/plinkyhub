@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 
 class UsernameDateLine extends ConsumerWidget {
@@ -38,7 +39,7 @@ class UsernameDateLine extends ConsumerWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                  context.go('/$username');
+                  context.go(AppRoute.userPage(username));
                 },
                 child: Text(
                   username,

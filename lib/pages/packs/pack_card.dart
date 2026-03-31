@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/pages/packs/pack_sharing_check.dart';
 import 'package:plinkyhub/pages/packs/save_to_plinky_dialog.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -37,8 +38,7 @@ class PackCard extends ConsumerWidget {
       child: InkWell(
         onTap: pack.username.isNotEmpty
             ? () => context.go(
-                '/${pack.username}/pack/'
-                '${Uri.encodeComponent(pack.name)}',
+                AppRoute.packs.itemPage(pack.username, pack.name),
               )
             : null,
         child: Padding(

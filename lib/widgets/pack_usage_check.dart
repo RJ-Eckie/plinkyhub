@@ -1,37 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
+import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
+import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
-/// Returns packs that reference the given preset ID.
-List<SavedPack> findPacksUsingPreset(WidgetRef ref, String presetId) {
+/// Ensures user packs are loaded, then returns packs using the preset.
+Future<List<SavedPack>> findPacksUsingPreset(
+  WidgetRef ref,
+  String presetId,
+) async {
+  await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
       .userPacks
-      .where(
-        (pack) => pack.slots.any((slot) => slot.presetId == presetId),
-      )
+      .where((pack) => pack.slots.any((slot) => slot.presetId == presetId))
       .toList();
 }
 
-/// Returns packs that reference the given sample ID.
-List<SavedPack> findPacksUsingSample(WidgetRef ref, String sampleId) {
+/// Ensures user packs are loaded, then returns packs using the sample.
+Future<List<SavedPack>> findPacksUsingSample(
+  WidgetRef ref,
+  String sampleId,
+) async {
+  await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
       .userPacks
-      .where(
-        (pack) => pack.slots.any((slot) => slot.sampleId == sampleId),
-      )
+      .where((pack) => pack.slots.any((slot) => slot.sampleId == sampleId))
       .toList();
 }
 
-/// Returns packs that reference the given wavetable ID.
-List<SavedPack> findPacksUsingWavetable(
+/// Ensures user packs are loaded, then returns packs using the wavetable.
+Future<List<SavedPack>> findPacksUsingWavetable(
   WidgetRef ref,
   String wavetableId,
-) {
+) async {
+  await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
       .userPacks
@@ -39,25 +45,64 @@ List<SavedPack> findPacksUsingWavetable(
       .toList();
 }
 
-/// Returns packs that reference the given pattern ID.
-List<SavedPack> findPacksUsingPattern(WidgetRef ref, String patternId) {
+/// Ensures user packs are loaded, then returns packs using the pattern.
+Future<List<SavedPack>> findPacksUsingPattern(
+  WidgetRef ref,
+  String patternId,
+) async {
+  await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
       .userPacks
-      .where(
-        (pack) => pack.slots.any((slot) => slot.patternId == patternId),
-      )
+      .where((pack) => pack.slots.any((slot) => slot.patternId == patternId))
       .toList();
 }
 
+/// Ensures user presets are loaded, then returns presets using the sample.
+Future<List<SavedPreset>> findPresetsUsingSample(
+  WidgetRef ref,
+  String sampleId,
+) async {
+  await _ensurePresetsLoaded(ref);
+  return ref
+      .read(savedPresetsProvider)
+      .userPresets
+      .where((preset) => preset.sampleId == sampleId)
+      .toList();
+}
+
+Future<void> _ensurePacksLoaded(WidgetRef ref) async {
+  final state = ref.read(savedPacksProvider);
+  if (state.userPacks.isEmpty && !state.isLoading) {
+    await ref.read(savedPacksProvider.notifier).fetchUserPacks();
+  }
+}
+
+Future<void> _ensurePresetsLoaded(WidgetRef ref) async {
+  final state = ref.read(savedPresetsProvider);
+  if (state.userPresets.isEmpty && !state.isLoading) {
+    await ref.read(savedPresetsProvider.notifier).fetchUserPresets();
+  }
+}
+
 /// Shows a dialog informing the user that the item is used in packs
-/// and must be removed from those packs before it can be deleted.
-/// Each pack name is a clickable link to its detail page.
-void showPackUsageDialog(
+/// and/or presets and must be removed before it can be deleted.
+void showItemUsageDialog(
   BuildContext context, {
   required String itemType,
-  required List<SavedPack> packs,
+  List<SavedPack> packs = const [],
+  List<SavedPreset> presets = const [],
 }) {
+  final references = <String>[];
+  if (packs.isNotEmpty) {
+    references.add('${packs.length} ${packs.length == 1 ? 'pack' : 'packs'}');
+  }
+  if (presets.isNotEmpty) {
+    references.add(
+      '${presets.length} ${presets.length == 1 ? 'preset' : 'presets'}',
+    );
+  }
+
   showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
@@ -67,15 +112,22 @@ void showPackUsageDialog(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'This $itemType is used in the following '
-            '${packs.length == 1 ? 'pack' : 'packs'}. '
+            'This $itemType is used in ${references.join(' and ')}. '
             'Remove it from '
-            '${packs.length == 1 ? 'the pack' : 'these packs'}'
+            '${references.length == 1 && (packs.length + presets.length) == 1 ? 'it' : 'them'}'
             ' first before deleting.',
           ),
           const SizedBox(height: 12),
           for (final pack in packs)
-            _PackLink(pack: pack, dialogContext: dialogContext),
+            _ItemRow(
+              icon: Icons.inventory_2,
+              name: pack.name.isEmpty ? '(unnamed)' : pack.name,
+            ),
+          for (final preset in presets)
+            _ItemRow(
+              icon: Icons.piano,
+              name: preset.name.isEmpty ? '(unnamed)' : preset.name,
+            ),
         ],
       ),
       actions: [
@@ -89,56 +141,29 @@ void showPackUsageDialog(
   );
 }
 
-class _PackLink extends StatelessWidget {
-  const _PackLink({
-    required this.pack,
-    required this.dialogContext,
-  });
+class _ItemRow extends StatelessWidget {
+  const _ItemRow({required this.icon, required this.name});
 
-  final SavedPack pack;
-  final BuildContext dialogContext;
+  final IconData icon;
+  final String name;
 
   @override
   Widget build(BuildContext context) {
-    final name = pack.name.isEmpty ? '(unnamed)' : pack.name;
-    final hasLink = pack.username.isNotEmpty;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: InkWell(
-        onTap: hasLink
-            ? () {
-                Navigator.of(dialogContext).pop();
-                context.go(
-                  '/${pack.username}/pack/'
-                  '${Uri.encodeComponent(pack.name)}',
-                );
-              }
-            : null,
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 4,
-            horizontal: 4,
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.inventory_2, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: hasLink
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
-                    decoration: hasLink ? TextDecoration.underline : null,
-                  ),
-                ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

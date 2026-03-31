@@ -8,6 +8,7 @@ import 'package:plinkyhub/pages/samples/report_sample_dialog.dart';
 import 'package:plinkyhub/pages/samples/sample_mode_selector.dart';
 import 'package:plinkyhub/pages/samples/save_sample_to_plinky_dialog.dart';
 import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/utils/wav.dart';
@@ -144,8 +145,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
       child: InkWell(
         onTap: sample.username.isNotEmpty
             ? () => context.go(
-                '/${sample.username}/sample/'
-                '${Uri.encodeComponent(sample.name)}',
+                AppRoute.samples.itemPage(sample.username, sample.name),
               )
             : null,
         child: Padding(
@@ -234,8 +234,10 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                       icon: const Icon(Icons.edit, size: 20),
                       tooltip: 'Edit sample',
                       onPressed: () => context.go(
-                        '/${sample.username}/sample/'
-                        '${Uri.encodeComponent(sample.name)}/edit',
+                        AppRoute.sampleEditPage(
+                          sample.username,
+                          sample.name,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -339,13 +341,17 @@ class _SampleCardState extends ConsumerState<SampleCard> {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
-    final referencingPacks = findPacksUsingSample(ref, widget.sample.id);
-    if (referencingPacks.isNotEmpty) {
-      showPackUsageDialog(
+  Future<void> _confirmDelete(BuildContext context) async {
+    final referencingPacks = await findPacksUsingSample(ref, widget.sample.id);
+    final referencingPresets =
+        await findPresetsUsingSample(ref, widget.sample.id);
+    if (!context.mounted) return;
+    if (referencingPacks.isNotEmpty || referencingPresets.isNotEmpty) {
+      showItemUsageDialog(
         context,
         itemType: 'sample',
         packs: referencingPacks,
+        presets: referencingPresets,
       );
       return;
     }

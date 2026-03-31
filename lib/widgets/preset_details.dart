@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/packs/sample_picker_dialog.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
@@ -83,7 +84,7 @@ class PresetDetailsHeader extends ConsumerWidget {
             _SaveToCloudButton(preset: preset),
             const SizedBox(width: 8),
             PlinkyButton(
-              onPressed: () => context.go('/editor'),
+              onPressed: () => context.go(AppRoute.editor.path),
               icon: Icons.play_arrow,
               label: 'Open in player',
             ),

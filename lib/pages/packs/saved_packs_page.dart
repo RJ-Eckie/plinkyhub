@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/packs/create_pack_tab.dart';
 import 'package:plinkyhub/pages/packs/load_pack_tab.dart';
 import 'package:plinkyhub/pages/packs/pack_card.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
@@ -74,7 +75,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
       final tabName = PackTab.values[_tabController.index].name;
-      context.go('/packs/$tabName');
+      context.go(AppRoute.packs.tab(tabName));
     }
   }
 

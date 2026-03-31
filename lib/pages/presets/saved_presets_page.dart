@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/presets/preset_card.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
@@ -70,7 +71,7 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
       final tabName = PresetTab.values[_tabController.index].name;
-      context.go('/presets/$tabName');
+      context.go(AppRoute.presets.tab(tabName));
     }
   }
 

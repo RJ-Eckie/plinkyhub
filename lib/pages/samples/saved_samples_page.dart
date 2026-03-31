@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/samples/load_sample_tab.dart';
 import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/pages/samples/upload_sample_tab.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
@@ -78,7 +79,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
       final tabName = SampleTab.values[_tabController.index].name;
-      context.go('/samples/$tabName');
+      context.go(AppRoute.samples.tab(tabName));
     }
   }
 
@@ -167,7 +168,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                   UploadSampleTab(
                     sampleToEdit: editSample,
                     onUploaded: () => _tabController.animateTo(0),
-                    onClear: () => context.go('/samples/create'),
+                    onClear: () => context.go(AppRoute.samples.tab('create')),
                   )
               else
                 const SignInPrompt(

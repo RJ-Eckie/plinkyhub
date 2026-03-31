@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -55,7 +56,7 @@ class AuthenticationButton extends ConsumerWidget {
       tooltip: displayName,
       onSelected: (value) {
         if (value == 'view_profile' && username != null) {
-          context.go('/$username');
+          context.go(AppRoute.userPage(username));
         } else if (value == 'sign_out') {
           ref.read(authenticationProvider.notifier).signOut();
         }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/users_search_notifier.dart';
 
 class UsersPage extends ConsumerStatefulWidget {
@@ -122,7 +123,7 @@ class UserListTile extends StatelessWidget {
         ),
         title: Text(user.username),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.go('/${user.username}'),
+        onTap: () => context.go(AppRoute.userPage(user.username)),
       ),
     );
   }
