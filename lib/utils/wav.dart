@@ -116,8 +116,11 @@ double _readSample(ByteData data, int offset, int bitsPerSample) {
     case 24:
       final b0 = data.getUint8(offset);
       final b1 = data.getUint8(offset + 1);
-      final b2 = data.getInt8(offset + 2);
-      final value = b0 | (b1 << 8) | (b2 << 16);
+      final b2 = data.getUint8(offset + 2);
+      final unsigned = b0 | (b1 << 8) | (b2 << 16);
+      // Sign-extend from 24-bit to handle negative values correctly on
+      // all platforms (getInt8 + bitwise OR can lose the sign on web).
+      final value = unsigned >= 0x800000 ? unsigned - 0x1000000 : unsigned;
       return value / 8388608.0;
     case 32:
       return data.getInt32(offset, Endian.little) / 2147483648.0;
@@ -280,6 +283,7 @@ List<(double, double)> wavToWaveformPeaks(
   final peaks = List<(double, double)>.filled(bucketCount, (0.0, 0.0));
   final samplesPerBucket = samples.length / bucketCount;
 
+  var globalMax = 0.0;
   for (var i = 0; i < bucketCount; i++) {
     final start = (i * samplesPerBucket).floor();
     final end = ((i + 1) * samplesPerBucket).floor().clamp(
@@ -297,6 +301,22 @@ List<(double, double)> wavToWaveformPeaks(
       }
     }
     peaks[i] = (minValue, maxValue);
+    if (maxValue.abs() > globalMax) {
+      globalMax = maxValue.abs();
+    }
+    if (minValue.abs() > globalMax) {
+      globalMax = minValue.abs();
+    }
+  }
+
+  // Normalize peaks so that the waveform fills the available display height,
+  // even for quiet audio files.
+  if (globalMax > 0) {
+    final scale = 1.0 / globalMax;
+    for (var i = 0; i < bucketCount; i++) {
+      final (minValue, maxValue) = peaks[i];
+      peaks[i] = (minValue * scale, maxValue * scale);
+    }
   }
 
   return peaks;

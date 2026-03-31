@@ -68,7 +68,12 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
   void _computeWaveformPeaks() {
     final wavBytes = widget.wavBytes;
     if (wavBytes != null) {
-      _waveformPeaks = wavToWaveformPeaks(wavBytes);
+      try {
+        _waveformPeaks = wavToWaveformPeaks(wavBytes);
+      } on Object catch (error) {
+        debugPrint('Failed to compute waveform peaks: $error');
+        _waveformPeaks = null;
+      }
     } else {
       _waveformPeaks = null;
     }
