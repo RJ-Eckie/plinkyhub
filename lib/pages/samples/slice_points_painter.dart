@@ -8,6 +8,8 @@ class SlicePointsPainter extends CustomPainter {
     required this.color,
     required this.backgroundColor,
     this.waveformPeaks,
+    this.playbackProgress,
+    this.progressColor,
   });
 
   final List<double> slicePoints;
@@ -16,6 +18,13 @@ class SlicePointsPainter extends CustomPainter {
 
   /// Min/max amplitude pairs for waveform visualization.
   final List<(double, double)>? waveformPeaks;
+
+  /// Current playback position as a fraction of the total sample (0.0–1.0).
+  /// When non-null, a progress line is drawn at this position.
+  final double? playbackProgress;
+
+  /// Color for the playback progress line. Falls back to [color] if null.
+  final Color? progressColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -46,6 +55,20 @@ class SlicePointsPainter extends CustomPainter {
         Offset(x, 0),
         Offset(x, size.height),
         linePaint,
+      );
+    }
+
+    final progress = playbackProgress;
+    if (progress != null) {
+      final progressX = progress * size.width;
+      final lineColor = progressColor ?? color;
+      final progressPaint = Paint()
+        ..color = lineColor
+        ..strokeWidth = 2;
+      canvas.drawLine(
+        Offset(progressX, 0),
+        Offset(progressX, size.height),
+        progressPaint,
       );
     }
   }
@@ -110,5 +133,6 @@ class SlicePointsPainter extends CustomPainter {
       slicePoints != oldDelegate.slicePoints ||
       color != oldDelegate.color ||
       backgroundColor != oldDelegate.backgroundColor ||
-      waveformPeaks != oldDelegate.waveformPeaks;
+      waveformPeaks != oldDelegate.waveformPeaks ||
+      playbackProgress != oldDelegate.playbackProgress;
 }

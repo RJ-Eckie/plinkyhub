@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
@@ -41,7 +42,8 @@ class SlicePointsEditor extends ConsumerStatefulWidget {
   ConsumerState<SlicePointsEditor> createState() => _SlicePointsEditorState();
 }
 
-class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
+class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
+    with SingleTickerProviderStateMixin {
   AudioSource? _audioSource;
   int? _playingSlice;
   int? _loadingSliceIndex;
@@ -49,9 +51,17 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
   int _draggingIndex = -1;
   bool _isNearLine = false;
 
+  late final Ticker _progressTicker;
+  double? _playbackProgress;
+  double _playbackStartFraction = 0;
+  double _playbackEndFraction = 1;
+  Duration _playbackSliceDuration = Duration.zero;
+  DateTime? _playbackStartTime;
+
   @override
   void initState() {
     super.initState();
+    _progressTicker = createTicker(_onTick);
     _computeWaveformPeaks();
   }
 
@@ -60,7 +70,7 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.wavBytes != widget.wavBytes) {
       _audioSource = null;
-      _playingSlice = null;
+      _stopProgressTracking();
       _computeWaveformPeaks();
     }
   }
@@ -79,8 +89,56 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
     }
   }
 
+  void _onTick(Duration elapsed) {
+    final startTime = _playbackStartTime;
+    if (startTime == null) {
+      return;
+    }
+    final elapsed = DateTime.now().difference(startTime);
+    final fraction = _playbackSliceDuration.inMicroseconds > 0
+        ? elapsed.inMicroseconds / _playbackSliceDuration.inMicroseconds
+        : 1.0;
+    if (fraction >= 1.0) {
+      _stopProgressTracking();
+      return;
+    }
+    final range = _playbackEndFraction - _playbackStartFraction;
+    setState(() {
+      _playbackProgress = _playbackStartFraction + range * fraction;
+    });
+  }
+
+  void _startProgressTracking({
+    required double startFraction,
+    required double endFraction,
+    required Duration sliceDuration,
+  }) {
+    _playbackStartFraction = startFraction;
+    _playbackEndFraction = endFraction;
+    _playbackSliceDuration = sliceDuration;
+    _playbackStartTime = DateTime.now();
+    _playbackProgress = startFraction;
+    if (!_progressTicker.isActive) {
+      _progressTicker.start();
+    }
+  }
+
+  void _stopProgressTracking() {
+    if (_progressTicker.isActive) {
+      _progressTicker.stop();
+    }
+    _playbackStartTime = null;
+    if (_playbackProgress != null) {
+      setState(() => _playbackProgress = null);
+    }
+    if (_playingSlice != null) {
+      setState(() => _playingSlice = null);
+    }
+  }
+
   @override
   void dispose() {
+    _progressTicker.dispose();
     _audioSource = null;
     _playingSlice = null;
     super.dispose();
@@ -125,19 +183,16 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
       final sliceDuration = totalDuration * (endFraction - startFraction);
 
       setState(() => _playingSlice = sliceIndex);
-
-      // Reset playing state when the slice finishes
-      await Future<void>.delayed(sliceDuration);
-      if (mounted && _playingSlice == sliceIndex) {
-        setState(() => _playingSlice = null);
-      }
+      _startProgressTracking(
+        startFraction: startFraction,
+        endFraction: endFraction,
+        sliceDuration: sliceDuration,
+      );
     } on Exception catch (error) {
       debugPrint('Failed to play slice: $error');
       if (mounted) {
-        setState(() {
-          _playingSlice = null;
-          _loadingSliceIndex = null;
-        });
+        _stopProgressTracking();
+        setState(() => _loadingSliceIndex = null);
       }
     }
   }
@@ -269,6 +324,9 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor> {
                         context,
                       ).colorScheme.surfaceContainerHighest,
                       waveformPeaks: _waveformPeaks,
+                      playbackProgress: _playbackProgress,
+                      progressColor:
+                          Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                     size: const Size(double.infinity, 200),
                   ),
