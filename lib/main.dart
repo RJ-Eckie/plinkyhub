@@ -110,8 +110,6 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
     return Scaffold(
       body: Stack(
         children: [
@@ -130,17 +128,6 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
               const VerticalDivider(thickness: 1, width: 1),
               Expanded(child: widget.navigationShell),
             ],
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-              tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
-              onPressed: () {
-                ref.read(themeModeProvider.notifier).toggle();
-              },
-            ),
           ),
           const Positioned(
             bottom: 8,
