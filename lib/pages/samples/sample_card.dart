@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/samples/report_sample_dialog.dart';
 import 'package:plinkyhub/pages/samples/sample_mode_selector.dart';
+import 'package:plinkyhub/pages/samples/save_sample_to_plinky_dialog.dart';
 import 'package:plinkyhub/pages/samples/slice_points_editor.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
@@ -210,6 +211,12 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                       itemType: 'sample',
                       itemName: sample.name,
                     ),
+                  if (sample.pcmFilePath.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.usb, size: 20),
+                      tooltip: 'Save to Plinky',
+                      onPressed: () => _saveToPlinky(context),
+                    ),
                   if (!isOwned)
                     IconButton(
                       icon: const Icon(Icons.flag_outlined, size: 20),
@@ -321,6 +328,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
           ),
         ),
       ),
+    );
+  }
+
+  void _saveToPlinky(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SaveSampleToPlinkyDialog(sample: widget.sample),
     );
   }
 
