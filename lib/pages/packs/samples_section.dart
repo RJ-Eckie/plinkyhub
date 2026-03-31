@@ -3,9 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 
 class SamplesSection extends ConsumerWidget {
-  const SamplesSection({required this.slots, super.key});
+  const SamplesSection({
+    required this.slots,
+    this.deviceSampleSlots = const {},
+    super.key,
+  });
 
   final List<({String? presetId, String? sampleId, String? patternId})> slots;
+  final Set<int> deviceSampleSlots;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,13 +49,23 @@ class SamplesSection extends ConsumerWidget {
                 ? uniqueSampleIds[index]
                 : null;
             final sample = sampleId != null
-                ? samples.where((sample) => sample.id == sampleId).firstOrNull
+                ? samples
+                      .where((sample) => sample.id == sampleId)
+                      .firstOrNull
                 : null;
+            final hasDeviceSample = deviceSampleSlots.contains(index);
+
+            String displayName;
+            if (sample != null) {
+              displayName = sample.name;
+            } else if (hasDeviceSample) {
+              displayName = 'On device';
+            } else {
+              displayName = 'Empty';
+            }
+
             return Expanded(
               child: Card(
-                color: sampleId != null
-                    ? theme.colorScheme.primaryContainer
-                    : null,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
@@ -58,15 +73,30 @@ class SamplesSection extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        '${index + 1}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${index + 1}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (hasDeviceSample && sampleId != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 2),
+                              child: Icon(
+                                Icons.link,
+                                size: 12,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        sample?.name ?? 'Empty',
+                        displayName,
                         style: theme.textTheme.bodySmall,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:web/web.dart' as web;
 
 const _storageKey = 'tos_accepted';
@@ -85,17 +86,17 @@ class TermsOfServiceDialog extends StatelessWidget {
       ),
       actions: [
         if (requireAcceptance)
-          FilledButton(
+          PlinkyButton(
             onPressed: () {
               web.window.localStorage.setItem(_storageKey, 'true');
               Navigator.of(context).pop();
             },
-            child: const Text('I Accept'),
+            label: 'I Accept',
           )
         else
-          FilledButton(
+          PlinkyButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            label: 'Close',
           ),
       ],
     );

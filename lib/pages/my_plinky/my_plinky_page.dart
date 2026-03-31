@@ -460,7 +460,10 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
             },
           ),
           const SizedBox(height: 16),
-          SamplesSection(slots: _slots),
+          SamplesSection(
+            slots: _slots,
+            deviceSampleSlots: _deviceSampleSlots,
+          ),
           const SizedBox(height: 16),
           PatternSection(
             patternIds: _patternIds,
