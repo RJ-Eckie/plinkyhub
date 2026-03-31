@@ -66,6 +66,8 @@ class YoutubeEmbed extends StatelessWidget {
             'accelerometer; autoplay; clipboard-write; '
             'encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
+        // Allow loading under cross-origin isolation (WASM builds).
+        iframe.setAttribute('credentialless', '');
         return iframe;
       },
     );
