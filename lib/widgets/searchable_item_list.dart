@@ -156,7 +156,7 @@ class _SearchableItemListState<T extends Searchable>
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const Spacer(),
-                        if (_hasStarredItems)
+                        if (widget.isOwned)
                           Tooltip(
                             message: 'Include starred',
                             child: Row(
@@ -165,14 +165,19 @@ class _SearchableItemListState<T extends Searchable>
                                 Icon(
                                   Icons.star,
                                   size: 16,
-                                  color: _includeStarred ? Colors.amber : null,
+                                  color: _includeStarred && _hasStarredItems
+                                      ? Colors.amber
+                                      : null,
                                 ),
                                 SizedBox(
                                   height: 24,
                                   child: Switch(
-                                    value: _includeStarred,
-                                    onChanged: (value) =>
-                                        setState(() => _includeStarred = value),
+                                    value: _includeStarred && _hasStarredItems,
+                                    onChanged: _hasStarredItems
+                                        ? (value) => setState(
+                                            () => _includeStarred = value,
+                                          )
+                                        : null,
                                   ),
                                 ),
                               ],
