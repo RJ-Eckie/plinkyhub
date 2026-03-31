@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PatternWrite {
 
- String get userId; String get name; String get filePath; String get description; bool get isPublic;
+ String get userId; String get name; String get filePath; String get description; bool get isPublic; String? get contentHash;
 /// Create a copy of PatternWrite
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PatternWriteCopyWith<PatternWrite> get copyWith => _$PatternWriteCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatternWrite&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatternWrite&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,name,filePath,description,isPublic);
+int get hashCode => Object.hash(runtimeType,userId,name,filePath,description,isPublic,contentHash);
 
 @override
 String toString() {
-  return 'PatternWrite(userId: $userId, name: $name, filePath: $filePath, description: $description, isPublic: $isPublic)';
+  return 'PatternWrite(userId: $userId, name: $name, filePath: $filePath, description: $description, isPublic: $isPublic, contentHash: $contentHash)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PatternWriteCopyWith<$Res>  {
   factory $PatternWriteCopyWith(PatternWrite value, $Res Function(PatternWrite) _then) = _$PatternWriteCopyWithImpl;
 @useResult
 $Res call({
- String userId, String name, String filePath, String description, bool isPublic
+ String userId, String name, String filePath, String description, bool isPublic, String? contentHash
 });
 
 
@@ -65,14 +65,15 @@ class _$PatternWriteCopyWithImpl<$Res>
 
 /// Create a copy of PatternWrite
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? name = null,Object? filePath = null,Object? description = null,Object? isPublic = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? name = null,Object? filePath = null,Object? description = null,Object? isPublic = null,Object? contentHash = freezed,}) {
   return _then(_self.copyWith(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,filePath: null == filePath ? _self.filePath : filePath // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,contentHash: freezed == contentHash ? _self.contentHash : contentHash // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String name,  String filePath,  String description,  bool isPublic)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String name,  String filePath,  String description,  bool isPublic,  String? contentHash)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatternWrite() when $default != null:
-return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.isPublic);case _:
+return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.isPublic,_that.contentHash);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String name,  String filePath,  String description,  bool isPublic)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String name,  String filePath,  String description,  bool isPublic,  String? contentHash)  $default,) {final _that = this;
 switch (_that) {
 case _PatternWrite():
-return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.isPublic);case _:
+return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.isPublic,_that.contentHash);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String name,  String filePath,  String description,  bool isPublic)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String name,  String filePath,  String description,  bool isPublic,  String? contentHash)?  $default,) {final _that = this;
 switch (_that) {
 case _PatternWrite() when $default != null:
-return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.isPublic);case _:
+return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.isPublic,_that.contentHash);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.userId,_that.name,_that.filePath,_that.description,_that.i
 @JsonSerializable()
 
 class _PatternWrite implements PatternWrite {
-  const _PatternWrite({required this.userId, required this.name, required this.filePath, this.description = '', this.isPublic = false});
+  const _PatternWrite({required this.userId, required this.name, required this.filePath, this.description = '', this.isPublic = false, this.contentHash});
   factory _PatternWrite.fromJson(Map<String, dynamic> json) => _$PatternWriteFromJson(json);
 
 @override final  String userId;
@@ -221,6 +222,7 @@ class _PatternWrite implements PatternWrite {
 @override final  String filePath;
 @override@JsonKey() final  String description;
 @override@JsonKey() final  bool isPublic;
+@override final  String? contentHash;
 
 /// Create a copy of PatternWrite
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatternWrite&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatternWrite&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,name,filePath,description,isPublic);
+int get hashCode => Object.hash(runtimeType,userId,name,filePath,description,isPublic,contentHash);
 
 @override
 String toString() {
-  return 'PatternWrite(userId: $userId, name: $name, filePath: $filePath, description: $description, isPublic: $isPublic)';
+  return 'PatternWrite(userId: $userId, name: $name, filePath: $filePath, description: $description, isPublic: $isPublic, contentHash: $contentHash)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$PatternWriteCopyWith<$Res> implements $PatternWriteCopyWi
   factory _$PatternWriteCopyWith(_PatternWrite value, $Res Function(_PatternWrite) _then) = __$PatternWriteCopyWithImpl;
 @override @useResult
 $Res call({
- String userId, String name, String filePath, String description, bool isPublic
+ String userId, String name, String filePath, String description, bool isPublic, String? contentHash
 });
 
 
@@ -272,14 +274,15 @@ class __$PatternWriteCopyWithImpl<$Res>
 
 /// Create a copy of PatternWrite
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? name = null,Object? filePath = null,Object? description = null,Object? isPublic = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? name = null,Object? filePath = null,Object? description = null,Object? isPublic = null,Object? contentHash = freezed,}) {
   return _then(_PatternWrite(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,filePath: null == filePath ? _self.filePath : filePath // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,contentHash: freezed == contentHash ? _self.contentHash : contentHash // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

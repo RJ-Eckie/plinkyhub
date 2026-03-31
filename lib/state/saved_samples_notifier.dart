@@ -4,6 +4,7 @@ import 'package:plinkyhub/models/sample_write.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_state.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedSamplesProvider =
@@ -175,6 +176,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
         fineTune: sample.fineTune,
         pitched: sample.pitched,
         sliceNotes: sample.sliceNotes,
+        contentHash: computeContentHash(pcmBytes),
       );
       await _supabase.from('samples').insert(write.toJson());
 

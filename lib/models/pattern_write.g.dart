@@ -13,6 +13,7 @@ _PatternWrite _$PatternWriteFromJson(Map<String, dynamic> json) =>
       filePath: json['file_path'] as String,
       description: json['description'] as String? ?? '',
       isPublic: json['is_public'] as bool? ?? false,
+      contentHash: json['content_hash'] as String?,
     );
 
 Map<String, dynamic> _$PatternWriteToJson(_PatternWrite instance) =>
@@ -22,4 +23,5 @@ Map<String, dynamic> _$PatternWriteToJson(_PatternWrite instance) =>
       'file_path': instance.filePath,
       'description': instance.description,
       'is_public': instance.isPublic,
+      'content_hash': instance.contentHash,
     };

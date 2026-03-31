@@ -30,6 +30,7 @@ abstract class SavedSample with _$SavedSample implements Searchable {
     @Default(0) int fineTune,
     @Default(false) bool pitched,
     @Default(defaultSliceNotes) List<int> sliceNotes,
+    String? contentHash,
   }) = _SavedSample;
 
   factory SavedSample.fromJson(Map<String, dynamic> json) =>

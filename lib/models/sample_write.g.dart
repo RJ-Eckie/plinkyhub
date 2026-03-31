@@ -26,6 +26,7 @@ _SampleWrite _$SampleWriteFromJson(Map<String, dynamic> json) => _SampleWrite(
           ?.map((e) => (e as num).toInt())
           .toList() ??
       defaultSliceNotes,
+  contentHash: json['content_hash'] as String?,
 );
 
 Map<String, dynamic> _$SampleWriteToJson(_SampleWrite instance) =>
@@ -41,4 +42,5 @@ Map<String, dynamic> _$SampleWriteToJson(_SampleWrite instance) =>
       'fine_tune': instance.fineTune,
       'pitched': instance.pitched,
       'slice_notes': instance.sliceNotes,
+      'content_hash': instance.contentHash,
     };

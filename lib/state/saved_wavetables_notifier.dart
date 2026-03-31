@@ -4,6 +4,7 @@ import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/models/wavetable_write.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_state.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedWavetablesProvider =
@@ -163,6 +164,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         filePath: wavetable.filePath,
         description: wavetable.description,
         isPublic: wavetable.isPublic,
+        contentHash: computeContentHash(uf2Bytes),
       );
       await _supabase.from('wavetables').insert(write.toJson());
 

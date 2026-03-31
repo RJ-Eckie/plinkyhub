@@ -11,6 +11,7 @@ abstract class PatternWrite with _$PatternWrite {
     required String filePath,
     @Default('') String description,
     @Default(false) bool isPublic,
+    String? contentHash,
   }) = _PatternWrite;
 
   factory PatternWrite.fromJson(Map<String, dynamic> json) =>

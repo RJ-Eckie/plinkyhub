@@ -19,6 +19,7 @@ _SavedWavetable _$SavedWavetableFromJson(Map<String, dynamic> json) =>
       username: _readUsername(json, 'username') as String? ?? '',
       starCount: (_readStarCount(json, 'star_count') as num?)?.toInt() ?? 0,
       isStarred: json['is_starred'] as bool? ?? false,
+      contentHash: json['content_hash'] as String?,
     );
 
 Map<String, dynamic> _$SavedWavetableToJson(_SavedWavetable instance) =>
@@ -34,4 +35,5 @@ Map<String, dynamic> _$SavedWavetableToJson(_SavedWavetable instance) =>
       'username': instance.username,
       'star_count': instance.starCount,
       'is_starred': instance.isStarred,
+      'content_hash': instance.contentHash,
     };

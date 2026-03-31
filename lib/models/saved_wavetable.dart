@@ -18,6 +18,7 @@ abstract class SavedWavetable with _$SavedWavetable implements Searchable {
     @Default('') @JsonKey(readValue: _readUsername) String username,
     @Default(0) @JsonKey(readValue: _readStarCount) int starCount,
     @Default(false) bool isStarred,
+    String? contentHash,
   }) = _SavedWavetable;
 
   factory SavedWavetable.fromJson(Map<String, dynamic> json) =>

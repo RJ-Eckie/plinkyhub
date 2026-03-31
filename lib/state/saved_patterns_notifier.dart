@@ -4,6 +4,7 @@ import 'package:plinkyhub/models/pattern_write.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patterns_state.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedPatternsProvider =
@@ -161,6 +162,7 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
         filePath: pattern.filePath,
         description: pattern.description,
         isPublic: pattern.isPublic,
+        contentHash: computeContentHash(fileBytes),
       );
       await _supabase.from('patterns').insert(write.toJson());
 
