@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -11,10 +12,9 @@ import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/sound_service.dart';
-import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
+import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
-import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/utils/wav.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -205,29 +205,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     });
   }
 
-  /// Returns true if the UF2 data is empty (all zeros or all 0xFF).
-  bool _isEmptyUf2(Uint8List data) {
-    return data.every((b) => b == 0) || data.every((b) => b == 0xFF);
-  }
-
-  /// Returns true if the PCM data is silent (all zeros, all 0xFF,
-  /// or every 16-bit sample is the same value).
-  bool _isSilentPcm(Uint8List pcmData) {
-    if (pcmData.every((byte) => byte == 0) ||
-        pcmData.every((byte) => byte == 0xFF)) {
-      return true;
-    }
-    // Check as 16-bit samples — silent if every frame is identical.
-    if (pcmData.length >= 2) {
-      final view = Int16List.view(pcmData.buffer);
-      final firstSample = view[0];
-      if (view.every((sample) => sample == firstSample)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   Future<void> _readFromPlinky() async {
     final directory = await showDirectoryPicker();
     if (directory == null) {
@@ -236,11 +213,13 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
 
     setState(() {
       _step = _LoadStep.uploading;
-      _statusMessage = 'Reading PRESETS.UF2...';
+      _statusMessage = 'Reading files from Plinky...';
       _errorMessage = null;
     });
 
     try {
+      // Read all files on the main thread (File System Access API
+      // requires it).
       final presetsUf2Bytes = await readFileFromDirectory(
         directory,
         'PRESETS.UF2',
@@ -251,52 +230,14 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         );
       }
 
-      final flashImage = uf2ToData(presetsUf2Bytes);
-
-      setState(() {
-        _statusMessage = 'Parsing presets...';
-      });
-      final parsed = parseFlashImage(flashImage);
-      _presetDataList = parsed.presets;
-      _sampleInfos = parsed.sampleInfos;
-      _patternQuarters = parsed.patternQuarters;
-
-      _samplePcmData = {};
-      _emptySampleSlots = {};
+      final sampleUf2s = <Uint8List?>[];
       for (var i = 0; i < sampleCount; i++) {
         setState(() {
           _statusMessage = 'Reading SAMPLE$i.UF2...';
         });
-        final sampleBytes = await readFileFromDirectory(
-          directory,
-          'SAMPLE$i.UF2',
+        sampleUf2s.add(
+          await readFileFromDirectory(directory, 'SAMPLE$i.UF2'),
         );
-        if (sampleBytes != null && sampleBytes.isNotEmpty) {
-          try {
-            var pcmData = uf2ToData(sampleBytes);
-            // The firmware exports the full sample slot, but the actual
-            // sample may be shorter. Trim to sampleLength from the
-            // SampleInfo so slice point fractions stay correct.
-            final sampleInfo = i < _sampleInfos.length ? _sampleInfos[i] : null;
-            if (sampleInfo != null &&
-                sampleInfo.sampleLength * 2 < pcmData.length) {
-              pcmData = Uint8List.sublistView(
-                pcmData,
-                0,
-                sampleInfo.sampleLength * 2,
-              );
-            }
-            if (pcmData.isNotEmpty && !_isSilentPcm(pcmData)) {
-              _samplePcmData[i] = pcmData;
-            } else {
-              _emptySampleSlots.add(i);
-            }
-          } on FormatException {
-            _emptySampleSlots.add(i);
-          }
-        } else {
-          _emptySampleSlots.add(i);
-        }
       }
 
       setState(() {
@@ -306,7 +247,41 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         directory,
         'WAVETAB.UF2',
       );
-      if (_wavetableUf2Bytes != null && _isEmptyUf2(_wavetableUf2Bytes!)) {
+
+      // Offload all CPU-heavy parsing to a separate isolate.
+      setState(() {
+        _statusMessage = 'Processing...';
+      });
+      final input = PlinkyDeviceInput(
+        presetsUf2: presetsUf2Bytes,
+        sampleUf2s: sampleUf2s,
+        wavetableBytes: _wavetableUf2Bytes,
+      );
+      final result = await Isolate.run(
+        () => parsePlinkyDevice(input),
+      );
+
+      // Store parsed results.
+      _presetDataList = result.presets;
+      _sampleInfos = result.sampleInfos;
+      _patternQuarters = result.patternQuarters;
+      _samplePcmData = result.samplePcmData;
+      _emptySampleSlots = result.emptySampleSlots;
+
+      // Use hashes from isolate result.
+      _presetHashes
+        ..clear()
+        ..addAll(result.presetHashes);
+      _sampleHashes
+        ..clear()
+        ..addAll(result.sampleHashes);
+      _wavetableHash = result.wavetableHash;
+      _patternHashes
+        ..clear()
+        ..addAll(result.patternHashes);
+
+      // Normalize wavetable bytes based on isolate result.
+      if (!result.deviceHasWavetable) {
         _wavetableUf2Bytes = null;
       }
 
@@ -352,17 +327,48 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
 
       _patternNames.clear();
       _patternDescriptions.clear();
-      for (final patternIndex in parsed.nonEmptyPatternIndices) {
-        _patternNames[patternIndex] = TextEditingController(text: '');
-        _patternDescriptions[patternIndex] = TextEditingController();
+      for (final patternIndex in result.nonEmptyPatternIndices) {
+        _patternNames[patternIndex] =
+            TextEditingController(text: '');
+        _patternDescriptions[patternIndex] =
+            TextEditingController();
       }
       _includePatternsInPack = _patternNames.isNotEmpty;
 
-      // Compute content hashes and find existing public matches.
+      // Find existing public matches using precomputed hashes.
       setState(() {
         _statusMessage = 'Checking for existing content...';
       });
-      await _computeHashesAndFindMatches(parsed);
+      _matchedPresets.clear();
+      _matchedSamples.clear();
+      _matchedWavetable = null;
+      _matchedPatterns.clear();
+
+      await Future.wait([
+        _findMatches('presets', _presetHashes, _matchedPresets),
+        _findMatches('samples', _sampleHashes, _matchedSamples),
+        _findMatches(
+          'patterns',
+          _patternHashes,
+          _matchedPatterns,
+        ),
+        _findWavetableMatch(),
+      ]);
+
+      // Set names from matched entries.
+      for (final entry in _matchedPresets.entries) {
+        _presetNames[entry.key]?.text = entry.value.name;
+        _presetsWithDeviceName.add(entry.key);
+      }
+      for (final entry in _matchedSamples.entries) {
+        _sampleNames[entry.key]?.text = entry.value.name;
+      }
+      if (_matchedWavetable != null) {
+        _wavetableNameController.text = _matchedWavetable!.name;
+      }
+      for (final entry in _matchedPatterns.entries) {
+        _patternNames[entry.key]?.text = entry.value.name;
+      }
 
       setState(() {
         _step = _LoadStep.review;
@@ -375,87 +381,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           _errorMessage = error.toString();
         });
       }
-    }
-  }
-
-  Future<void> _computeHashesAndFindMatches(ParsedFlashImage parsed) async {
-    _presetHashes.clear();
-    _sampleHashes.clear();
-    _wavetableHash = null;
-    _patternHashes.clear();
-    _matchedPresets.clear();
-    _matchedSamples.clear();
-    _matchedWavetable = null;
-    _matchedPatterns.clear();
-
-    // Compute hashes for presets.
-    for (final entry in _presetNames.entries) {
-      final presetBytes = _presetDataList[entry.key];
-      if (presetBytes != null) {
-        _presetHashes[entry.key] = computeContentHash(presetBytes);
-      }
-    }
-
-    // Compute hashes for samples.
-    for (final entry in _samplePcmData.entries) {
-      _sampleHashes[entry.key] = computeContentHash(entry.value);
-    }
-
-    // Compute hash for wavetable.
-    if (_wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty) {
-      _wavetableHash = computeContentHash(_wavetableUf2Bytes!);
-    }
-
-    // Compute hashes for patterns.
-    for (final patternIndex in _patternNames.keys) {
-      final quarterStart = patternIndex * 4;
-      final quarters = List<Uint8List?>.filled(
-        _patternQuarters.length,
-        null,
-      );
-      for (var q = 0; q < 4; q++) {
-        final index = quarterStart + q;
-        if (index < _patternQuarters.length) {
-          quarters[index] = _patternQuarters[index];
-        }
-      }
-      final patternBlob = serializePatternQuarters(quarters);
-      _patternHashes[patternIndex] = computeContentHash(patternBlob);
-    }
-
-    // Query for existing public matches.
-    await Future.wait([
-      _findMatches(
-        'presets',
-        _presetHashes,
-        _matchedPresets,
-      ),
-      _findMatches(
-        'samples',
-        _sampleHashes,
-        _matchedSamples,
-      ),
-      _findMatches(
-        'patterns',
-        _patternHashes,
-        _matchedPatterns,
-      ),
-      _findWavetableMatch(),
-    ]);
-
-    // Set names from matched entries.
-    for (final entry in _matchedPresets.entries) {
-      _presetNames[entry.key]?.text = entry.value.name;
-      _presetsWithDeviceName.add(entry.key);
-    }
-    for (final entry in _matchedSamples.entries) {
-      _sampleNames[entry.key]?.text = entry.value.name;
-    }
-    if (_matchedWavetable != null) {
-      _wavetableNameController.text = _matchedWavetable!.name;
-    }
-    for (final entry in _matchedPatterns.entries) {
-      _patternNames[entry.key]?.text = entry.value.name;
     }
   }
 
