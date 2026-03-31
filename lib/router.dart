@@ -255,50 +255,31 @@ class _ItemPageShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
     return Scaffold(
-      body: Stack(
+      body: Row(
         children: [
-          Row(
-            children: [
-              NavigationSidebar(
-                selectedIndex: -1,
-                onDestinationSelected: (index) {
-                  final paths = [
-                    '/my-plinky',
-                    '/editor',
-                    '/presets',
-                    '/packs',
-                    '/samples',
-                    '/wavetables',
-                    '/patterns',
-                    '/users',
-                    '/profile',
-                    '/about',
-                  ];
-                  if (index >= 0 && index < paths.length) {
-                    context.go(paths[index]);
-                  }
-                },
-              ),
-              const VerticalDivider(thickness: 1, width: 1),
-              Expanded(child: child),
-            ],
+          NavigationSidebar(
+            selectedIndex: -1,
+            onDestinationSelected: (index) {
+              final paths = [
+                '/my-plinky',
+                '/editor',
+                '/presets',
+                '/packs',
+                '/samples',
+                '/wavetables',
+                '/patterns',
+                '/users',
+                '/profile',
+                '/about',
+              ];
+              if (index >= 0 && index < paths.length) {
+                context.go(paths[index]);
+              }
+            },
           ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: Icon(
-                isDark ? Icons.light_mode : Icons.dark_mode,
-              ),
-              tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
-              onPressed: () {
-                ref.read(themeModeProvider.notifier).toggle();
-              },
-            ),
-          ),
+          const VerticalDivider(thickness: 1, width: 1),
+          Expanded(child: child),
         ],
       ),
     );
