@@ -135,6 +135,9 @@ class PackSlotTile extends ConsumerWidget {
     ).then((selected) {
       if (selected != null) {
         onPresetChanged(selected.id);
+        if (selected.sampleId != null) {
+          onSampleChanged(selected.sampleId);
+        }
       }
     });
   }

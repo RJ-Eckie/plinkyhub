@@ -232,6 +232,25 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   }
 
   Future<void> _savePack() async {
+    final uniqueSampleCount = _slots
+        .map((slot) => slot.sampleId)
+        .whereType<String>()
+        .toSet()
+        .length;
+    if (uniqueSampleCount > sampleCount) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'A pack can use at most $sampleCount samples. '
+              'Currently using $uniqueSampleCount.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
     final slots =
         <
           ({
