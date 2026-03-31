@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -120,14 +122,33 @@ void showItemUsageDialog(
           ),
           const SizedBox(height: 12),
           for (final pack in packs)
-            _ItemRow(
+            _ItemLink(
               icon: Icons.inventory_2,
               name: pack.name.isEmpty ? '(unnamed)' : pack.name,
+              onTap: pack.username.isNotEmpty
+                  ? () {
+                      Navigator.of(dialogContext).pop();
+                      dialogContext.go(
+                        AppRoute.packs.itemPage(pack.username, pack.name),
+                      );
+                    }
+                  : null,
             ),
           for (final preset in presets)
-            _ItemRow(
+            _ItemLink(
               icon: Icons.piano,
               name: preset.name.isEmpty ? '(unnamed)' : preset.name,
+              onTap: preset.username.isNotEmpty
+                  ? () {
+                      Navigator.of(dialogContext).pop();
+                      dialogContext.go(
+                        AppRoute.presets.itemPage(
+                          preset.username,
+                          preset.name,
+                        ),
+                      );
+                    }
+                  : null,
             ),
         ],
       ),
@@ -146,32 +167,43 @@ bool _isSingleReference(
   List<String> references,
   List<SavedPack> packs,
   List<SavedPreset> presets,
-) =>
-    references.length == 1 && packs.length + presets.length == 1;
+) => references.length == 1 && packs.length + presets.length == 1;
 
-class _ItemRow extends StatelessWidget {
-  const _ItemRow({required this.icon, required this.name});
+class _ItemLink extends StatelessWidget {
+  const _ItemLink({required this.icon, required this.name, this.onTap});
 
   final IconData icon;
   final String name;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final isClickable = onTap != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Row(
-          children: [
-            Icon(icon, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: Row(
+            children: [
+              Icon(icon, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isClickable
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+                    decoration: isClickable ? TextDecoration.underline : null,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
