@@ -24,7 +24,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 GoRouter createRouter(ProviderContainer container) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/editor',
+    initialLocation: '/my-plinky',
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

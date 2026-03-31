@@ -78,30 +78,108 @@ class ParsedPlinkyDevice {
   final bool deviceHasWavetable;
 }
 
-/// Parses all data from a Plinky device. This is a top-level function
-/// so it can be called via `Isolate.run` to keep the UI responsive.
-///
-/// Performs UF2 decoding, flash image parsing, PCM trimming, silence
-/// detection, and SHA-256 content hashing for all items.
-ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
-  // Parse PRESETS.UF2.
-  final flashImage = uf2ToData(input.presetsUf2);
+/// Result of parsing PRESETS.UF2 (phase 1).
+class ParsedPresetsPhase {
+  ParsedPresetsPhase({
+    required this.presets,
+    required this.sampleInfos,
+    required this.rawSampleInfos,
+    required this.patternQuarters,
+    required this.presetHashes,
+    required this.nonEmptyPatternIndices,
+    required this.patternHashes,
+  });
+
+  final List<Uint8List?> presets;
+  final List<ParsedSampleInfo?> sampleInfos;
+  final List<Uint8List?> rawSampleInfos;
+  final List<Uint8List?> patternQuarters;
+  final Map<int, String> presetHashes;
+  final List<int> nonEmptyPatternIndices;
+  final Map<int, String> patternHashes;
+}
+
+/// Input for [parseSamplesPhase].
+class SamplesPhaseInput {
+  SamplesPhaseInput({
+    required this.sampleUf2s,
+    required this.sampleInfos,
+  });
+
+  final List<Uint8List?> sampleUf2s;
+  final List<ParsedSampleInfo?> sampleInfos;
+}
+
+/// Result of parsing samples (phase 2).
+class ParsedSamplesPhase {
+  ParsedSamplesPhase({
+    required this.samplePcmData,
+    required this.emptySampleSlots,
+    required this.sampleHashes,
+  });
+
+  final Map<int, Uint8List> samplePcmData;
+  final Set<int> emptySampleSlots;
+  final Map<int, String> sampleHashes;
+}
+
+/// Result of checking the wavetable (phase 3).
+class ParsedWavetablePhase {
+  ParsedWavetablePhase({
+    required this.deviceHasWavetable,
+    required this.wavetableHash,
+  });
+
+  final bool deviceHasWavetable;
+  final String? wavetableHash;
+}
+
+/// Phase 1: Parse PRESETS.UF2 — decodes flash image, extracts presets,
+/// patterns, sample metadata, and computes preset/pattern hashes.
+ParsedPresetsPhase parsePresetsPhase(Uint8List presetsUf2) {
+  final flashImage = uf2ToData(presetsUf2);
   final parsed = parseFlashImage(flashImage);
 
-  // Compute preset hashes.
   final presetHashes = <int, String>{};
   for (var i = 0; i < presetCount; i++) {
     final presetBytes = parsed.presets[i];
-    if (presetBytes != null) {
-      // Check if preset is empty (all zero parameters).
-      final allZero = presetBytes.every((b) => b == 0);
-      if (!allZero) {
-        presetHashes[i] = computeContentHash(presetBytes);
-      }
+    if (presetBytes != null && !presetBytes.every((b) => b == 0)) {
+      presetHashes[i] = computeContentHash(presetBytes);
     }
   }
 
-  // Parse samples: decode UF2, trim, detect silence, hash.
+  final patternHashes = <int, String>{};
+  final nonEmptyPatternIndices = parsed.nonEmptyPatternIndices;
+  for (final patternIndex in nonEmptyPatternIndices) {
+    final quarterStart = patternIndex * 4;
+    final quarters = List<Uint8List?>.filled(
+      parsed.patternQuarters.length,
+      null,
+    );
+    for (var q = 0; q < 4; q++) {
+      final index = quarterStart + q;
+      if (index < parsed.patternQuarters.length) {
+        quarters[index] = parsed.patternQuarters[index];
+      }
+    }
+    final patternBlob = serializePatternQuarters(quarters);
+    patternHashes[patternIndex] = computeContentHash(patternBlob);
+  }
+
+  return ParsedPresetsPhase(
+    presets: parsed.presets,
+    sampleInfos: parsed.sampleInfos,
+    rawSampleInfos: parsed.rawSampleInfos,
+    patternQuarters: parsed.patternQuarters,
+    presetHashes: presetHashes,
+    nonEmptyPatternIndices: nonEmptyPatternIndices,
+    patternHashes: patternHashes,
+  );
+}
+
+/// Phase 2: Parse samples — decodes UF2, trims PCM, detects silence,
+/// and computes content hashes.
+ParsedSamplesPhase parseSamplesPhase(SamplesPhaseInput input) {
   final samplePcmData = <int, Uint8List>{};
   final emptySampleSlots = <int>{};
   final sampleHashes = <int, String>{};
@@ -115,7 +193,7 @@ ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
     try {
       var pcmData = uf2ToData(sampleUf2);
       final sampleInfo =
-          i < parsed.sampleInfos.length ? parsed.sampleInfos[i] : null;
+          i < input.sampleInfos.length ? input.sampleInfos[i] : null;
       if (sampleInfo != null &&
           sampleInfo.sampleLength * 2 < pcmData.length) {
         pcmData = Uint8List.sublistView(
@@ -135,8 +213,15 @@ ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
     }
   }
 
-  // Check wavetable.
-  final wavetableBytes = input.wavetableBytes;
+  return ParsedSamplesPhase(
+    samplePcmData: samplePcmData,
+    emptySampleSlots: emptySampleSlots,
+    sampleHashes: sampleHashes,
+  );
+}
+
+/// Phase 3: Check wavetable — detects presence and computes hash.
+ParsedWavetablePhase parseWavetablePhase(Uint8List? wavetableBytes) {
   final deviceHasWavetable = wavetableBytes != null &&
       wavetableBytes.isNotEmpty &&
       !wavetableBytes.every((b) => b == 0) &&
@@ -144,38 +229,37 @@ ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
   final wavetableHash =
       deviceHasWavetable ? computeContentHash(wavetableBytes) : null;
 
-  // Compute pattern hashes.
-  final patternHashes = <int, String>{};
-  final nonEmptyPatternIndices = parsed.nonEmptyPatternIndices;
-  for (final patternIndex in nonEmptyPatternIndices) {
-    final quarterStart = patternIndex * 4;
-    final quarters = List<Uint8List?>.filled(
-      parsed.patternQuarters.length,
-      null,
-    );
-    for (var q = 0; q < 4; q++) {
-      final index = quarterStart + q;
-      if (index < parsed.patternQuarters.length) {
-        quarters[index] = parsed.patternQuarters[index];
-      }
-    }
-    final patternBlob = serializePatternQuarters(quarters);
-    patternHashes[patternIndex] = computeContentHash(patternBlob);
-  }
+  return ParsedWavetablePhase(
+    deviceHasWavetable: deviceHasWavetable,
+    wavetableHash: wavetableHash,
+  );
+}
+
+/// Parses all data from a Plinky device in one shot. This is a
+/// top-level function so it can be called via `Isolate.run`.
+ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
+  final presetsResult = parsePresetsPhase(input.presetsUf2);
+  final samplesResult = parseSamplesPhase(
+    SamplesPhaseInput(
+      sampleUf2s: input.sampleUf2s,
+      sampleInfos: presetsResult.sampleInfos,
+    ),
+  );
+  final wavetableResult = parseWavetablePhase(input.wavetableBytes);
 
   return ParsedPlinkyDevice(
-    presets: parsed.presets,
-    sampleInfos: parsed.sampleInfos,
-    rawSampleInfos: parsed.rawSampleInfos,
-    patternQuarters: parsed.patternQuarters,
-    nonEmptyPatternIndices: nonEmptyPatternIndices,
-    samplePcmData: samplePcmData,
-    emptySampleSlots: emptySampleSlots,
-    presetHashes: presetHashes,
-    sampleHashes: sampleHashes,
-    wavetableHash: wavetableHash,
-    patternHashes: patternHashes,
-    deviceHasWavetable: deviceHasWavetable,
+    presets: presetsResult.presets,
+    sampleInfos: presetsResult.sampleInfos,
+    rawSampleInfos: presetsResult.rawSampleInfos,
+    patternQuarters: presetsResult.patternQuarters,
+    nonEmptyPatternIndices: presetsResult.nonEmptyPatternIndices,
+    samplePcmData: samplesResult.samplePcmData,
+    emptySampleSlots: samplesResult.emptySampleSlots,
+    presetHashes: presetsResult.presetHashes,
+    sampleHashes: samplesResult.sampleHashes,
+    wavetableHash: wavetableResult.wavetableHash,
+    patternHashes: presetsResult.patternHashes,
+    deviceHasWavetable: wavetableResult.deviceHasWavetable,
   );
 }
 

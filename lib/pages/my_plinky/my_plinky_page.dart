@@ -1,4 +1,3 @@
-import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -104,29 +103,38 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         'wavetab.uf2',
       );
 
-      // Offload all CPU-heavy parsing to a separate isolate.
-      setState(() => _statusMessage = 'Processing...');
-      final input = PlinkyDeviceInput(
-        presetsUf2: presetsUf2Bytes,
-        sampleUf2s: sampleUf2s,
-        wavetableBytes: wavetableBytes,
+      // Phase 1: Parse presets and patterns.
+      setState(() => _statusMessage = 'Parsing presets...');
+      await Future<void>.delayed(Duration.zero);
+      final presetsResult = parsePresetsPhase(presetsUf2Bytes);
+
+      // Phase 2: Parse samples.
+      setState(() => _statusMessage = 'Parsing samples...');
+      await Future<void>.delayed(Duration.zero);
+      final samplesResult = parseSamplesPhase(
+        SamplesPhaseInput(
+          sampleUf2s: sampleUf2s,
+          sampleInfos: presetsResult.sampleInfos,
+        ),
       );
-      final result = await Isolate.run(
-        () => parsePlinkyDevice(input),
-      );
+
+      // Phase 3: Check wavetable.
+      setState(() => _statusMessage = 'Checking wavetable...');
+      await Future<void>.delayed(Duration.zero);
+      final wavetableResult = parseWavetablePhase(wavetableBytes);
 
       // Store parsed flash image for save-back merging.
       _parsedFlashImage = ParsedFlashImage(
-        presets: result.presets,
-        sampleInfos: result.sampleInfos,
-        rawSampleInfos: result.rawSampleInfos,
-        patternQuarters: result.patternQuarters,
+        presets: presetsResult.presets,
+        sampleInfos: presetsResult.sampleInfos,
+        rawSampleInfos: presetsResult.rawSampleInfos,
+        patternQuarters: presetsResult.patternQuarters,
       );
 
       // Populate device state from parsed results.
       _devicePresets.clear();
       for (var i = 0; i < presetCount; i++) {
-        final presetBytes = result.presets[i];
+        final presetBytes = presetsResult.presets[i];
         if (presetBytes != null) {
           final preset = Preset(presetBytes.buffer);
           if (!preset.isEmpty) {
@@ -137,13 +145,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       _deviceSampleSlots
         ..clear()
-        ..addAll(result.samplePcmData.keys);
+        ..addAll(samplesResult.samplePcmData.keys);
 
-      _deviceHasWavetable = result.deviceHasWavetable;
+      _deviceHasWavetable = wavetableResult.deviceHasWavetable;
 
       _devicePatternIndices
         ..clear()
-        ..addAll(result.nonEmptyPatternIndices);
+        ..addAll(presetsResult.nonEmptyPatternIndices);
 
       // Match content hashes against saved entries.
       setState(() => _statusMessage = 'Matching saved content...');
@@ -156,21 +164,21 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       await Future.wait([
         _findMatches(
           'presets',
-          result.presetHashes,
+          presetsResult.presetHashes,
           matchedPresets,
         ),
         _findMatches(
           'samples',
-          result.sampleHashes,
+          samplesResult.sampleHashes,
           matchedSamples,
         ),
         _findMatches(
           'patterns',
-          result.patternHashes,
+          presetsResult.patternHashes,
           matchedPatterns,
         ),
-        if (result.wavetableHash != null)
-          _findWavetableMatch(result.wavetableHash!).then(
+        if (wavetableResult.wavetableHash != null)
+          _findWavetableMatch(wavetableResult.wavetableHash!).then(
             (entry) => matchedWavetable = entry,
           ),
       ]);
