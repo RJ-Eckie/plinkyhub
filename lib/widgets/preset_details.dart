@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/preset.dart';
+import 'package:plinkyhub/models/saved_sample.dart';
+import 'package:plinkyhub/pages/packs/sample_picker_dialog.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
@@ -220,6 +222,7 @@ class _SaveToCloudButton extends ConsumerWidget {
     WidgetRef ref,
     PlinkyState plinkyState,
   ) {
+    final nameController = TextEditingController(text: preset.name);
     final descriptionController = TextEditingController();
     var isPublic = false;
     String? selectedSampleId;
@@ -231,13 +234,19 @@ class _SaveToCloudButton extends ConsumerWidget {
         builder: (context, setDialogState) {
           final samples = ref.read(savedSamplesProvider).userSamples;
           return AlertDialog(
-            title: Text(
-              'Save "${preset.name.isEmpty ? '(unnamed)' : preset.name}"'
-              ' to cloud',
-            ),
+            title: const Text('Save preset to cloud'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 8,
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: descriptionController,
                   decoration: const InputDecoration(
@@ -247,25 +256,11 @@ class _SaveToCloudButton extends ConsumerWidget {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String?>(
-                  initialValue: selectedSampleId,
-                  decoration: const InputDecoration(
-                    labelText: 'Sample (optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      child: Text('No sample'),
-                    ),
-                    ...samples.map((sample) {
-                      return DropdownMenuItem<String?>(
-                        value: sample.id,
-                        child: Text(
-                          sample.name.isEmpty ? '(unnamed)' : sample.name,
-                        ),
-                      );
-                    }),
-                  ],
+                _SampleSelector(
+                  samples: samples,
+                  selectedSampleId: selectedSampleId,
+                  currentUserId:
+                      ref.read(authenticationProvider).user?.id,
                   onChanged: (value) {
                     setDialogState(
                       () => selectedSampleId = value,
@@ -295,6 +290,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                 PlinkyButton(
                   onPressed: () {
                     Navigator.of(context).pop();
+                    preset.name = nameController.text;
                     ref
                         .read(savedPresetsProvider.notifier)
                         .overwritePreset(
@@ -317,6 +313,7 @@ class _SaveToCloudButton extends ConsumerWidget {
               PlinkyButton(
                 onPressed: () {
                   Navigator.of(context).pop();
+                  preset.name = nameController.text;
                   ref
                       .read(savedPresetsProvider.notifier)
                       .savePreset(
@@ -575,6 +572,68 @@ class _RandomizeGroupSection extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+}
+
+class _SampleSelector extends StatelessWidget {
+  const _SampleSelector({
+    required this.samples,
+    required this.selectedSampleId,
+    required this.currentUserId,
+    required this.onChanged,
+  });
+
+  final List<SavedSample> samples;
+  final String? selectedSampleId;
+  final String? currentUserId;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedName = selectedSampleId != null
+        ? samples
+              .where((s) => s.id == selectedSampleId)
+              .map((s) => s.name.isEmpty ? '(unnamed)' : s.name)
+              .firstOrNull ??
+            'Unknown sample'
+        : 'No sample';
+
+    return InputDecorator(
+      decoration: const InputDecoration(
+        labelText: 'Sample (optional)',
+        border: OutlineInputBorder(),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text(selectedName)),
+          if (selectedSampleId != null)
+            IconButton(
+              icon: const Icon(Icons.clear, size: 20),
+              onPressed: () => onChanged(null),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.search, size: 20),
+            onPressed: () async {
+              final result = await showDialog<SavedSample>(
+                context: context,
+                builder: (context) => SamplePickerDialog(
+                  samples: samples,
+                  currentUserId: currentUserId,
+                ),
+              );
+              if (result != null) {
+                onChanged(result.id);
+              }
+            },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
     );
   }
 }
