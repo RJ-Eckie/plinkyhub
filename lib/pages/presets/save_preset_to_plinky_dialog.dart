@@ -1,14 +1,14 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:plinkyhub/models/saved_sample.dart';
+import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_save_dialog_views.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum _DialogStep {
   slotSelection,
@@ -18,24 +18,22 @@ enum _DialogStep {
   error,
 }
 
-class SaveSampleToPlinkyDialog extends ConsumerStatefulWidget {
-  const SaveSampleToPlinkyDialog({required this.sample, super.key});
+class SavePresetToPlinkyDialog extends ConsumerStatefulWidget {
+  const SavePresetToPlinkyDialog({required this.preset, super.key});
 
-  final SavedSample sample;
+  final SavedPreset preset;
 
   @override
-  ConsumerState<SaveSampleToPlinkyDialog> createState() =>
-      _SaveSampleToPlinkyDialogState();
+  ConsumerState<SavePresetToPlinkyDialog> createState() =>
+      _SavePresetToPlinkyDialogState();
 }
 
-class _SaveSampleToPlinkyDialogState
-    extends ConsumerState<SaveSampleToPlinkyDialog> {
+class _SavePresetToPlinkyDialogState
+    extends ConsumerState<SavePresetToPlinkyDialog> {
   _DialogStep _step = _DialogStep.slotSelection;
   int _selectedSlot = 0;
   String _statusMessage = '';
   String? _errorMessage;
-
-  SupabaseClient get _supabase => Supabase.instance.client;
 
   Future<void> _startSave() async {
     final directory = await showDirectoryPicker(readwrite: true);
@@ -45,7 +43,7 @@ class _SaveSampleToPlinkyDialogState
 
     setState(() {
       _step = _DialogStep.progress;
-      _statusMessage = 'Downloading sample data...';
+      _statusMessage = 'Generating PRESETS.UF2...';
     });
 
     try {
@@ -62,27 +60,6 @@ class _SaveSampleToPlinkyDialogState
   Future<void> _generateAndWriteFiles(
     FileSystemDirectoryHandle directory,
   ) async {
-    final sample = widget.sample;
-
-    setState(() => _statusMessage = 'Downloading sample PCM data...');
-    final pcmBytes = await _supabase.storage
-        .from('samples')
-        .download(sample.pcmFilePath);
-
-    setState(() => _statusMessage = 'Generating SAMPLE$_selectedSlot.UF2...');
-    final sampleUf2Bytes = sampleToUf2(
-      pcmBytes,
-      slotIndex: _selectedSlot,
-    );
-
-    setState(() => _statusMessage = 'Writing SAMPLE$_selectedSlot.UF2...');
-    await writeFileToDirectory(
-      directory,
-      'SAMPLE$_selectedSlot.UF2',
-      sampleUf2Bytes,
-    );
-
-    // Read existing PRESETS.UF2 to preserve other slots.
     setState(() => _statusMessage = 'Reading existing PRESETS.UF2...');
     final existingUf2 = await readFileFromDirectory(directory, 'PRESETS.UF2');
 
@@ -101,11 +78,8 @@ class _SaveSampleToPlinkyDialogState
       sampleInfos = List<Uint8List?>.filled(sampleCount, null);
     }
 
-    sampleInfos[_selectedSlot] = buildSampleInfo(
-      pcmData: pcmBytes,
-      slicePoints: sample.slicePoints,
-      sliceNotes: sample.sliceNotes,
-      pitched: sample.pitched,
+    presets[_selectedSlot] = Uint8List.fromList(
+      base64Decode(widget.preset.presetData),
     );
 
     setState(() => _statusMessage = 'Generating PRESETS.UF2...');
@@ -124,8 +98,8 @@ class _SaveSampleToPlinkyDialogState
     return AlertDialog(
       title: Text(
         switch (_step) {
-          _DialogStep.slotSelection => 'Save sample to Plinky',
-          _DialogStep.instructions => 'Save sample to Plinky',
+          _DialogStep.slotSelection => 'Save preset to Plinky',
+          _DialogStep.instructions => 'Save preset to Plinky',
           _DialogStep.progress => 'Saving...',
           _DialogStep.done => 'Done',
           _DialogStep.error => 'Error',
@@ -139,12 +113,12 @@ class _SaveSampleToPlinkyDialogState
               onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
             ),
           _DialogStep.instructions => const TunnelOfLightsInstructions(
-              itemType: 'sample',
+              itemType: 'preset',
             ),
           _DialogStep.progress => SaveProgressView(
               statusMessage: _statusMessage,
             ),
-          _DialogStep.done => const SaveDoneView(itemType: 'sample'),
+          _DialogStep.done => const SaveDoneView(itemType: 'preset'),
           _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
       ),
@@ -200,15 +174,15 @@ class _SlotSelectionView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select the sample slot on your Plinky:'),
+        const Text('Select the preset slot on your Plinky:'),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (var i = 0; i < sampleCount; i++)
+            for (var i = 0; i < presetCount; i++)
               ChoiceChip(
-                label: Text('Slot ${i + 1}'),
+                label: Text('${i + 1}'),
                 selected: selectedSlot == i,
                 showCheckmark: false,
                 onSelected: (_) => onSlotChanged(i),
@@ -217,8 +191,8 @@ class _SlotSelectionView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Note: All presets on your Plinky that use sample slot '
-          '${selectedSlot + 1} will use this sample after saving.',
+          'Note: This will overwrite the existing preset in slot '
+          '${selectedSlot + 1} on your Plinky.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

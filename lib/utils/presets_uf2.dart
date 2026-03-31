@@ -418,6 +418,7 @@ ParsedFlashImage parseFlashImage(Uint8List flashImage) {
 
   // Extract sample infos (item IDs 128-135).
   final sampleInfos = List<ParsedSampleInfo?>.filled(sampleCount, null);
+  final rawSampleInfos = List<Uint8List?>.filled(sampleCount, null);
   for (var i = 0; i < sampleCount; i++) {
     final page = pages[_sampleInfoItemIdStart + i];
     if (page == null) {
@@ -425,6 +426,7 @@ ParsedFlashImage parseFlashImage(Uint8List flashImage) {
     }
     final sampleInfoBytes = Uint8List.sublistView(page, 0, sampleInfoSize);
     sampleInfos[i] = parseSampleInfo(sampleInfoBytes);
+    rawSampleInfos[i] = Uint8List.fromList(sampleInfoBytes);
   }
 
   // Extract pattern quarters (item IDs 32-127).
@@ -442,6 +444,7 @@ ParsedFlashImage parseFlashImage(Uint8List flashImage) {
   return ParsedFlashImage(
     presets: presets,
     sampleInfos: sampleInfos,
+    rawSampleInfos: rawSampleInfos,
     patternQuarters: patternQuarters,
   );
 }
@@ -451,14 +454,18 @@ class ParsedFlashImage {
   ParsedFlashImage({
     required this.presets,
     required this.sampleInfos,
+    required this.rawSampleInfos,
     required this.patternQuarters,
   });
 
   /// 32 preset entries (null for empty slots).
   final List<Uint8List?> presets;
 
-  /// 8 sample info entries (null for empty slots).
+  /// 8 parsed sample info entries (null for empty slots).
   final List<ParsedSampleInfo?> sampleInfos;
+
+  /// 8 raw sample info byte arrays (null for empty slots).
+  final List<Uint8List?> rawSampleInfos;
 
   /// 96 pattern quarter entries (24 patterns × 4 quarters, null for empty).
   final List<Uint8List?> patternQuarters;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
+import 'package:plinkyhub/pages/presets/save_preset_to_plinky_dialog.dart';
 import 'package:plinkyhub/pages/presets/star_button.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
@@ -89,6 +90,11 @@ class PresetCard extends ConsumerWidget {
                       itemType: 'preset',
                       itemName: preset.name,
                     ),
+                  IconButton(
+                    icon: const Icon(Icons.usb, size: 20),
+                    tooltip: 'Save to Plinky',
+                    onPressed: () => _saveToPlinky(context),
+                  ),
                   const Spacer(),
                   if (isOwned) ...[
                     IconButton(
@@ -118,6 +124,14 @@ class PresetCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _saveToPlinky(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SavePresetToPlinkyDialog(preset: preset),
     );
   }
 
