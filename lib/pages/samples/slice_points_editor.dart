@@ -361,8 +361,7 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
                       ).colorScheme.surfaceContainerHighest,
                       waveformPeaks: _waveformPeaks,
                       playbackProgress: _playbackProgress,
-                      progressColor:
-                          Theme.of(context).colorScheme.onPrimaryContainer,
+                      progressColor: const Color(0xFFFF4081),
                     ),
                     size: const Size(double.infinity, 200),
                   ),
