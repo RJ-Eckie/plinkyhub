@@ -47,22 +47,20 @@ class WavetableSection extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             if (isLinked)
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Icon(
-                  Icons.link,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              Icon(
+                Icons.link,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
               ),
-            Expanded(
-              child: Text(
-                statusText,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+            Text(
+              statusText,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (wavetableId != null)
               IconButton(
