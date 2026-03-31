@@ -31,7 +31,7 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
-      - run: flutter build web --wasm --release
+      - run: flutter build web --release
 
       - name: Deploy to web branch
         run: |
