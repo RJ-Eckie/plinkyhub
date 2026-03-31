@@ -182,16 +182,28 @@ ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
 /// Returns true if the PCM data is silent (all zeros, all 0xFF,
 /// or every 16-bit sample is the same value).
 bool _isSilentPcm(Uint8List pcmData) {
-  if (pcmData.every((byte) => byte == 0) ||
-      pcmData.every((byte) => byte == 0xFF)) {
+  if (pcmData.isEmpty) {
     return true;
   }
-  if (pcmData.length >= 2) {
-    final view = Int16List.view(pcmData.buffer);
-    final firstSample = view[0];
-    if (view.every((sample) => sample == firstSample)) {
-      return true;
+  // Single pass: check if all bytes are the same value.
+  final first = pcmData[0];
+  for (var i = 1; i < pcmData.length; i++) {
+    if (pcmData[i] != first) {
+      // Bytes differ, but could still be uniform 16-bit samples.
+      // Fall through to the 16-bit check.
+      if (pcmData.length >= 4) {
+        final view = Int16List.view(pcmData.buffer);
+        final firstSample = view[0];
+        for (var j = 1; j < view.length; j++) {
+          if (view[j] != firstSample) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
     }
   }
-  return false;
+  // All bytes identical (covers all-zero and all-0xFF).
+  return true;
 }

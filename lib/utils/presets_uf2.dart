@@ -79,6 +79,16 @@ const _floatingPatternItemIdStart = _floatingPresetItemId + 1;
 /// Total number of flash items used by the firmware.
 const _numFlashItems = _floatingPatternItemIdStart + _quartersPerPattern;
 
+/// Returns true if every byte in [data] equals [value].
+bool _allSameByte(Uint8List data, int value) {
+  for (var i = 0; i < data.length; i++) {
+    if (data[i] != value) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Byte offset of P_SAMPLE base value in the preset binary.
 /// eParams index 52 × 16 bytes per parameter = 832.
 /// The raw Int16 value occupies bytes 832-833 (little-endian).
@@ -409,8 +419,9 @@ ParsedFlashImage parseFlashImage(Uint8List flashImage) {
       continue;
     }
     final presetBytes = Uint8List.sublistView(page, 0, presetSize);
+    final first = presetBytes[0];
     final isEmpty =
-        presetBytes.every((b) => b == 0xFF) || presetBytes.every((b) => b == 0);
+        (first == 0 || first == 0xFF) && _allSameByte(presetBytes, first);
     if (!isEmpty) {
       presets[i] = Uint8List.fromList(presetBytes);
     }
@@ -530,9 +541,7 @@ Uint8List generatePresetsUf2({
   // Create raw flash image: 256 pages × 2048 bytes, initialized to 0xFF
   // (erased flash state).
   final flashImage = Uint8List(flashPageCount * flashPageSize);
-  for (var i = 0; i < flashImage.length; i++) {
-    flashImage[i] = 0xFF;
-  }
+  flashImage.fillRange(0, flashImage.length, 0xFF);
 
   var seq = 1;
   var pageIndex = 0;
@@ -615,17 +624,15 @@ Uint8List generatePresetsUf2({
 Uint8List serializePatternQuarters(List<Uint8List?> quarters) {
   const totalSize = _patternQuarterCount * patternQuarterSize;
   final blob = Uint8List(totalSize);
-  // Fill with 0xFF (erased flash).
-  for (var i = 0; i < totalSize; i++) {
-    blob[i] = 0xFF;
-  }
+  blob.fillRange(0, totalSize, 0xFF);
   for (var i = 0; i < quarters.length && i < _patternQuarterCount; i++) {
     final quarter = quarters[i];
     if (quarter != null) {
       final offset = i * patternQuarterSize;
-      for (var j = 0; j < quarter.length && j < patternQuarterSize; j++) {
-        blob[offset + j] = quarter[j];
-      }
+      final length = quarter.length < patternQuarterSize
+          ? quarter.length
+          : patternQuarterSize;
+      blob.setRange(offset, offset + length, quarter);
     }
   }
   return blob;
@@ -647,7 +654,7 @@ List<Uint8List?> deserializePatternQuarters(Uint8List blob) {
       offset,
       offset + patternQuarterSize,
     );
-    final isEmpty = quarter.every((b) => b == 0xFF);
+    final isEmpty = _allSameByte(quarter, 0xFF);
     if (!isEmpty) {
       quarters[i] = Uint8List.fromList(quarter);
     }
