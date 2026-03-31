@@ -46,6 +46,7 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
     with SingleTickerProviderStateMixin {
   AudioSource? _audioSource;
   int? _playingSlice;
+  int? _pausedSlice;
   int? _loadingSliceIndex;
   List<(double, double)>? _waveformPeaks;
   int _draggingIndex = -1;
@@ -57,6 +58,7 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
   double _playbackEndFraction = 1;
   Duration _playbackSliceDuration = Duration.zero;
   DateTime? _playbackStartTime;
+  Duration? _pausedElapsed;
 
   @override
   void initState() {
@@ -128,12 +130,12 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
       _progressTicker.stop();
     }
     _playbackStartTime = null;
-    if (_playbackProgress != null) {
-      setState(() => _playbackProgress = null);
-    }
-    if (_playingSlice != null) {
-      setState(() => _playingSlice = null);
-    }
+    _pausedElapsed = null;
+    setState(() {
+      _playbackProgress = null;
+      _playingSlice = null;
+      _pausedSlice = null;
+    });
   }
 
   @override
@@ -141,7 +143,38 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
     _progressTicker.dispose();
     _audioSource = null;
     _playingSlice = null;
+    _pausedSlice = null;
     super.dispose();
+  }
+
+  void _pauseSlice() {
+    final soundService = ref.read(soundServiceProvider);
+    soundService.setPaused(paused: true);
+    _pausedElapsed = _playbackStartTime != null
+        ? DateTime.now().difference(_playbackStartTime!)
+        : Duration.zero;
+    if (_progressTicker.isActive) {
+      _progressTicker.stop();
+    }
+    setState(() {
+      _pausedSlice = _playingSlice;
+      _playingSlice = null;
+    });
+  }
+
+  void _resumeSlice() {
+    final soundService = ref.read(soundServiceProvider);
+    soundService.setPaused(paused: false);
+    _playbackStartTime =
+        DateTime.now().subtract(_pausedElapsed ?? Duration.zero);
+    _pausedElapsed = null;
+    if (!_progressTicker.isActive) {
+      _progressTicker.start();
+    }
+    setState(() {
+      _playingSlice = _pausedSlice;
+      _pausedSlice = null;
+    });
   }
 
   Future<void> _playSlice(int sliceIndex) async {
@@ -149,6 +182,9 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
     if (wavBytes == null || _loadingSliceIndex != null) {
       return;
     }
+
+    _pausedSlice = null;
+    _pausedElapsed = null;
 
     try {
       final soundService = ref.read(soundServiceProvider);
@@ -358,11 +394,21 @@ class _SlicePointsEditorState extends ConsumerState<SlicePointsEditor>
                         )
                       : IconButton.filled(
                           icon: Icon(
-                            _playingSlice == i ? Icons.stop : Icons.play_arrow,
+                            _playingSlice == i
+                                ? Icons.pause
+                                : Icons.play_arrow,
                             size: 18,
                           ),
                           onPressed: widget.wavBytes != null
-                              ? () => _playSlice(i)
+                              ? () {
+                                  if (_playingSlice == i) {
+                                    _pauseSlice();
+                                  } else if (_pausedSlice == i) {
+                                    _resumeSlice();
+                                  } else {
+                                    _playSlice(i);
+                                  }
+                                }
                               : null,
                           tooltip: 'Preview slice ${i + 1}',
                           visualDensity: VisualDensity.compact,

@@ -63,6 +63,14 @@ class SoundService {
     return handle;
   }
 
+  /// Pause or resume the currently playing preview.
+  void setPaused({required bool paused}) {
+    final handle = _activeHandle;
+    if (handle != null) {
+      _soloud.setPause(handle, paused);
+    }
+  }
+
   /// Stop the currently playing preview.
   Future<void> stopPreview() async {
     final handle = _activeHandle;
