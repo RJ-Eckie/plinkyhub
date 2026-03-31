@@ -279,7 +279,25 @@ class _ItemPageShell extends ConsumerWidget {
             },
           ),
           const VerticalDivider(thickness: 1, width: 1),
-          Expanded(child: child),
+          Expanded(
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: BackButton(
+                    onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        context.go('/editor');
+                      }
+                    },
+                  ),
+                ),
+                Expanded(child: child),
+              ],
+            ),
+          ),
         ],
       ),
     );
