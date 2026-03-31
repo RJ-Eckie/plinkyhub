@@ -19,12 +19,15 @@ import 'package:plinkyhub/pages/wavetables/saved_wavetables_page.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_page.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
 
+/// The default route shown when the app starts.
+const initialRoute = '/my-plinky';
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createRouter(ProviderContainer container) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/my-plinky',
+    initialLocation: initialRoute,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -289,7 +292,7 @@ class _ItemPageShell extends ConsumerWidget {
                       if (Navigator.of(context).canPop()) {
                         Navigator.of(context).pop();
                       } else {
-                        context.go('/editor');
+                        context.go(initialRoute);
                       }
                     },
                   ),
