@@ -115,7 +115,7 @@ void showItemUsageDialog(
             'This $itemType is used in '
             '${references.join(' and ')}. '
             'Remove it from '
-            '${references.length == 1 && packs.length + presets.length == 1 ? 'it' : 'them'}'
+            '${_isSingleReference(references, packs, presets) ? 'it' : 'them'}'
             ' first before deleting.',
           ),
           const SizedBox(height: 12),
@@ -141,6 +141,13 @@ void showItemUsageDialog(
     ),
   );
 }
+
+bool _isSingleReference(
+  List<String> references,
+  List<SavedPack> packs,
+  List<SavedPreset> presets,
+) =>
+    references.length == 1 && packs.length + presets.length == 1;
 
 class _ItemRow extends StatelessWidget {
   const _ItemRow({required this.icon, required this.name});
