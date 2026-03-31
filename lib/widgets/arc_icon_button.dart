@@ -83,10 +83,10 @@ class _ArcIconButtonState extends State<ArcIconButton>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectedColor = widget.arcColor ?? theme.colorScheme.primary;
+    final selectedColor = widget.arcColor ?? Colors.white;
     final unselectedColor =
         widget.arcColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.4);
-    final selectedForeground = widget.iconColor ?? theme.colorScheme.primary;
+    final selectedForeground = widget.iconColor ?? Colors.white;
     final unselectedForeground =
         widget.iconColor ?? theme.colorScheme.onSurface;
 
@@ -215,7 +215,7 @@ class _ArcPainter extends CustomPainter {
 
     final baseColor = Color.lerp(
       const Color(0xFF888888),
-      const Color(0xFF4488FF),
+      Colors.white,
       s,
     )!;
     final hoverColor = Color.lerp(Colors.white, baseColor, s)!;
