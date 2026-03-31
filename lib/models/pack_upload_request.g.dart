@@ -120,6 +120,7 @@ _PackUploadPreset _$PackUploadPresetFromJson(Map<String, dynamic> json) =>
       isPublic: json['is_public'] as bool? ?? false,
       contentHash: json['content_hash'] as String?,
       existingId: json['existing_id'] as String?,
+      sampleSlotIndex: (json['sample_slot_index'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$PackUploadPresetToJson(_PackUploadPreset instance) =>
@@ -133,6 +134,7 @@ Map<String, dynamic> _$PackUploadPresetToJson(_PackUploadPreset instance) =>
       'is_public': instance.isPublic,
       'content_hash': instance.contentHash,
       'existing_id': instance.existingId,
+      'sample_slot_index': instance.sampleSlotIndex,
     };
 
 _PackUploadWavetable _$PackUploadWavetableFromJson(Map<String, dynamic> json) =>

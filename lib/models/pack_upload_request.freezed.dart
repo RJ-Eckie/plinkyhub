@@ -948,7 +948,7 @@ as String?,
 /// @nodoc
 mixin _$PackUploadPreset {
 
- int get slotIndex; String get userId; String get name; String get category; String get presetData; String get description; bool get isPublic; String? get contentHash; String? get existingId;
+ int get slotIndex; String get userId; String get name; String get category; String get presetData; String get description; bool get isPublic; String? get contentHash; String? get existingId; int? get sampleSlotIndex;
 /// Create a copy of PackUploadPreset
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -961,16 +961,16 @@ $PackUploadPresetCopyWith<PackUploadPreset> get copyWith => _$PackUploadPresetCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackUploadPreset&&(identical(other.slotIndex, slotIndex) || other.slotIndex == slotIndex)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.presetData, presetData) || other.presetData == presetData)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash)&&(identical(other.existingId, existingId) || other.existingId == existingId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackUploadPreset&&(identical(other.slotIndex, slotIndex) || other.slotIndex == slotIndex)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.presetData, presetData) || other.presetData == presetData)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash)&&(identical(other.existingId, existingId) || other.existingId == existingId)&&(identical(other.sampleSlotIndex, sampleSlotIndex) || other.sampleSlotIndex == sampleSlotIndex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,slotIndex,userId,name,category,presetData,description,isPublic,contentHash,existingId);
+int get hashCode => Object.hash(runtimeType,slotIndex,userId,name,category,presetData,description,isPublic,contentHash,existingId,sampleSlotIndex);
 
 @override
 String toString() {
-  return 'PackUploadPreset(slotIndex: $slotIndex, userId: $userId, name: $name, category: $category, presetData: $presetData, description: $description, isPublic: $isPublic, contentHash: $contentHash, existingId: $existingId)';
+  return 'PackUploadPreset(slotIndex: $slotIndex, userId: $userId, name: $name, category: $category, presetData: $presetData, description: $description, isPublic: $isPublic, contentHash: $contentHash, existingId: $existingId, sampleSlotIndex: $sampleSlotIndex)';
 }
 
 
@@ -981,7 +981,7 @@ abstract mixin class $PackUploadPresetCopyWith<$Res>  {
   factory $PackUploadPresetCopyWith(PackUploadPreset value, $Res Function(PackUploadPreset) _then) = _$PackUploadPresetCopyWithImpl;
 @useResult
 $Res call({
- int slotIndex, String userId, String name, String category, String presetData, String description, bool isPublic, String? contentHash, String? existingId
+ int slotIndex, String userId, String name, String category, String presetData, String description, bool isPublic, String? contentHash, String? existingId, int? sampleSlotIndex
 });
 
 
@@ -998,7 +998,7 @@ class _$PackUploadPresetCopyWithImpl<$Res>
 
 /// Create a copy of PackUploadPreset
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? slotIndex = null,Object? userId = null,Object? name = null,Object? category = null,Object? presetData = null,Object? description = null,Object? isPublic = null,Object? contentHash = freezed,Object? existingId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? slotIndex = null,Object? userId = null,Object? name = null,Object? category = null,Object? presetData = null,Object? description = null,Object? isPublic = null,Object? contentHash = freezed,Object? existingId = freezed,Object? sampleSlotIndex = freezed,}) {
   return _then(_self.copyWith(
 slotIndex: null == slotIndex ? _self.slotIndex : slotIndex // ignore: cast_nullable_to_non_nullable
 as int,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -1009,7 +1009,8 @@ as String,description: null == description ? _self.description : description // 
 as String,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
 as bool,contentHash: freezed == contentHash ? _self.contentHash : contentHash // ignore: cast_nullable_to_non_nullable
 as String?,existingId: freezed == existingId ? _self.existingId : existingId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,sampleSlotIndex: freezed == sampleSlotIndex ? _self.sampleSlotIndex : sampleSlotIndex // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -1094,10 +1095,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int slotIndex,  String userId,  String name,  String category,  String presetData,  String description,  bool isPublic,  String? contentHash,  String? existingId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int slotIndex,  String userId,  String name,  String category,  String presetData,  String description,  bool isPublic,  String? contentHash,  String? existingId,  int? sampleSlotIndex)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PackUploadPreset() when $default != null:
-return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.presetData,_that.description,_that.isPublic,_that.contentHash,_that.existingId);case _:
+return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.presetData,_that.description,_that.isPublic,_that.contentHash,_that.existingId,_that.sampleSlotIndex);case _:
   return orElse();
 
 }
@@ -1115,10 +1116,10 @@ return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.pre
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int slotIndex,  String userId,  String name,  String category,  String presetData,  String description,  bool isPublic,  String? contentHash,  String? existingId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int slotIndex,  String userId,  String name,  String category,  String presetData,  String description,  bool isPublic,  String? contentHash,  String? existingId,  int? sampleSlotIndex)  $default,) {final _that = this;
 switch (_that) {
 case _PackUploadPreset():
-return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.presetData,_that.description,_that.isPublic,_that.contentHash,_that.existingId);case _:
+return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.presetData,_that.description,_that.isPublic,_that.contentHash,_that.existingId,_that.sampleSlotIndex);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1135,10 +1136,10 @@ return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.pre
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int slotIndex,  String userId,  String name,  String category,  String presetData,  String description,  bool isPublic,  String? contentHash,  String? existingId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int slotIndex,  String userId,  String name,  String category,  String presetData,  String description,  bool isPublic,  String? contentHash,  String? existingId,  int? sampleSlotIndex)?  $default,) {final _that = this;
 switch (_that) {
 case _PackUploadPreset() when $default != null:
-return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.presetData,_that.description,_that.isPublic,_that.contentHash,_that.existingId);case _:
+return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.presetData,_that.description,_that.isPublic,_that.contentHash,_that.existingId,_that.sampleSlotIndex);case _:
   return null;
 
 }
@@ -1150,7 +1151,7 @@ return $default(_that.slotIndex,_that.userId,_that.name,_that.category,_that.pre
 @JsonSerializable()
 
 class _PackUploadPreset implements PackUploadPreset {
-  const _PackUploadPreset({required this.slotIndex, required this.userId, required this.name, required this.category, required this.presetData, this.description = '', this.isPublic = false, this.contentHash, this.existingId});
+  const _PackUploadPreset({required this.slotIndex, required this.userId, required this.name, required this.category, required this.presetData, this.description = '', this.isPublic = false, this.contentHash, this.existingId, this.sampleSlotIndex});
   factory _PackUploadPreset.fromJson(Map<String, dynamic> json) => _$PackUploadPresetFromJson(json);
 
 @override final  int slotIndex;
@@ -1162,6 +1163,7 @@ class _PackUploadPreset implements PackUploadPreset {
 @override@JsonKey() final  bool isPublic;
 @override final  String? contentHash;
 @override final  String? existingId;
+@override final  int? sampleSlotIndex;
 
 /// Create a copy of PackUploadPreset
 /// with the given fields replaced by the non-null parameter values.
@@ -1176,16 +1178,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackUploadPreset&&(identical(other.slotIndex, slotIndex) || other.slotIndex == slotIndex)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.presetData, presetData) || other.presetData == presetData)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash)&&(identical(other.existingId, existingId) || other.existingId == existingId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackUploadPreset&&(identical(other.slotIndex, slotIndex) || other.slotIndex == slotIndex)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.presetData, presetData) || other.presetData == presetData)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash)&&(identical(other.existingId, existingId) || other.existingId == existingId)&&(identical(other.sampleSlotIndex, sampleSlotIndex) || other.sampleSlotIndex == sampleSlotIndex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,slotIndex,userId,name,category,presetData,description,isPublic,contentHash,existingId);
+int get hashCode => Object.hash(runtimeType,slotIndex,userId,name,category,presetData,description,isPublic,contentHash,existingId,sampleSlotIndex);
 
 @override
 String toString() {
-  return 'PackUploadPreset(slotIndex: $slotIndex, userId: $userId, name: $name, category: $category, presetData: $presetData, description: $description, isPublic: $isPublic, contentHash: $contentHash, existingId: $existingId)';
+  return 'PackUploadPreset(slotIndex: $slotIndex, userId: $userId, name: $name, category: $category, presetData: $presetData, description: $description, isPublic: $isPublic, contentHash: $contentHash, existingId: $existingId, sampleSlotIndex: $sampleSlotIndex)';
 }
 
 
@@ -1196,7 +1198,7 @@ abstract mixin class _$PackUploadPresetCopyWith<$Res> implements $PackUploadPres
   factory _$PackUploadPresetCopyWith(_PackUploadPreset value, $Res Function(_PackUploadPreset) _then) = __$PackUploadPresetCopyWithImpl;
 @override @useResult
 $Res call({
- int slotIndex, String userId, String name, String category, String presetData, String description, bool isPublic, String? contentHash, String? existingId
+ int slotIndex, String userId, String name, String category, String presetData, String description, bool isPublic, String? contentHash, String? existingId, int? sampleSlotIndex
 });
 
 
@@ -1213,7 +1215,7 @@ class __$PackUploadPresetCopyWithImpl<$Res>
 
 /// Create a copy of PackUploadPreset
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? slotIndex = null,Object? userId = null,Object? name = null,Object? category = null,Object? presetData = null,Object? description = null,Object? isPublic = null,Object? contentHash = freezed,Object? existingId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? slotIndex = null,Object? userId = null,Object? name = null,Object? category = null,Object? presetData = null,Object? description = null,Object? isPublic = null,Object? contentHash = freezed,Object? existingId = freezed,Object? sampleSlotIndex = freezed,}) {
   return _then(_PackUploadPreset(
 slotIndex: null == slotIndex ? _self.slotIndex : slotIndex // ignore: cast_nullable_to_non_nullable
 as int,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -1224,7 +1226,8 @@ as String,description: null == description ? _self.description : description // 
 as String,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
 as bool,contentHash: freezed == contentHash ? _self.contentHash : contentHash // ignore: cast_nullable_to_non_nullable
 as String?,existingId: freezed == existingId ? _self.existingId : existingId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,sampleSlotIndex: freezed == sampleSlotIndex ? _self.sampleSlotIndex : sampleSlotIndex // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

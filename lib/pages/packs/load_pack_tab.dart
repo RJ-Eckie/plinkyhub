@@ -719,6 +719,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       });
 
       // Build preset data (skip matched entries).
+      // Pre-compute raw P_SAMPLE values for each sample slot.
+      final sampleSlotRawValues = <int, int>{
+        for (final slotIndex in _samplePcmData.keys)
+          slotIndex: sampleSlotToRaw(slotIndex),
+      };
+
       final presetUploads = <PackUploadPreset>[];
       for (final entry in _presetNames.entries) {
         final slotIndex = entry.key;
@@ -747,6 +753,20 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         final preset = Preset(presetBytes.buffer);
         final category = _presetCategories[slotIndex] ?? preset.category;
 
+        // Detect which sample slot this preset uses.
+        int? presetSampleSlotIndex;
+        if (preset.usesSample) {
+          final presetRaw = preset.parameterById('P_SAMPLE')?.value;
+          if (presetRaw != null) {
+            for (final rawEntry in sampleSlotRawValues.entries) {
+              if ((presetRaw - rawEntry.value).abs() < 2) {
+                presetSampleSlotIndex = rawEntry.key;
+                break;
+              }
+            }
+          }
+        }
+
         presetUploads.add(
           PackUploadPreset(
             slotIndex: slotIndex,
@@ -757,6 +777,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             description: _presetDescriptions[slotIndex]?.text.trim() ?? '',
             isPublic: _packIsPublic,
             contentHash: _presetHashes[slotIndex],
+            sampleSlotIndex: presetSampleSlotIndex,
           ),
         );
       }

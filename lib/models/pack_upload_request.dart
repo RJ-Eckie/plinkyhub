@@ -67,6 +67,7 @@ abstract class PackUploadPreset with _$PackUploadPreset {
     @Default(false) bool isPublic,
     String? contentHash,
     String? existingId,
+    int? sampleSlotIndex,
   }) = _PackUploadPreset;
 
   factory PackUploadPreset.fromJson(Map<String, dynamic> json) =>
