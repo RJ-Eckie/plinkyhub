@@ -176,19 +176,32 @@ class _SlotSelectionView extends StatelessWidget {
       children: [
         const Text('Select the preset slot on your Plinky:'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < presetCount; i++)
-              ChoiceChip(
-                label: Text('${i + 1}'),
-                selected: selectedSlot == i,
-                showCheckmark: false,
-                onSelected: (_) => onSlotChanged(i),
-              ),
-          ],
-        ),
+        for (var row = 0; row < 8; row++)
+          Row(
+            children: [
+              for (var col = 0; col < 4; col++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: col < 3 ? 8 : 0,
+                      bottom: row < 7 ? 8 : 0,
+                    ),
+                    child: ChoiceChip(
+                      label: SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          '${row * 4 + col + 1}',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      selected: selectedSlot == row * 4 + col,
+                      showCheckmark: false,
+                      onSelected: (_) => onSlotChanged(row * 4 + col),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         const SizedBox(height: 16),
         Text(
           'Note: This will overwrite the existing preset in slot '
