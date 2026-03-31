@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
+import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
-import 'package:plinkyhub/pages/packs/pack_slot_tile.dart';
 import 'package:plinkyhub/pages/packs/pattern_picker_dialog.dart';
+import 'package:plinkyhub/pages/packs/preset_picker_dialog.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
+import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
@@ -33,7 +35,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   String _statusMessage = '';
   String? _errorMessage;
 
-  // Slots matching the Create Pack format.
+  // Device data: preset name/category from PRESETS.UF2 per slot.
+  final _devicePresets = <int, Preset>{};
+
+  // Device sample slot indices that have audio data.
+  final _deviceSampleSlots = <int>{};
+
+  // Linked saved entry IDs (null = not linked).
   final List<({String? presetId, String? sampleId, String? patternId})>
       _slots = List.generate(
         32,
@@ -41,6 +49,10 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       );
   String? _wavetableId;
   String? _patternId;
+
+  // Whether the device had a wavetable / patterns.
+  bool _deviceHasWavetable = false;
+  final _devicePatternIndices = <int>[];
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -62,7 +74,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         'PRESETS.UF2',
       );
       if (presetsUf2Bytes == null) {
-        throw Exception('PRESETS.UF2 not found on the selected drive.');
+        throw Exception(
+          'PRESETS.UF2 not found on the selected drive.',
+        );
       }
 
       final flashImage = uf2ToData(presetsUf2Bytes);
@@ -70,7 +84,8 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       setState(() => _statusMessage = 'Parsing presets...');
       final parsed = parseFlashImage(flashImage);
 
-      // Identify non-empty presets and samples.
+      // Parse device presets and compute hashes.
+      _devicePresets.clear();
       final presetHashes = <int, String>{};
       for (var i = 0; i < presetCount; i++) {
         final presetBytes = parsed.presets[i];
@@ -79,11 +94,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         }
         final preset = Preset(presetBytes.buffer);
         if (!preset.isEmpty) {
+          _devicePresets[i] = preset;
           presetHashes[i] = computeContentHash(presetBytes);
         }
       }
 
-      final samplePcmData = <int, Uint8List>{};
+      // Read and hash samples.
+      _deviceSampleSlots.clear();
       final sampleHashes = <int, String>{};
       for (var i = 0; i < sampleCount; i++) {
         setState(() => _statusMessage = 'Reading SAMPLE$i.UF2...');
@@ -106,7 +123,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
               );
             }
             if (pcmData.isNotEmpty && !_isSilentPcm(pcmData)) {
-              samplePcmData[i] = pcmData;
+              _deviceSampleSlots.add(i);
               sampleHashes[i] = computeContentHash(pcmData);
             }
           } on FormatException {
@@ -117,22 +134,24 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       // Read wavetable.
       setState(() => _statusMessage = 'Reading WAVETAB.UF2...');
-      var wavetableBytes = await readFileFromDirectory(
+      final wavetableBytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
       );
       String? wavetableHash;
-      if (wavetableBytes != null &&
+      _deviceHasWavetable = wavetableBytes != null &&
           !wavetableBytes.every((b) => b == 0) &&
-          !wavetableBytes.every((b) => b == 0xFF)) {
-        wavetableHash = computeContentHash(wavetableBytes);
-      } else {
-        wavetableBytes = null;
+          !wavetableBytes.every((b) => b == 0xFF);
+      if (_deviceHasWavetable) {
+        wavetableHash = computeContentHash(wavetableBytes!);
       }
 
       // Compute pattern hashes.
+      _devicePatternIndices
+        ..clear()
+        ..addAll(parsed.nonEmptyPatternIndices);
       final patternHashes = <int, String>{};
-      for (final patternIndex in parsed.nonEmptyPatternIndices) {
+      for (final patternIndex in _devicePatternIndices) {
         final quarterStart = patternIndex * 4;
         final quarters = List<Uint8List?>.filled(
           parsed.patternQuarters.length,
@@ -145,7 +164,8 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
           }
         }
         final patternBlob = serializePatternQuarters(quarters);
-        patternHashes[patternIndex] = computeContentHash(patternBlob);
+        patternHashes[patternIndex] =
+            computeContentHash(patternBlob);
       }
 
       // Match content hashes against saved entries.
@@ -168,13 +188,17 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       // Pre-compute raw P_SAMPLE values for sample slot matching.
       final sampleSlotRawValues = <int, int>{
-        for (final slotIndex in samplePcmData.keys)
+        for (final slotIndex in _deviceSampleSlots)
           slotIndex: sampleSlotToRaw(slotIndex),
       };
 
       // Populate slots with matched IDs.
       for (var i = 0; i < 32; i++) {
-        _slots[i] = (presetId: null, sampleId: null, patternId: null);
+        _slots[i] = (
+          presetId: null,
+          sampleId: null,
+          patternId: null,
+        );
       }
 
       for (final entry in matchedPresets.entries) {
@@ -182,19 +206,16 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         String? sampleId;
 
         // Find matched sample for this preset's sample slot.
-        final presetBytes = parsed.presets[slotIndex];
-        if (presetBytes != null) {
-          final preset = Preset(presetBytes.buffer);
-          if (preset.usesSample) {
-            final presetRaw =
-                preset.parameterById('P_SAMPLE')?.value;
-            if (presetRaw != null) {
-              for (final rawEntry in sampleSlotRawValues.entries) {
-                if ((presetRaw - rawEntry.value).abs() < 2) {
-                  sampleId =
-                      matchedSamples[rawEntry.key]?.id;
-                  break;
-                }
+        final preset = _devicePresets[slotIndex];
+        if (preset != null && preset.usesSample) {
+          final presetRaw =
+              preset.parameterById('P_SAMPLE')?.value;
+          if (presetRaw != null) {
+            for (final rawEntry
+                in sampleSlotRawValues.entries) {
+              if ((presetRaw - rawEntry.value).abs() < 2) {
+                sampleId = matchedSamples[rawEntry.key]?.id;
+                break;
               }
             }
           }
@@ -208,8 +229,6 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       }
 
       _wavetableId = matchedWavetable?.id;
-
-      // Use the first matched pattern if any.
       _patternId = matchedPatterns.values.firstOrNull?.id;
 
       setState(() {
@@ -319,10 +338,14 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
               Text(
                 'Connect your Plinky in Tunnel of Lights mode '
                 "to see what's on it.",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant,
+                    ),
               ),
               const SizedBox(height: 16),
               const Text('1. Turn off your Plinky'),
@@ -371,7 +394,11 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
           child: Column(
             children: [
               const SizedBox(height: 32),
-              const Icon(Icons.error, size: 48, color: Colors.red),
+              const Icon(
+                Icons.error,
+                size: 48,
+                color: Colors.red,
+              ),
               const SizedBox(height: 16),
               Text(
                 _errorMessage ?? 'An unknown error occurred.',
@@ -434,13 +461,12 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
             ),
             itemCount: 32,
             itemBuilder: (context, index) {
-              // Column-major order: 1-8 first column, 9-16 second,
-              // etc.
               final row = index ~/ 4;
               final column = index % 4;
               final slotIndex = column * 8 + row;
-              return PackSlotTile(
+              return _PlinkySlotTile(
                 slotNumber: slotIndex,
+                devicePreset: _devicePresets[slotIndex],
                 presetId: _slots[slotIndex].presetId,
                 sampleId: _slots[slotIndex].sampleId,
                 onPresetChanged: (presetId) {
@@ -469,12 +495,14 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
           const SizedBox(height: 16),
           _WavetableSection(
             wavetableId: _wavetableId,
+            deviceHasWavetable: _deviceHasWavetable,
             onChanged: (wavetableId) =>
                 setState(() => _wavetableId = wavetableId),
           ),
           const SizedBox(height: 16),
           _PatternSection(
             patternId: _patternId,
+            devicePatternCount: _devicePatternIndices.length,
             onChanged: (patternId) =>
                 setState(() => _patternId = patternId),
           ),
@@ -492,13 +520,155 @@ class _MatchedEntry {
   final String name;
 }
 
+/// A slot tile that shows the device preset name from PRESETS.UF2
+/// as the primary label, with a link icon when matched to a saved
+/// entry, and a popup menu to pick or clear presets/samples.
+class _PlinkySlotTile extends ConsumerWidget {
+  const _PlinkySlotTile({
+    required this.slotNumber,
+    required this.devicePreset,
+    required this.presetId,
+    required this.sampleId,
+    required this.onPresetChanged,
+    required this.onSampleChanged,
+  });
+
+  final int slotNumber;
+  final Preset? devicePreset;
+  final String? presetId;
+  final String? sampleId;
+  final ValueChanged<String?> onPresetChanged;
+  final ValueChanged<String?> onSampleChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final hasDevicePreset = devicePreset != null;
+    final isLinked = presetId != null;
+
+    // Show device name as primary, or linked name if no device
+    // preset but a saved one is picked.
+    String displayName;
+    if (hasDevicePreset) {
+      displayName = devicePreset!.name.isNotEmpty
+          ? devicePreset!.name
+          : 'Preset ${slotNumber + 1}';
+    } else if (isLinked) {
+      final presets = ref.watch(
+        savedPresetsProvider
+            .select((state) => state.userPresets),
+      );
+      displayName = presets
+              .where((preset) => preset.id == presetId)
+              .firstOrNull
+              ?.name ??
+          '(unknown)';
+    } else {
+      displayName = 'Empty';
+    }
+
+    final categoryLabel = devicePreset?.category.label ?? '';
+
+    return Card(
+      color: hasDevicePreset || isLinked
+          ? theme.colorScheme.primaryContainer
+          : null,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _showPresetPicker(context, ref),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 4,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${slotNumber + 1}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: hasDevicePreset || isLinked
+                          ? theme.colorScheme.onPrimaryContainer
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (isLinked) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.link,
+                      size: 12,
+                      color:
+                          theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ],
+                ],
+              ),
+              if (hasDevicePreset || isLinked) ...[
+                Text(
+                  displayName,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color:
+                        theme.colorScheme.onPrimaryContainer,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                if (categoryLabel.isNotEmpty)
+                  Text(
+                    categoryLabel,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme
+                          .colorScheme.onPrimaryContainer
+                          .withValues(alpha: 0.7),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPresetPicker(BuildContext context, WidgetRef ref) {
+    final presets = ref.read(
+      savedPresetsProvider.select((state) => state.userPresets),
+    );
+    final currentUserId =
+        ref.read(authenticationProvider).user?.id;
+    showDialog<SavedPreset>(
+      context: context,
+      builder: (context) => PresetPickerDialog(
+        presets: presets,
+        currentUserId: currentUserId,
+      ),
+    ).then((selected) {
+      if (selected != null) {
+        onPresetChanged(selected.id);
+        if (selected.sampleId != null) {
+          onSampleChanged(selected.sampleId);
+        }
+      }
+    });
+  }
+}
+
 class _WavetableSection extends ConsumerWidget {
   const _WavetableSection({
     required this.wavetableId,
+    required this.deviceHasWavetable,
     required this.onChanged,
   });
 
   final String? wavetableId;
+  final bool deviceHasWavetable;
   final ValueChanged<String?> onChanged;
 
   @override
@@ -519,6 +689,13 @@ class _WavetableSection extends ConsumerWidget {
                   ?.name
         : null;
 
+    final isLinked = wavetableId != null;
+    final statusText = isLinked
+        ? wavetableName ?? '(unknown)'
+        : deviceHasWavetable
+            ? 'Present on device (not linked)'
+            : 'None';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -529,10 +706,20 @@ class _WavetableSection extends ConsumerWidget {
         const SizedBox(height: 8),
         Row(
           children: [
+            if (isLinked)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.link,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             Expanded(
               child: Text(
-                wavetableName ?? 'None',
-                style: Theme.of(context).textTheme.bodyMedium,
+                statusText,
+                style:
+                    Theme.of(context).textTheme.bodyMedium,
               ),
             ),
             if (wavetableId != null)
@@ -543,7 +730,8 @@ class _WavetableSection extends ConsumerWidget {
               ),
             PlinkyButton(
               onPressed: () async {
-                final authState = ref.read(authenticationProvider);
+                final authState =
+                    ref.read(authenticationProvider);
                 final allWavetables = {
                   ...wavetablesState.userWavetables,
                   ...wavetablesState.publicWavetables,
@@ -551,7 +739,8 @@ class _WavetableSection extends ConsumerWidget {
                 final selected =
                     await showDialog<SavedWavetable>(
                   context: context,
-                  builder: (context) => WavetablePickerDialog(
+                  builder: (context) =>
+                      WavetablePickerDialog(
                     wavetables: allWavetables,
                     currentUserId: authState.user?.id,
                   ),
@@ -573,10 +762,12 @@ class _WavetableSection extends ConsumerWidget {
 class _PatternSection extends ConsumerWidget {
   const _PatternSection({
     required this.patternId,
+    required this.devicePatternCount,
     required this.onChanged,
   });
 
   final String? patternId;
+  final int devicePatternCount;
   final ValueChanged<String?> onChanged;
 
   @override
@@ -584,7 +775,9 @@ class _PatternSection extends ConsumerWidget {
     final patternsState = ref.watch(savedPatternsProvider);
     final patternName = patternId != null
         ? patternsState.userPatterns
-                  .where((pattern) => pattern.id == patternId)
+                  .where(
+                    (pattern) => pattern.id == patternId,
+                  )
                   .firstOrNull
                   ?.name ??
               patternsState.publicPatterns
@@ -594,6 +787,13 @@ class _PatternSection extends ConsumerWidget {
                   .firstOrNull
                   ?.name
         : null;
+
+    final isLinked = patternId != null;
+    final statusText = isLinked
+        ? patternName ?? '(unknown)'
+        : devicePatternCount > 0
+            ? '$devicePatternCount on device (not linked)'
+            : 'None';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,10 +805,20 @@ class _PatternSection extends ConsumerWidget {
         const SizedBox(height: 8),
         Row(
           children: [
+            if (isLinked)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.link,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             Expanded(
               child: Text(
-                patternName ?? 'None',
-                style: Theme.of(context).textTheme.bodyMedium,
+                statusText,
+                style:
+                    Theme.of(context).textTheme.bodyMedium,
               ),
             ),
             if (patternId != null)
@@ -619,12 +829,14 @@ class _PatternSection extends ConsumerWidget {
               ),
             PlinkyButton(
               onPressed: () async {
-                final authState = ref.read(authenticationProvider);
+                final authState =
+                    ref.read(authenticationProvider);
                 final allPatterns = {
                   ...patternsState.userPatterns,
                   ...patternsState.publicPatterns,
                 }.toList();
-                final selected = await showDialog<SavedPattern>(
+                final selected =
+                    await showDialog<SavedPattern>(
                   context: context,
                   builder: (context) => PatternPickerDialog(
                     patterns: allPatterns,
