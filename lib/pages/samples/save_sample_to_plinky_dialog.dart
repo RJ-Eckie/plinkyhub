@@ -192,6 +192,7 @@ class _SlotSelectionView extends StatelessWidget {
               ChoiceChip(
                 label: Text('Slot ${i + 1}'),
                 selected: selectedSlot == i,
+                showCheckmark: false,
                 onSelected: (_) => onSlotChanged(i),
               ),
           ],
@@ -199,7 +200,7 @@ class _SlotSelectionView extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'Note: All presets on your Plinky that use sample slot '
-          '${selectedSlot + 1} will play this sample after saving.',
+          '${selectedSlot + 1} will use this sample after saving.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
