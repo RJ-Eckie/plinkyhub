@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/preset.dart';
+import 'package:plinkyhub/pages/my_plinky/save_my_plinky_dialog.dart';
 import 'package:plinkyhub/pages/packs/pattern_section.dart';
 import 'package:plinkyhub/pages/packs/preset_slots_grid.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
@@ -28,6 +29,12 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   String _statusMessage = '';
   String? _errorMessage;
 
+  // Directory handle from the initial connect.
+  FileSystemDirectoryHandle? _directory;
+
+  // Parsed flash image from device (preserved for save-back merging).
+  ParsedFlashImage? _parsedFlashImage;
+
   // Device data: preset name/category from PRESETS.UF2 per slot.
   final _devicePresets = <int, Preset>{};
 
@@ -50,10 +57,11 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   SupabaseClient get _supabase => Supabase.instance.client;
 
   Future<void> _connectToPlinky() async {
-    final directory = await showDirectoryPicker();
+    final directory = await showDirectoryPicker(readwrite: true);
     if (directory == null) {
       return;
     }
+    _directory = directory;
 
     setState(() {
       _state = _PageState.loading;
@@ -76,6 +84,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       setState(() => _statusMessage = 'Parsing presets...');
       final parsed = parseFlashImage(flashImage);
+      _parsedFlashImage = parsed;
 
       // Parse device presets and compute hashes.
       _devicePresets.clear();
@@ -441,6 +450,21 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
                 onPressed: _connectToPlinky,
                 icon: Icons.refresh,
                 label: 'Reload',
+              ),
+              const SizedBox(width: 8),
+              PlinkyButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (context) => SaveMyPlinkyDialog(
+                    directory: _directory!,
+                    slots: _slots,
+                    patternIds: _patternIds,
+                    wavetableId: _wavetableId,
+                    parsedFlashImage: _parsedFlashImage!,
+                  ),
+                ),
+                icon: Icons.save,
+                label: 'Save to Plinky',
               ),
             ],
           ),
