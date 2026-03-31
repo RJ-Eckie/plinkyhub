@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/pages/about_page.dart';
 import 'package:plinkyhub/pages/editor/editor_page.dart';
+import 'package:plinkyhub/pages/my_plinky/my_plinky_page.dart';
 import 'package:plinkyhub/pages/packs/pack_page.dart';
 import 'package:plinkyhub/pages/packs/saved_packs_page.dart';
 import 'package:plinkyhub/pages/patterns/pattern_page.dart';
@@ -30,7 +31,16 @@ GoRouter createRouter(ProviderContainer container) {
           return PlinkyHubShell(navigationShell: navigationShell);
         },
         branches: [
-          // Branch 0: Editor
+          // Branch 0: My Plinky
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/my-plinky',
+                builder: (context, state) => const MyPlinkyPage(),
+              ),
+            ],
+          ),
+          // Branch 1: Editor
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -41,7 +51,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 1: Presets
+          // Branch 2: Presets
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -58,7 +68,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 2: Packs
+          // Branch 3: Packs
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -75,7 +85,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 3: Samples
+          // Branch 4: Samples
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -92,7 +102,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 4: Wavetables
+          // Branch 5: Wavetables
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -109,7 +119,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 5: Patterns
+          // Branch 6: Patterns
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -126,7 +136,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 6: Users
+          // Branch 7: Users
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -135,7 +145,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 7: User Profile
+          // Branch 8: User Profile
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -144,7 +154,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 8: About
+          // Branch 9: About
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -256,6 +266,7 @@ class _ItemPageShell extends ConsumerWidget {
                 selectedIndex: -1,
                 onDestinationSelected: (index) {
                   final paths = [
+                    '/my-plinky',
                     '/editor',
                     '/presets',
                     '/packs',
