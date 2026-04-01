@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -250,17 +249,43 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         'WAVETAB.UF2',
       );
 
-      // Offload all CPU-heavy parsing to a separate isolate.
-      setState(() {
-        _statusMessage = 'Processing...';
-      });
-      final input = PlinkyDeviceInput(
-        presetsUf2: presetsUf2Bytes,
-        sampleUf2s: sampleUf2s,
-        wavetableBytes: _wavetableUf2Bytes,
+      // Parse device data on the main thread, yielding to the UI
+      // between phases (Isolate.run is not supported in WASM).
+
+      // Phase 1: Parse presets and patterns.
+      setState(() => _statusMessage = 'Parsing presets...');
+      await Future<void>.delayed(Duration.zero);
+      final presetsResult = parsePresetsPhase(presetsUf2Bytes);
+
+      // Phase 2: Parse samples.
+      final samplesResult = await parseSamplesPhase(
+        SamplesPhaseInput(
+          sampleUf2s: sampleUf2s,
+          sampleInfos: presetsResult.sampleInfos,
+        ),
+        onSampleParsing: (index) {
+          setState(() => _statusMessage = 'Parsing sample $index...');
+        },
       );
-      final result = await Isolate.run(
-        () => parsePlinkyDevice(input),
+
+      // Phase 3: Check wavetable.
+      setState(() => _statusMessage = 'Checking wavetable...');
+      await Future<void>.delayed(Duration.zero);
+      final wavetableResult = parseWavetablePhase(_wavetableUf2Bytes);
+
+      final result = ParsedPlinkyDevice(
+        presets: presetsResult.presets,
+        sampleInfos: presetsResult.sampleInfos,
+        rawSampleInfos: presetsResult.rawSampleInfos,
+        patternQuarters: presetsResult.patternQuarters,
+        nonEmptyPatternIndices: presetsResult.nonEmptyPatternIndices,
+        samplePcmData: samplesResult.samplePcmData,
+        emptySampleSlots: samplesResult.emptySampleSlots,
+        presetHashes: presetsResult.presetHashes,
+        sampleHashes: samplesResult.sampleHashes,
+        wavetableHash: wavetableResult.wavetableHash,
+        patternHashes: presetsResult.patternHashes,
+        deviceHasWavetable: wavetableResult.deviceHasWavetable,
       );
 
       // Store parsed results.
@@ -270,7 +295,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _samplePcmData = result.samplePcmData;
       _emptySampleSlots = result.emptySampleSlots;
 
-      // Use hashes from isolate result.
+      // Use hashes from parsed result.
       _presetHashes
         ..clear()
         ..addAll(result.presetHashes);
@@ -282,7 +307,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         ..clear()
         ..addAll(result.patternHashes);
 
-      // Normalize wavetable bytes based on isolate result.
+      // Normalize wavetable bytes based on parsed result.
       if (!result.deviceHasWavetable) {
         _wavetableUf2Bytes = null;
       }

@@ -179,12 +179,20 @@ ParsedPresetsPhase parsePresetsPhase(Uint8List presetsUf2) {
 
 /// Phase 2: Parse samples — decodes UF2, trims PCM, detects silence,
 /// and computes content hashes.
-ParsedSamplesPhase parseSamplesPhase(SamplesPhaseInput input) {
+///
+/// If [onSampleParsing] is provided, it is called before each sample
+/// is parsed with the sample index, allowing callers to update UI.
+Future<ParsedSamplesPhase> parseSamplesPhase(
+  SamplesPhaseInput input, {
+  void Function(int sampleIndex)? onSampleParsing,
+}) async {
   final samplePcmData = <int, Uint8List>{};
   final emptySampleSlots = <int>{};
   final sampleHashes = <int, String>{};
 
   for (var i = 0; i < sampleCount; i++) {
+    onSampleParsing?.call(i);
+    await Future<void>.delayed(Duration.zero);
     final sampleUf2 = input.sampleUf2s[i];
     if (sampleUf2 == null || sampleUf2.isEmpty) {
       emptySampleSlots.add(i);
@@ -237,11 +245,10 @@ ParsedWavetablePhase parseWavetablePhase(Uint8List? wavetableBytes) {
   );
 }
 
-/// Parses all data from a Plinky device in one shot. This is a
-/// top-level function so it can be called via `Isolate.run`.
-ParsedPlinkyDevice parsePlinkyDevice(PlinkyDeviceInput input) {
+/// Parses all data from a Plinky device in one shot.
+Future<ParsedPlinkyDevice> parsePlinkyDevice(PlinkyDeviceInput input) async {
   final presetsResult = parsePresetsPhase(input.presetsUf2);
-  final samplesResult = parseSamplesPhase(
+  final samplesResult = await parseSamplesPhase(
     SamplesPhaseInput(
       sampleUf2s: input.sampleUf2s,
       sampleInfos: presetsResult.sampleInfos,

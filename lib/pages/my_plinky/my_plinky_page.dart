@@ -111,13 +111,14 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       final presetsResult = parsePresetsPhase(presetsUf2Bytes);
 
       // Phase 2: Parse samples.
-      setState(() => _statusMessage = 'Parsing samples...');
-      await Future<void>.delayed(Duration.zero);
-      final samplesResult = parseSamplesPhase(
+      final samplesResult = await parseSamplesPhase(
         SamplesPhaseInput(
           sampleUf2s: sampleUf2s,
           sampleInfos: presetsResult.sampleInfos,
         ),
+        onSampleParsing: (index) {
+          setState(() => _statusMessage = 'Parsing sample $index...');
+        },
       );
 
       // Phase 3: Check wavetable.
