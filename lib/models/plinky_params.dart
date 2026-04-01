@@ -575,6 +575,7 @@ const plinkyParams = <PlinkyParamDef>[
     cc: 102,
     name: 'Arp on/off',
     description: 'Switches the arpeggiator on and off.',
+    enumName: ['Off', 'On'],
   ),
   PlinkyParamDef(
     id: 'P_ARPMODE',
@@ -668,6 +669,7 @@ const plinkyParams = <PlinkyParamDef>[
         'Switches the latch on/off. When on, '
         'played notes will sustain even when you take your '
         'fingers off plinky.',
+    enumName: ['Off', 'On'],
   ),
   PlinkyParamDef(
     id: 'P_SEQMODE',

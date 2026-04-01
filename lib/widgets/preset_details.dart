@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/packs/sample_picker_dialog.dart';
-import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
@@ -31,20 +29,15 @@ class PresetDetailsHeader extends ConsumerWidget {
         Row(
           children: [
             SizedBox(
-              width: 120,
+              width: 140,
               child: TextField(
                 controller: TextEditingController(
                   text: preset.name,
                 ),
                 maxLength: 8,
                 decoration: const InputDecoration(
-                  isDense: true,
                   counterText: '',
-                  hintText: 'Name',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
+                  labelText: 'Name',
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (value) {
@@ -54,15 +47,11 @@ class PresetDetailsHeader extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             SizedBox(
-              width: 160,
+              width: 180,
               child: DropdownButtonFormField<PresetCategory>(
                 initialValue: preset.category,
                 decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
+                  labelText: 'Category',
                   border: OutlineInputBorder(),
                 ),
                 items: PresetCategory.values.map((category) {
@@ -82,12 +71,6 @@ class PresetDetailsHeader extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             _SaveToCloudButton(preset: preset),
-            const SizedBox(width: 8),
-            PlinkyButton(
-              onPressed: () => context.go(AppRoute.editor.path),
-              icon: Icons.play_arrow,
-              label: 'Open in player',
-            ),
             const SizedBox(width: 8),
             PlinkyButton(
               onPressed: () => showDialog<void>(
