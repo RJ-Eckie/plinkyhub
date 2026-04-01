@@ -104,6 +104,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       state = state.copyWith(starredWavetables: wavetables);
     } on Exception catch (error) {
       debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
     }
   }
 

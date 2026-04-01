@@ -36,7 +36,8 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
     });
     ref.onDispose(() => _authSubscription?.cancel());
     if (currentUser != null) {
-      _fetchUsername(currentUser.id).then((username) {
+      Future.microtask(() async {
+        final username = await _fetchUsername(currentUser.id);
         state = state.copyWith(username: username);
       });
     }

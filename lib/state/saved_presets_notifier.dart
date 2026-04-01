@@ -113,6 +113,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
       state = state.copyWith(starredPresets: presets);
     } on Exception catch (error) {
       debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
     }
   }
 

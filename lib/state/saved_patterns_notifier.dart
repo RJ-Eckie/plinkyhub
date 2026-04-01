@@ -102,6 +102,7 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
       state = state.copyWith(starredPatterns: patterns);
     } on Exception catch (error) {
       debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
     }
   }
 

@@ -112,6 +112,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       state = state.copyWith(starredPacks: packs);
     } on Exception catch (error) {
       debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
     }
   }
 
@@ -267,12 +268,13 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       );
     }
 
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
+      return;
+    }
+
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final userId = ref.read(authenticationProvider).user?.id;
-      if (userId == null) {
-        return;
-      }
 
       final write = PackWrite(
         userId: userId,

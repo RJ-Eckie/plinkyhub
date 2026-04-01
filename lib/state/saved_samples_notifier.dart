@@ -102,6 +102,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       state = state.copyWith(starredSamples: samples);
     } on Exception catch (error) {
       debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
     }
   }
 

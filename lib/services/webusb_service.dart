@@ -10,6 +10,11 @@ const _vendorFilters = [
   0xCAFE, // TinyUSB example
 ];
 
+// CDC (Communication Device Class) control request codes.
+const _cdcSetControlLineState = 0x22;
+const _cdcControlLineStateDtrActive = 0x01;
+const _cdcControlLineStateInactive = 0x00;
+
 @JS('navigator.usb')
 external USB? get _navigatorUsb;
 
@@ -165,8 +170,8 @@ class WebUsbService {
     final controlSetup = USBControlTransferParameters(
       requestType: 'class',
       recipient: 'interface',
-      request: 0x22,
-      value: 0x01,
+      request: _cdcSetControlLineState,
+      value: _cdcControlLineStateDtrActive,
       index: _interfaceNumber,
     );
     await _device!.controlTransferOut(controlSetup).toDart;
@@ -218,8 +223,8 @@ class WebUsbService {
       final controlSetup = USBControlTransferParameters(
         requestType: 'class',
         recipient: 'interface',
-        request: 0x22,
-        value: 0x01,
+        request: _cdcSetControlLineState,
+        value: _cdcControlLineStateDtrActive,
         index: _interfaceNumber,
       );
       await _device!.controlTransferOut(controlSetup).toDart;
@@ -232,12 +237,15 @@ class WebUsbService {
   }
 
   Future<void> _readLoop() async {
+    var consecutiveErrors = 0;
+    const maxConsecutiveErrors = 50;
     while (_connected) {
       try {
         final result = await _device!
             .transferIn(_endpointIn, _usbBufferSize)
             .toDart;
 
+        consecutiveErrors = 0;
         final dataView = result.data;
         if (dataView != null) {
           final byteData = dataView.toDart;
@@ -249,6 +257,16 @@ class WebUsbService {
           break;
         }
         if (error.toString().contains('disconnected')) {
+          _connected = false;
+          _device = null;
+          onError?.call(error);
+          break;
+        }
+        consecutiveErrors++;
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          debugPrint(
+            'USB read loop: too many consecutive errors, disconnecting',
+          );
           _connected = false;
           _device = null;
           onError?.call(error);
@@ -278,8 +296,8 @@ class WebUsbService {
         final controlSetup = USBControlTransferParameters(
           requestType: 'class',
           recipient: 'interface',
-          request: 0x22,
-          value: 0x00,
+          request: _cdcSetControlLineState,
+          value: _cdcControlLineStateInactive,
           index: _interfaceNumber,
         );
         await _device!.controlTransferOut(controlSetup).toDart;

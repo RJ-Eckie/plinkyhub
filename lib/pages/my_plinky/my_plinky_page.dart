@@ -28,11 +28,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   String _statusMessage = '';
   String? _errorMessage;
 
-  // Directory handle from the initial connect.
-  late FileSystemDirectoryHandle? _directory;
+  // Directory handle from the initial connect (null until user selects drive).
+  // ignore: use_late_for_private_fields_and_variables
+  FileSystemDirectoryHandle? _directory;
 
-  // Parsed flash image from device (preserved for save-back merging).
-  late ParsedFlashImage? _parsedFlashImage;
+  // Parsed flash image from device (null until successfully parsed).
+  // ignore: use_late_for_private_fields_and_variables
+  ParsedFlashImage? _parsedFlashImage;
 
   // Device data: preset name/category from PRESETS.UF2 per slot.
   final _devicePresets = <int, Preset>{};
