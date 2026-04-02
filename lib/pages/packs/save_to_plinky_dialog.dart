@@ -307,7 +307,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       title: Text(
         switch (_step) {
           _DialogStep.instructions => 'Save to Plinky',
-          _DialogStep.progress => 'Saving...',
+          _DialogStep.progress => 'Uploading to Plinky...',
           _DialogStep.done => 'Done',
           _DialogStep.error => 'Error',
         },

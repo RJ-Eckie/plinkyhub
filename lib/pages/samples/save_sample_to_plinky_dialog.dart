@@ -126,7 +126,7 @@ class _SaveSampleToPlinkyDialogState
         switch (_step) {
           _DialogStep.slotSelection => 'Save sample to Plinky',
           _DialogStep.instructions => 'Save sample to Plinky',
-          _DialogStep.progress => 'Saving...',
+          _DialogStep.progress => 'Uploading to Plinky...',
           _DialogStep.done => 'Done',
           _DialogStep.error => 'Error',
         },
