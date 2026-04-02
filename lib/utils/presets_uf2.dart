@@ -168,6 +168,28 @@ int sampleSlotToRaw(int slotIndex) {
   return ((storedIndex << 10) + (_sampleRange - 1)) ~/ _sampleRange;
 }
 
+/// Converts a raw P_SAMPLE parameter value back to a firmware sample
+/// slot index (0-7). Returns -1 if the value represents no sample.
+///
+/// This finds the nearest slot by checking which slot's raw value is
+/// closest to [rawValue].
+int rawToSampleSlot(int rawValue) {
+  if (rawValue == 0) {
+    return -1;
+  }
+  var bestSlot = -1;
+  var bestDistance = 0x7FFFFFFF;
+  for (var slot = 0; slot < sampleCount; slot++) {
+    final slotRaw = sampleSlotToRaw(slot);
+    final distance = (rawValue - slotRaw).abs();
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestSlot = slot;
+    }
+  }
+  return bestSlot;
+}
+
 /// Creates a default SysParams block (16 bytes).
 Uint8List _buildSysParams() {
   final data = Uint8List(_sysParamsSize);

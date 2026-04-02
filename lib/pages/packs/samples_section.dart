@@ -35,28 +35,22 @@ class SamplesSection extends ConsumerWidget {
     }
 
     // Build a map from device sample slot (0-7) to preset slot numbers
-    // that reference it via P_SAMPLE, using the raw parameter values.
+    // that reference it via P_SAMPLE.
     final deviceSlotToPresetSlots = <int, List<int>>{};
-    final sampleSlotRawValues = <int, int>{
-      for (final slotIndex in deviceSampleSlots)
-        slotIndex: sampleSlotToRaw(slotIndex),
-    };
     for (final presetEntry in devicePresets.entries) {
       final preset = presetEntry.value;
       if (!preset.usesSample) {
         continue;
       }
       final presetRaw = preset.parameterById('P_SAMPLE')?.value;
-      if (presetRaw == null) {
+      if (presetRaw == null || presetRaw == 0) {
         continue;
       }
-      for (final rawEntry in sampleSlotRawValues.entries) {
-        if ((presetRaw - rawEntry.value).abs() < 2) {
-          deviceSlotToPresetSlots
-              .putIfAbsent(rawEntry.key, () => [])
-              .add(presetEntry.key + 1);
-          break;
-        }
+      final sampleSlot = rawToSampleSlot(presetRaw);
+      if (sampleSlot >= 0) {
+        deviceSlotToPresetSlots
+            .putIfAbsent(sampleSlot, () => [])
+            .add(presetEntry.key + 1);
       }
     }
 

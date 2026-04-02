@@ -182,12 +182,6 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
           ),
       ]);
 
-      // Pre-compute raw P_SAMPLE values for sample slot matching.
-      final sampleSlotRawValues = <int, int>{
-        for (final slotIndex in _deviceSampleSlots)
-          slotIndex: sampleSlotToRaw(slotIndex),
-      };
-
       // Populate slots with matched IDs.
       for (var i = 0; i < 32; i++) {
         _slots[i] = (
@@ -205,12 +199,10 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         final preset = _devicePresets[slotIndex];
         if (preset != null && preset.usesSample) {
           final presetRaw = preset.parameterById('P_SAMPLE')?.value;
-          if (presetRaw != null) {
-            for (final rawEntry in sampleSlotRawValues.entries) {
-              if ((presetRaw - rawEntry.value).abs() < 2) {
-                sampleId = matchedSamples[rawEntry.key]?.id;
-                break;
-              }
+          if (presetRaw != null && presetRaw != 0) {
+            final sampleSlot = rawToSampleSlot(presetRaw);
+            if (sampleSlot >= 0) {
+              sampleId = matchedSamples[sampleSlot]?.id;
             }
           }
         }
@@ -225,12 +217,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       // Link samples that were matched by content hash but not yet
       // linked through a preset's P_SAMPLE parameter.
       for (final entry in matchedSamples.entries) {
-        final slotIndex = entry.key;
-        // Find all preset slots that reference this sample slot.
-        final rawValue = sampleSlotRawValues[slotIndex];
-        if (rawValue == null) {
-          continue;
-        }
+        final sampleSlotIndex = entry.key;
         for (var i = 0; i < 32; i++) {
           if (_slots[i].sampleId != null) {
             continue;
@@ -240,7 +227,10 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
             continue;
           }
           final presetRaw = preset.parameterById('P_SAMPLE')?.value;
-          if (presetRaw != null && (presetRaw - rawValue).abs() < 2) {
+          if (presetRaw == null || presetRaw == 0) {
+            continue;
+          }
+          if (rawToSampleSlot(presetRaw) == sampleSlotIndex) {
             _slots[i] = (
               presetId: _slots[i].presetId,
               sampleId: entry.value.id,
