@@ -1666,6 +1666,13 @@ class _LoadUploadingStep extends StatelessWidget {
         const CircularProgressIndicator(),
         const SizedBox(height: 16),
         Text(statusMessage),
+        const SizedBox(height: 8),
+        Text(
+          '(This might take a while)',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
