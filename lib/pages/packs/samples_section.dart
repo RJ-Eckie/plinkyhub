@@ -88,14 +88,11 @@ class SamplesSection extends ConsumerWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (hasDeviceSample && sampleId != null)
+                          if (sample != null)
                             Padding(
-                              padding: const EdgeInsets.only(left: 2),
+                              padding: const EdgeInsets.only(left: 4),
                               child: GestureDetector(
                                 onTap: () {
-                                  if (sample == null) {
-                                    return;
-                                  }
                                   final currentUserId = ref
                                       .read(authenticationProvider)
                                       .user
