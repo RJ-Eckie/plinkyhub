@@ -8,6 +8,7 @@ import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_section.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
+import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -51,12 +52,34 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null, patternId: null);
     }
+
+    // Build a set of sample IDs from the sample slots (56-63).
+    final packSampleIds = <String>{};
+    for (final slot in pack.slots) {
+      if (slot.slotNumber >= sampleSlotStart && slot.sampleId != null) {
+        packSampleIds.add(slot.sampleId!);
+      }
+    }
+
+    // Look up each preset's sample_id from saved presets state.
+    final presets = ref.read(
+      savedPresetsProvider.select((state) => state.userPresets),
+    );
+    final presetSampleMap = <String, String?>{};
+    for (final preset in presets) {
+      if (preset.sampleId != null && packSampleIds.contains(preset.sampleId)) {
+        presetSampleMap[preset.id] = preset.sampleId;
+      }
+    }
+
     for (final slot in pack.slots) {
       if (slot.slotNumber < presetCount) {
-        // Preset slot (0-31).
+        // Preset slot (0-31) — resolve sample from preset's sample_id.
         _slots[slot.slotNumber] = (
           presetId: slot.presetId,
-          sampleId: slot.sampleId,
+          sampleId: slot.presetId != null
+              ? presetSampleMap[slot.presetId]
+              : null,
           patternId: slot.patternId,
         );
       } else if (slot.slotNumber >= patternSlotStart &&
