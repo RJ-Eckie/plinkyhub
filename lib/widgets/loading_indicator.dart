@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
 class LoadingIndicator extends StatelessWidget {
   const LoadingIndicator({required this.message, super.key});
@@ -12,7 +13,7 @@ class LoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const PlinkyLoadingAnimation(),
           const SizedBox(height: 16),
           Text(message),
           const SizedBox(height: 8),
