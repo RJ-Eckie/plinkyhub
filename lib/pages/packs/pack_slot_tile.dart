@@ -82,18 +82,6 @@ class PackSlotTile extends ConsumerWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (hasDevicePreset && isLinked)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 2),
-                        child: GestureDetector(
-                          onTap: () => _showLinkedPreset(context, ref),
-                          child: Icon(
-                            Icons.link,
-                            size: 16,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -102,10 +90,28 @@ class PackSlotTile extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      presetName,
-                      style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            presetName,
+                            style: theme.textTheme.bodySmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (hasDevicePreset && isLinked)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: GestureDetector(
+                              onTap: () => _showLinkedPreset(context, ref),
+                              child: Icon(
+                                Icons.link,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     if (categoryLabel.isNotEmpty)
                       Text(
