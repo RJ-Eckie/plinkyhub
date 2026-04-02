@@ -26,6 +26,7 @@ abstract class PackUploadPack with _$PackUploadPack {
     @Default('') String description,
     @Default(false) bool isPublic,
     @Default('') String youtubeUrl,
+    String? contentHash,
   }) = _PackUploadPack;
 
   factory PackUploadPack.fromJson(Map<String, dynamic> json) =>

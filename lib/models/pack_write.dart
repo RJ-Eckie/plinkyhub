@@ -12,6 +12,7 @@ abstract class PackWrite with _$PackWrite {
     @Default(false) bool isPublic,
     String? wavetableId,
     @Default('') String youtubeUrl,
+    String? contentHash,
   }) = _PackWrite;
 
   factory PackWrite.fromJson(Map<String, dynamic> json) =>

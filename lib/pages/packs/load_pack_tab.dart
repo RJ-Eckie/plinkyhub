@@ -14,6 +14,7 @@ import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/sound_service.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
@@ -471,81 +472,49 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     }
   }
 
-  /// Checks if an existing pack already contains all the same content.
-  /// Returns the matching pack, or null if no duplicate exists.
+  /// Computes the content hash for the current device data.
+  String _computePackHash() {
+    return computePackContentHash(
+      presetHashes: _presetHashes,
+      sampleHashes: _sampleHashes,
+      patternHashes: _patternHashes,
+      wavetableHash: _wavetableHash,
+    );
+  }
+
+  /// Checks if an existing pack already contains all the same content
+  /// by comparing the pack content hash.
   Future<SavedPack?> _findDuplicatePack() async {
-    // Only check when every item was matched to an existing entry.
-    final allPresetsMatched = _presetHashes.keys.every(
-      _matchedPresets.containsKey,
-    );
-    final allSamplesMatched = _sampleHashes.keys.every(
-      _matchedSamples.containsKey,
-    );
-    final allPatternsMatched = _patternHashes.keys.every(
-      _matchedPatterns.containsKey,
-    );
-    final wavetableMatched =
-        _wavetableHash == null || _matchedWavetable != null;
+    final packHash = _computePackHash();
 
-    if (!allPresetsMatched ||
-        !allSamplesMatched ||
-        !allPatternsMatched ||
-        !wavetableMatched) {
-      return null;
-    }
-
-    // Find packs that reference the first matched preset.
-    final firstPresetId = _matchedPresets.values.firstOrNull?.id;
-    if (firstPresetId == null) {
-      return null;
-    }
-
+    // Check locally loaded packs first.
     final packsState = ref.read(savedPacksProvider);
-    final allPacks = {
+    final allLocalPacks = [
       ...packsState.userPacks,
       ...packsState.publicPacks,
-    };
-
-    final matchedPresetIds = _matchedPresets.values
-        .map((entry) => entry.id)
-        .toSet();
-    final matchedSampleIds = _matchedSamples.values
-        .map((entry) => entry.id)
-        .toSet();
-    final matchedPatternIds = _matchedPatterns.values
-        .map((entry) => entry.id)
-        .toSet();
-    final matchedWavetableId = _matchedWavetable?.id;
-
-    for (final pack in allPacks) {
-      // Check wavetable.
-      if (pack.wavetableId != matchedWavetableId) {
-        continue;
-      }
-
-      // Check that the pack has the same preset and sample IDs.
-      final packPresetIds = pack.slots
-          .map((slot) => slot.presetId)
-          .whereType<String>()
-          .toSet();
-      final packSampleIds = pack.slots
-          .map((slot) => slot.sampleId)
-          .whereType<String>()
-          .toSet();
-      final packPatternIds = pack.slots
-          .map((slot) => slot.patternId)
-          .whereType<String>()
-          .toSet();
-
-      if (packPresetIds.length == matchedPresetIds.length &&
-          packPresetIds.containsAll(matchedPresetIds) &&
-          packSampleIds.length == matchedSampleIds.length &&
-          packSampleIds.containsAll(matchedSampleIds) &&
-          packPatternIds.length == matchedPatternIds.length &&
-          packPatternIds.containsAll(matchedPatternIds)) {
+    ];
+    for (final pack in allLocalPacks) {
+      if (pack.contentHash == packHash) {
         return pack;
       }
     }
+
+    // Query the database for any pack with the same hash.
+    final results = await _supabase
+        .from('packs')
+        .select(
+          '*, pack_slots(*), profiles(username), '
+          'pack_stars(count)',
+        )
+        .eq('content_hash', packHash)
+        .limit(1);
+
+    if (results.isNotEmpty) {
+      return SavedPack.fromJson(
+        results.first,
+      );
+    }
+
     return null;
   }
 
@@ -889,6 +858,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           description: _packDescriptionController.text.trim(),
           youtubeUrl: _packYoutubeUrlController.text.trim(),
           isPublic: _packIsPublic,
+          contentHash: _computePackHash(),
         ),
         samplesData: sampleUploads,
         presetsData: presetUploads,

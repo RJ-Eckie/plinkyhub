@@ -54,6 +54,7 @@ _PackUploadPack _$PackUploadPackFromJson(Map<String, dynamic> json) =>
       description: json['description'] as String? ?? '',
       isPublic: json['is_public'] as bool? ?? false,
       youtubeUrl: json['youtube_url'] as String? ?? '',
+      contentHash: json['content_hash'] as String?,
     );
 
 Map<String, dynamic> _$PackUploadPackToJson(_PackUploadPack instance) =>
@@ -63,6 +64,7 @@ Map<String, dynamic> _$PackUploadPackToJson(_PackUploadPack instance) =>
       'description': instance.description,
       'is_public': instance.isPublic,
       'youtube_url': instance.youtubeUrl,
+      'content_hash': instance.contentHash,
     };
 
 _PackUploadSample _$PackUploadSampleFromJson(Map<String, dynamic> json) =>

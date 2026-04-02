@@ -359,7 +359,7 @@ $PackUploadWavetableCopyWith<$Res>? get wavetableData {
 /// @nodoc
 mixin _$PackUploadPack {
 
- String get userId; String get name; String get description; bool get isPublic; String get youtubeUrl;
+ String get userId; String get name; String get description; bool get isPublic; String get youtubeUrl; String? get contentHash;
 /// Create a copy of PackUploadPack
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -372,16 +372,16 @@ $PackUploadPackCopyWith<PackUploadPack> get copyWith => _$PackUploadPackCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackUploadPack&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PackUploadPack&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,name,description,isPublic,youtubeUrl);
+int get hashCode => Object.hash(runtimeType,userId,name,description,isPublic,youtubeUrl,contentHash);
 
 @override
 String toString() {
-  return 'PackUploadPack(userId: $userId, name: $name, description: $description, isPublic: $isPublic, youtubeUrl: $youtubeUrl)';
+  return 'PackUploadPack(userId: $userId, name: $name, description: $description, isPublic: $isPublic, youtubeUrl: $youtubeUrl, contentHash: $contentHash)';
 }
 
 
@@ -392,7 +392,7 @@ abstract mixin class $PackUploadPackCopyWith<$Res>  {
   factory $PackUploadPackCopyWith(PackUploadPack value, $Res Function(PackUploadPack) _then) = _$PackUploadPackCopyWithImpl;
 @useResult
 $Res call({
- String userId, String name, String description, bool isPublic, String youtubeUrl
+ String userId, String name, String description, bool isPublic, String youtubeUrl, String? contentHash
 });
 
 
@@ -409,14 +409,15 @@ class _$PackUploadPackCopyWithImpl<$Res>
 
 /// Create a copy of PackUploadPack
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? name = null,Object? description = null,Object? isPublic = null,Object? youtubeUrl = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? name = null,Object? description = null,Object? isPublic = null,Object? youtubeUrl = null,Object? contentHash = freezed,}) {
   return _then(_self.copyWith(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
 as bool,youtubeUrl: null == youtubeUrl ? _self.youtubeUrl : youtubeUrl // ignore: cast_nullable_to_non_nullable
-as String,
+as String,contentHash: freezed == contentHash ? _self.contentHash : contentHash // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -501,10 +502,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String name,  String description,  bool isPublic,  String youtubeUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String name,  String description,  bool isPublic,  String youtubeUrl,  String? contentHash)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PackUploadPack() when $default != null:
-return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.youtubeUrl);case _:
+return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.youtubeUrl,_that.contentHash);case _:
   return orElse();
 
 }
@@ -522,10 +523,10 @@ return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.y
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String name,  String description,  bool isPublic,  String youtubeUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String name,  String description,  bool isPublic,  String youtubeUrl,  String? contentHash)  $default,) {final _that = this;
 switch (_that) {
 case _PackUploadPack():
-return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.youtubeUrl);case _:
+return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.youtubeUrl,_that.contentHash);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -542,10 +543,10 @@ return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.y
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String name,  String description,  bool isPublic,  String youtubeUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String name,  String description,  bool isPublic,  String youtubeUrl,  String? contentHash)?  $default,) {final _that = this;
 switch (_that) {
 case _PackUploadPack() when $default != null:
-return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.youtubeUrl);case _:
+return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.youtubeUrl,_that.contentHash);case _:
   return null;
 
 }
@@ -557,7 +558,7 @@ return $default(_that.userId,_that.name,_that.description,_that.isPublic,_that.y
 @JsonSerializable()
 
 class _PackUploadPack implements PackUploadPack {
-  const _PackUploadPack({required this.userId, required this.name, this.description = '', this.isPublic = false, this.youtubeUrl = ''});
+  const _PackUploadPack({required this.userId, required this.name, this.description = '', this.isPublic = false, this.youtubeUrl = '', this.contentHash});
   factory _PackUploadPack.fromJson(Map<String, dynamic> json) => _$PackUploadPackFromJson(json);
 
 @override final  String userId;
@@ -565,6 +566,7 @@ class _PackUploadPack implements PackUploadPack {
 @override@JsonKey() final  String description;
 @override@JsonKey() final  bool isPublic;
 @override@JsonKey() final  String youtubeUrl;
+@override final  String? contentHash;
 
 /// Create a copy of PackUploadPack
 /// with the given fields replaced by the non-null parameter values.
@@ -579,16 +581,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackUploadPack&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PackUploadPack&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.isPublic, isPublic) || other.isPublic == isPublic)&&(identical(other.youtubeUrl, youtubeUrl) || other.youtubeUrl == youtubeUrl)&&(identical(other.contentHash, contentHash) || other.contentHash == contentHash));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,name,description,isPublic,youtubeUrl);
+int get hashCode => Object.hash(runtimeType,userId,name,description,isPublic,youtubeUrl,contentHash);
 
 @override
 String toString() {
-  return 'PackUploadPack(userId: $userId, name: $name, description: $description, isPublic: $isPublic, youtubeUrl: $youtubeUrl)';
+  return 'PackUploadPack(userId: $userId, name: $name, description: $description, isPublic: $isPublic, youtubeUrl: $youtubeUrl, contentHash: $contentHash)';
 }
 
 
@@ -599,7 +601,7 @@ abstract mixin class _$PackUploadPackCopyWith<$Res> implements $PackUploadPackCo
   factory _$PackUploadPackCopyWith(_PackUploadPack value, $Res Function(_PackUploadPack) _then) = __$PackUploadPackCopyWithImpl;
 @override @useResult
 $Res call({
- String userId, String name, String description, bool isPublic, String youtubeUrl
+ String userId, String name, String description, bool isPublic, String youtubeUrl, String? contentHash
 });
 
 
@@ -616,14 +618,15 @@ class __$PackUploadPackCopyWithImpl<$Res>
 
 /// Create a copy of PackUploadPack
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? name = null,Object? description = null,Object? isPublic = null,Object? youtubeUrl = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? name = null,Object? description = null,Object? isPublic = null,Object? youtubeUrl = null,Object? contentHash = freezed,}) {
   return _then(_PackUploadPack(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
 as bool,youtubeUrl: null == youtubeUrl ? _self.youtubeUrl : youtubeUrl // ignore: cast_nullable_to_non_nullable
-as String,
+as String,contentHash: freezed == contentHash ? _self.contentHash : contentHash // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

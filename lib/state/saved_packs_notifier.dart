@@ -149,6 +149,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     bool isPublic = false,
     String? wavetableId,
     String youtubeUrl = '',
+    String? contentHash,
   }) async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
@@ -170,6 +171,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         isPublic: isPublic,
         wavetableId: wavetableId,
         youtubeUrl: youtubeUrl,
+        contentHash: contentHash,
       );
       final packResponse = await _supabase
           .from('packs')
