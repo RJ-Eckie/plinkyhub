@@ -882,7 +882,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Pack loaded from Plinky'),
+            content: Text('Pack saved successfully!'),
           ),
         );
         widget.onLoaded?.call();
@@ -1668,7 +1668,7 @@ class _LoadDoneStep extends StatelessWidget {
           color: Colors.green,
         ),
         const SizedBox(height: 16),
-        const Text('Pack loaded successfully!'),
+        const Text('Pack saved successfully!'),
         const SizedBox(height: 16),
         PlinkyButton(
           onPressed: onLoadAnother,
