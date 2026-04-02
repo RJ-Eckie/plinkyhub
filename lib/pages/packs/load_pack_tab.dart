@@ -893,15 +893,12 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       await ref.read(savedPacksProvider.notifier).fetchUserPacks();
 
       if (mounted) {
-        setState(() {
-          _step = _LoadStep.done;
-          _statusMessage = '';
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pack saved successfully!'),
           ),
         );
+        _reset();
         widget.onLoaded?.call();
       }
     } on Exception catch (error) {
@@ -986,10 +983,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               onSave: _uploadAll,
               onChanged: () => setState(() {}),
             ),
-            _LoadStep.uploading => const SizedBox.shrink(),
-            _LoadStep.done => _LoadDoneStep(
-              onLoadAnother: _reset,
-            ),
+            _LoadStep.uploading || _LoadStep.done => const SizedBox.shrink(),
             _LoadStep.error => _LoadErrorStep(
               errorMessage: _errorMessage,
               onTryAgain: _reset,
@@ -1707,34 +1701,6 @@ class _PresetEditDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           icon: Icons.check,
           label: 'Done',
-        ),
-      ],
-    );
-  }
-}
-
-class _LoadDoneStep extends StatelessWidget {
-  const _LoadDoneStep({required this.onLoadAnother});
-
-  final VoidCallback onLoadAnother;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 32),
-        const Icon(
-          Icons.check_circle,
-          size: 48,
-          color: Colors.green,
-        ),
-        const SizedBox(height: 16),
-        const Text('Pack saved successfully!'),
-        const SizedBox(height: 16),
-        PlinkyButton(
-          onPressed: onLoadAnother,
-          icon: Icons.refresh,
-          label: 'Load another',
         ),
       ],
     );
