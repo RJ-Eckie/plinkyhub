@@ -52,15 +52,19 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
       _slots[i] = (presetId: null, sampleId: null, patternId: null);
     }
     for (final slot in pack.slots) {
-      if (slot.slotNumber < 32) {
+      if (slot.slotNumber < presetCount) {
+        // Preset slot (0-31).
         _slots[slot.slotNumber] = (
           presetId: slot.presetId,
           sampleId: slot.sampleId,
           patternId: slot.patternId,
         );
-      }
-      if (slot.patternId != null) {
-        _patternIds[slot.slotNumber] = slot.patternId;
+      } else if (slot.slotNumber >= patternSlotStart &&
+          slot.slotNumber < sampleSlotStart &&
+          slot.patternId != null) {
+        // Pattern slot — convert to pattern index.
+        final patternIndex = slot.slotNumber - patternSlotStart;
+        _patternIds[patternIndex] = slot.patternId;
       }
     }
   }
