@@ -18,11 +18,13 @@ class PackCard extends ConsumerWidget {
     required this.pack,
     required this.isOwned,
     this.onEdit,
+    this.onDeleted,
     super.key,
   });
 
   final SavedPack pack;
   final bool isOwned;
+  final VoidCallback? onDeleted;
   final VoidCallback? onEdit;
 
   @override
@@ -218,9 +220,7 @@ class PackCard extends ConsumerWidget {
             onPressed: () {
               Navigator.of(dialogContext).pop();
               ref.read(savedPacksProvider.notifier).deletePack(pack.id);
-              if (GoRouter.of(context).canPop()) {
-                context.pop();
-              }
+              onDeleted?.call();
             },
             icon: Icons.delete,
             label: 'Delete',

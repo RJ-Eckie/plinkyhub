@@ -14,11 +14,13 @@ class PatternCard extends ConsumerWidget {
   const PatternCard({
     required this.pattern,
     required this.isOwned,
+    this.onDeleted,
     super.key,
   });
 
   final SavedPattern pattern;
   final bool isOwned;
+  final VoidCallback? onDeleted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,9 +143,7 @@ class PatternCard extends ConsumerWidget {
               ref
                   .read(savedPatternsProvider.notifier)
                   .deletePattern(pattern.id);
-              if (GoRouter.of(context).canPop()) {
-                context.pop();
-              }
+              onDeleted?.call();
             },
             icon: Icons.delete,
             label: 'Delete',

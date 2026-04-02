@@ -15,11 +15,13 @@ class WavetableCard extends ConsumerWidget {
   const WavetableCard({
     required this.wavetable,
     required this.isOwned,
+    this.onDeleted,
     super.key,
   });
 
   final SavedWavetable wavetable;
   final bool isOwned;
+  final VoidCallback? onDeleted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -160,9 +162,7 @@ class WavetableCard extends ConsumerWidget {
               ref
                   .read(savedWavetablesProvider.notifier)
                   .deleteWavetable(wavetable.id);
-              if (GoRouter.of(context).canPop()) {
-                context.pop();
-              }
+              onDeleted?.call();
             },
             icon: Icons.delete,
             label: 'Delete',

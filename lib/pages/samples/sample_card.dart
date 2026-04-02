@@ -22,11 +22,13 @@ class SampleCard extends ConsumerStatefulWidget {
   const SampleCard({
     required this.sample,
     required this.isOwned,
+    this.onDeleted,
     super.key,
   });
 
   final SavedSample sample;
   final bool isOwned;
+  final VoidCallback? onDeleted;
 
   @override
   ConsumerState<SampleCard> createState() => _SampleCardState();
@@ -380,9 +382,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               ref
                   .read(savedSamplesProvider.notifier)
                   .deleteSample(widget.sample.id);
-              if (GoRouter.of(context).canPop()) {
-                context.pop();
-              }
+              widget.onDeleted?.call();
             },
             icon: Icons.delete,
             label: 'Delete',

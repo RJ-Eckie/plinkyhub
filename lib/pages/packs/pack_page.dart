@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/pages/packs/pack_card.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -101,6 +103,7 @@ class _PackPageState extends ConsumerState<PackPage> {
               PackCard(
                 pack: _pack!,
                 isOwned: isOwned,
+                onDeleted: () => context.go(AppRoute.packs.path),
               ),
             ],
           ),

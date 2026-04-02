@@ -17,11 +17,13 @@ class PresetCard extends ConsumerWidget {
   const PresetCard({
     required this.preset,
     required this.isOwned,
+    this.onDeleted,
     super.key,
   });
 
   final SavedPreset preset;
   final bool isOwned;
+  final VoidCallback? onDeleted;
 
   SavedSample? _findSample(WidgetRef ref) {
     if (preset.sampleId == null) {
@@ -215,9 +217,7 @@ class PresetCard extends ConsumerWidget {
             onPressed: () {
               Navigator.of(dialogContext).pop();
               ref.read(savedPresetsProvider.notifier).deletePreset(preset.id);
-              if (GoRouter.of(context).canPop()) {
-                context.pop();
-              }
+              onDeleted?.call();
             },
             icon: Icons.delete,
             label: 'Delete',
