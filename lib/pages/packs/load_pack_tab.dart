@@ -1119,8 +1119,8 @@ class _LoadReviewStep extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'This pack already exists as '
-                        '"${matchedPack!.name}".',
+                        'This is the '
+                        '${matchedPack!.name} pack.',
                         style: TextStyle(
                           color: Theme.of(
                             context,
