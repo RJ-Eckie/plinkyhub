@@ -70,9 +70,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   final _presetsWithDeviceName = <int>{};
   final _sampleNames = <int, TextEditingController>{};
   final _sampleDescriptions = <int, TextEditingController>{};
-  final _wavetableNameController = TextEditingController(
-    text: 'Wavetable',
-  );
+  final _wavetableNameController = TextEditingController();
   final _wavetableDescriptionController = TextEditingController();
   final _patternNames = <int, TextEditingController>{};
   final _patternDescriptions = <int, TextEditingController>{};
@@ -130,6 +128,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             ? ''
             : '$packName - ${entry.key + 1}';
       }
+    }
+    if (_matchedWavetable == null) {
+      _wavetableNameController.text = packName;
     }
   }
 
@@ -204,7 +205,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _sampleDescriptions.clear();
       _patternNames.clear();
       _patternDescriptions.clear();
-      _wavetableNameController.text = 'Wavetable';
+      _wavetableNameController.clear();
       _wavetableDescriptionController.clear();
       _includeWavetableInPack = true;
       _includePatternsInPack = true;
@@ -362,7 +363,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
           _wavetableUf2Bytes != null && _wavetableUf2Bytes!.isNotEmpty;
       _includeWavetableInPack = hasWavetable;
       if (hasWavetable) {
-        _wavetableNameController.text = 'Wavetable';
+        _wavetableNameController.clear();
         _wavetableDescriptionController.clear();
       }
 
