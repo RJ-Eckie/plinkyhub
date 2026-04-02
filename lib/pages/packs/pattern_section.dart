@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/pages/packs/pattern_picker_dialog.dart';
+import 'package:plinkyhub/pages/patterns/pattern_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
@@ -115,10 +116,13 @@ class _PatternTile extends ConsumerWidget {
                   ),
                   if (hasDevicePattern && isLinked) ...[
                     const SizedBox(width: 4),
-                    Icon(
-                      Icons.link,
-                      size: 12,
-                      color: theme.colorScheme.primary,
+                    GestureDetector(
+                      onTap: () => _showLinkedPattern(context, ref),
+                      child: Icon(
+                        Icons.link,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ],
                 ],
@@ -130,6 +134,33 @@ class _PatternTile extends ConsumerWidget {
                 maxLines: 1,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLinkedPattern(BuildContext context, WidgetRef ref) {
+    final pattern = ref
+        .read(savedPatternsProvider)
+        .userPatterns
+        .where((pattern) => pattern.id == patternId)
+        .firstOrNull;
+    if (pattern == null) {
+      return;
+    }
+    final currentUserId = ref.read(authenticationProvider).user?.id;
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: PatternCard(
+              pattern: pattern,
+              isOwned: pattern.userId == currentUserId,
+            ),
           ),
         ),
       ),

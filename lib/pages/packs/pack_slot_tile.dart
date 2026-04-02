@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/packs/preset_picker_dialog.dart';
 import 'package:plinkyhub/pages/packs/sample_picker_dialog.dart';
+import 'package:plinkyhub/pages/presets/preset_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
@@ -84,10 +85,13 @@ class PackSlotTile extends ConsumerWidget {
                     if (hasDevicePreset && isLinked)
                       Padding(
                         padding: const EdgeInsets.only(left: 2),
-                        child: Icon(
-                          Icons.link,
-                          size: 12,
-                          color: theme.colorScheme.primary,
+                        child: GestureDetector(
+                          onTap: () => _showLinkedPreset(context, ref),
+                          child: Icon(
+                            Icons.link,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                       ),
                   ],
@@ -154,6 +158,33 @@ class PackSlotTile extends ConsumerWidget {
                 },
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLinkedPreset(BuildContext context, WidgetRef ref) {
+    final preset = ref
+        .read(savedPresetsProvider)
+        .userPresets
+        .where((preset) => preset.id == presetId)
+        .firstOrNull;
+    if (preset == null) {
+      return;
+    }
+    final currentUserId = ref.read(authenticationProvider).user?.id;
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: PresetCard(
+              preset: preset,
+              isOwned: preset.userId == currentUserId,
+            ),
           ),
         ),
       ),

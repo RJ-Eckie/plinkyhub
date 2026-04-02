@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
+import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -53,10 +54,44 @@ class WavetableSection extends ConsumerWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             if (isLinked)
-              Icon(
-                Icons.link,
-                size: 16,
-                color: Theme.of(context).colorScheme.primary,
+              GestureDetector(
+                onTap: () {
+                  final wavetable = wavetablesState.userWavetables
+                          .where(
+                            (wavetable) => wavetable.id == wavetableId,
+                          )
+                          .firstOrNull ??
+                      wavetablesState.publicWavetables
+                          .where(
+                            (wavetable) => wavetable.id == wavetableId,
+                          )
+                          .firstOrNull;
+                  if (wavetable == null) {
+                    return;
+                  }
+                  final currentUserId =
+                      ref.read(authenticationProvider).user?.id;
+                  showDialog<void>(
+                    context: context,
+                    builder: (context) => Dialog(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 600),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: WavetableCard(
+                            wavetable: wavetable,
+                            isOwned: wavetable.userId == currentUserId,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: Icon(
+                  Icons.link,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             Text(
               statusText,

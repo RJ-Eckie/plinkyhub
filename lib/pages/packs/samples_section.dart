@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/pages/samples/sample_card.dart';
+import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 
 class SamplesSection extends ConsumerWidget {
@@ -84,10 +86,39 @@ class SamplesSection extends ConsumerWidget {
                           if (hasDeviceSample && sampleId != null)
                             Padding(
                               padding: const EdgeInsets.only(left: 2),
-                              child: Icon(
-                                Icons.link,
-                                size: 12,
-                                color: theme.colorScheme.primary,
+                              child: GestureDetector(
+                                onTap: () {
+                                  if (sample == null) {
+                                    return;
+                                  }
+                                  final currentUserId = ref
+                                      .read(authenticationProvider)
+                                      .user
+                                      ?.id;
+                                  showDialog<void>(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 600,
+                                        ),
+                                        child: SingleChildScrollView(
+                                          padding: const EdgeInsets.all(16),
+                                          child: SampleCard(
+                                            sample: sample,
+                                            isOwned: sample.userId ==
+                                                currentUserId,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Icon(
+                                  Icons.link,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
                             ),
                         ],
