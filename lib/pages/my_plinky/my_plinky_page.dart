@@ -222,6 +222,34 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         );
       }
 
+      // Link samples that were matched by content hash but not yet
+      // linked through a preset's P_SAMPLE parameter.
+      for (final entry in matchedSamples.entries) {
+        final slotIndex = entry.key;
+        // Find all preset slots that reference this sample slot.
+        final rawValue = sampleSlotRawValues[slotIndex];
+        if (rawValue == null) {
+          continue;
+        }
+        for (var i = 0; i < 32; i++) {
+          if (_slots[i].sampleId != null) {
+            continue;
+          }
+          final preset = _devicePresets[i];
+          if (preset == null || !preset.usesSample) {
+            continue;
+          }
+          final presetRaw = preset.parameterById('P_SAMPLE')?.value;
+          if (presetRaw != null && (presetRaw - rawValue).abs() < 2) {
+            _slots[i] = (
+              presetId: _slots[i].presetId,
+              sampleId: entry.value.id,
+              patternId: _slots[i].patternId,
+            );
+          }
+        }
+      }
+
       _wavetableId = matchedWavetable?.id;
       _patternIds.clear();
       for (final patternIndex in _devicePatternIndices) {
