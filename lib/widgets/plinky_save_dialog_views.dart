@@ -77,7 +77,11 @@ class SaveDoneView extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.check_circle, size: 48, color: Colors.green),
+        Icon(
+          Icons.check_circle,
+          size: 48,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(height: 16),
         Text(
           '${itemType[0].toUpperCase()}${itemType.substring(1)} '
