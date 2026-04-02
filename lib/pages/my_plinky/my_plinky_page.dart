@@ -2,16 +2,21 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/preset.dart';
+import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/pages/my_plinky/save_my_plinky_dialog.dart';
 import 'package:plinkyhub/pages/packs/pattern_section.dart';
 import 'package:plinkyhub/pages/packs/preset_slots_grid.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_section.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/utils/constants.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
+import 'package:plinkyhub/widgets/linked_item_icon.dart';
 import 'package:plinkyhub/widgets/loading_indicator.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -56,6 +61,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   // Whether the device had a wavetable / patterns.
   bool _deviceHasWavetable = false;
   final _devicePatternIndices = <int>[];
+
+  // Matched pack (null if no matching pack found).
+  SavedPack? _matchedPack;
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -250,6 +258,15 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         _patternIds[patternIndex] = matchedPatterns[patternIndex]?.id;
       }
 
+      // Check if the device content matches an existing pack.
+      final packHash = computePackContentHash(
+        presetHashes: presetsResult.presetHashes,
+        sampleHashes: samplesResult.sampleHashes,
+        patternHashes: presetsResult.patternHashes,
+        wavetableHash: wavetableResult.wavetableHash,
+      );
+      _matchedPack = await _findMatchingPack(packHash);
+
       setState(() {
         _state = _PageState.loaded;
         _statusMessage = '';
@@ -263,6 +280,22 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         });
       }
     }
+  }
+
+  Future<SavedPack?> _findMatchingPack(String packHash) async {
+    final results = await _supabase
+        .from('packs')
+        .select(
+          '*, pack_slots(*), profiles(username), '
+          'pack_stars(count)',
+        )
+        .eq('content_hash', packHash)
+        .limit(1);
+
+    if (results.isNotEmpty) {
+      return SavedPack.fromJson(results.first);
+    }
+    return null;
   }
 
   Future<void> _findMatches(
@@ -419,6 +452,42 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_matchedPack != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Card(
+                color: theme.colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.library_music,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'This is the ${_matchedPack!.name} pack.',
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                      if (_matchedPack!.username.isNotEmpty)
+                        LinkedItemIcon(
+                          onTap: () => context.go(
+                            AppRoute.packs.itemPage(
+                              _matchedPack!.username,
+                              _matchedPack!.name,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Row(
             children: [
               Text(
