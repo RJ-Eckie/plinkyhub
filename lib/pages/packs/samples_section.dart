@@ -126,10 +126,13 @@ class SamplesSection extends ConsumerWidget {
               displayName = 'Empty';
             }
 
-            // Prefer preset slots from sampleId, fall back to device.
+            // Prefer preset slots from sampleId, fall back to device
+            // (only if the device actually has sample data in this slot).
             final presetSlots = sampleId != null
                 ? sampleToPresetSlots[sampleId]
-                : deviceSlotToPresetSlots[deviceSlot];
+                : hasDeviceSample
+                ? deviceSlotToPresetSlots[deviceSlot]
+                : null;
 
             return Expanded(
               child: Card(
