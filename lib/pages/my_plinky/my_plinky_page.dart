@@ -8,6 +8,7 @@ import 'package:plinkyhub/pages/packs/pattern_section.dart';
 import 'package:plinkyhub/pages/packs/preset_slots_grid.dart';
 import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_section.dart';
+import 'package:plinkyhub/utils/constants.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
@@ -241,7 +242,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         }
       }
 
-      _wavetableId = matchedWavetable?.id;
+      _wavetableId =
+          matchedWavetable?.id ??
+          (wavetableResult.deviceHasWavetable ? defaultWavetableId : null);
       _patternIds.clear();
       for (final patternIndex in _devicePatternIndices) {
         _patternIds[patternIndex] = matchedPatterns[patternIndex]?.id;
