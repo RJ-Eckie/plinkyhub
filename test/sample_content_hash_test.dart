@@ -132,7 +132,8 @@ void main() {
         expect(
           hashFromParser,
           equals(hashFromSavePath),
-          reason: 'Hash from parser should match hash '
+          reason:
+              'Hash from parser should match hash '
               'computed on the same PCM data',
         );
 
