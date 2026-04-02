@@ -539,13 +539,13 @@ class _DrawingToolSelector extends StatelessWidget {
   final DrawingTool selectedTool;
   final ValueChanged<DrawingTool> onToolSelected;
 
-  static const _toolLabels = {
-    DrawingTool.pencil: 'Pencil',
-    DrawingTool.brush: 'Brush',
-    DrawingTool.grab: 'Grab',
-    DrawingTool.line: 'Line',
-    DrawingTool.eraser: 'Eraser',
-    DrawingTool.smooth: 'Smooth',
+  static const _toolData = {
+    DrawingTool.pencil: (label: 'Pencil', icon: Icons.edit),
+    DrawingTool.brush: (label: 'Brush', icon: Icons.brush),
+    DrawingTool.grab: (label: 'Grab', icon: Icons.pan_tool),
+    DrawingTool.line: (label: 'Line', icon: Icons.show_chart),
+    DrawingTool.eraser: (label: 'Eraser', icon: Icons.auto_fix_normal),
+    DrawingTool.smooth: (label: 'Smooth', icon: Icons.waves),
   };
 
   @override
@@ -555,9 +555,12 @@ class _DrawingToolSelector extends StatelessWidget {
       runSpacing: 4,
       children: DrawingTool.values.map((tool) {
         final isSelected = tool == selectedTool;
+        final data = _toolData[tool]!;
         return ChoiceChip(
-          label: Text(_toolLabels[tool]!),
+          avatar: Icon(data.icon, size: 18),
+          label: Text(data.label),
           selected: isSelected,
+          showCheckmark: false,
           onSelected: (_) => onToolSelected(tool),
           visualDensity: VisualDensity.compact,
         );
