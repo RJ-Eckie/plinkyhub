@@ -160,6 +160,9 @@ class WavetableCard extends ConsumerWidget {
               ref
                   .read(savedWavetablesProvider.notifier)
                   .deleteWavetable(wavetable.id);
+              if (GoRouter.of(context).canPop()) {
+                context.pop();
+              }
             },
             icon: Icons.delete,
             label: 'Delete',

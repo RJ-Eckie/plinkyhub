@@ -380,6 +380,9 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               ref
                   .read(savedSamplesProvider.notifier)
                   .deleteSample(widget.sample.id);
+              if (GoRouter.of(context).canPop()) {
+                context.pop();
+              }
             },
             icon: Icons.delete,
             label: 'Delete',

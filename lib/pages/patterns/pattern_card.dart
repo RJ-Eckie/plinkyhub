@@ -141,6 +141,9 @@ class PatternCard extends ConsumerWidget {
               ref
                   .read(savedPatternsProvider.notifier)
                   .deletePattern(pattern.id);
+              if (GoRouter.of(context).canPop()) {
+                context.pop();
+              }
             },
             icon: Icons.delete,
             label: 'Delete',

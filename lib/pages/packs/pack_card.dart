@@ -218,6 +218,9 @@ class PackCard extends ConsumerWidget {
             onPressed: () {
               Navigator.of(dialogContext).pop();
               ref.read(savedPacksProvider.notifier).deletePack(pack.id);
+              if (GoRouter.of(context).canPop()) {
+                context.pop();
+              }
             },
             icon: Icons.delete,
             label: 'Delete',
