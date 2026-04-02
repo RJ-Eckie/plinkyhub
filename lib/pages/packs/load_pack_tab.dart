@@ -19,6 +19,7 @@ import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/wav.dart';
+import 'package:plinkyhub/widgets/loading_indicator.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -963,8 +964,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               onSave: _uploadAll,
               onChanged: () => setState(() {}),
             ),
-            _LoadStep.uploading => _LoadUploadingStep(
-              statusMessage: _statusMessage,
+            _LoadStep.uploading => LoadingIndicator(
+              message: _statusMessage,
             ),
             _LoadStep.done => _LoadDoneStep(
               onLoadAnother: _reset,
@@ -1645,33 +1646,6 @@ class _PresetEditDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           icon: Icons.check,
           label: 'Done',
-        ),
-      ],
-    );
-  }
-}
-
-class _LoadUploadingStep extends StatelessWidget {
-  const _LoadUploadingStep({
-    required this.statusMessage,
-  });
-
-  final String statusMessage;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 32),
-        const CircularProgressIndicator(),
-        const SizedBox(height: 16),
-        Text(statusMessage),
-        const SizedBox(height: 8),
-        Text(
-          '(This might take a while)',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
         ),
       ],
     );

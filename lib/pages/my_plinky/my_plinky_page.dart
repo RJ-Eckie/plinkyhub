@@ -11,6 +11,7 @@ import 'package:plinkyhub/pages/packs/wavetable_section.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
+import 'package:plinkyhub/widgets/loading_indicator.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -368,23 +369,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   }
 
   Widget _buildLoadingView() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(_statusMessage),
-          const SizedBox(height: 8),
-          Text(
-            '(This might take a while)',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
+    return LoadingIndicator(message: _statusMessage);
   }
 
   Widget _buildErrorView() {
