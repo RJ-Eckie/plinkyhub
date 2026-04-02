@@ -275,7 +275,6 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-
       final write = PackWrite(
         userId: userId,
         name: name,

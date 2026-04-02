@@ -138,8 +138,8 @@ class SamplesSection extends ConsumerWidget {
                                           padding: const EdgeInsets.all(16),
                                           child: SampleCard(
                                             sample: sample,
-                                            isOwned: sample.userId ==
-                                                currentUserId,
+                                            isOwned:
+                                                sample.userId == currentUserId,
                                           ),
                                         ),
                                       ),

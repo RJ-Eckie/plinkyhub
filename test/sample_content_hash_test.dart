@@ -1,14 +1,15 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:test/test.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
-import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
+import 'package:test/test.dart';
 
 void main() {
-  final testDataDirectory = '/home/spydon/Downloads/plinky/Meska';
+  const testDataDirectory = '/home/spydon/Downloads/plinky/Meska';
 
   group('Sample content hash consistency', () {
     late Uint8List presetsUf2;
@@ -66,7 +67,11 @@ void main() {
       var pcmData = uf2ToData(sample0Uf2);
       final sampleInfo = presetsResult.sampleInfos[0];
       if (sampleInfo != null && sampleInfo.sampleLength * 2 < pcmData.length) {
-        pcmData = Uint8List.sublistView(pcmData, 0, sampleInfo.sampleLength * 2);
+        pcmData = Uint8List.sublistView(
+          pcmData,
+          0,
+          sampleInfo.sampleLength * 2,
+        );
       }
       final manualHash = computeContentHash(pcmData);
 
@@ -91,8 +96,8 @@ void main() {
         print('sampleInfo is null — no trimming applied');
       }
 
-      final trimmedPcm = (sampleInfo != null &&
-              sampleInfo.sampleLength * 2 < rawPcm.length)
+      final trimmedPcm =
+          (sampleInfo != null && sampleInfo.sampleLength * 2 < rawPcm.length)
           ? Uint8List.sublistView(rawPcm, 0, sampleInfo.sampleLength * 2)
           : rawPcm;
 
@@ -127,8 +132,8 @@ void main() {
         expect(
           hashFromParser,
           equals(hashFromSavePath),
-          reason:
-              'Hash from parser should match hash computed on the same PCM data',
+          reason: 'Hash from parser should match hash '
+              'computed on the same PCM data',
         );
 
         print('Parser hash: $hashFromParser');
@@ -162,7 +167,9 @@ void main() {
       final hashWithoutInfo = resultWithoutInfo.sampleHashes[0];
 
       print('Hash WITH sampleInfo trimming: $hashWithInfo');
-      print('PCM size WITH trimming: ${resultWithInfo.samplePcmData[0]?.length}');
+      print(
+        'PCM size WITH trimming: ${resultWithInfo.samplePcmData[0]?.length}',
+      );
       print('Hash WITHOUT sampleInfo trimming: $hashWithoutInfo');
       print(
         'PCM size WITHOUT trimming: '

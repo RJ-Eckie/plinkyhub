@@ -56,7 +56,8 @@ class WavetableSection extends ConsumerWidget {
             if (isLinked)
               GestureDetector(
                 onTap: () {
-                  final wavetable = wavetablesState.userWavetables
+                  final wavetable =
+                      wavetablesState.userWavetables
                           .where(
                             (wavetable) => wavetable.id == wavetableId,
                           )
@@ -69,8 +70,10 @@ class WavetableSection extends ConsumerWidget {
                   if (wavetable == null) {
                     return;
                   }
-                  final currentUserId =
-                      ref.read(authenticationProvider).user?.id;
+                  final currentUserId = ref
+                      .read(authenticationProvider)
+                      .user
+                      ?.id;
                   showDialog<void>(
                     context: context,
                     builder: (context) => Dialog(
