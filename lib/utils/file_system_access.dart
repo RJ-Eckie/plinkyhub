@@ -82,6 +82,8 @@ Future<FileSystemDirectoryHandle?> showDirectoryPicker({
 /// Reads a file from a [FileSystemDirectoryHandle] as bytes.
 ///
 /// Returns `null` if the file does not exist or cannot be read.
+/// If the file is not found, retries with the lowercase filename as
+/// a fallback (some Plinky devices use lowercase filenames).
 Future<Uint8List?> readFileFromDirectory(
   FileSystemDirectoryHandle directory,
   String fileName,
@@ -92,7 +94,19 @@ Future<Uint8List?> readFileFromDirectory(
     final arrayBuffer = await file.arrayBuffer().toDart;
     return arrayBuffer.toDart.asUint8List();
   } on Object {
-    return null;
+    // Try lowercase fallback.
+    final lowerName = fileName.toLowerCase();
+    if (lowerName == fileName) {
+      return null;
+    }
+    try {
+      final fileHandle = await directory.getFileHandle(lowerName);
+      final file = await fileHandle.getFile();
+      final arrayBuffer = await file.arrayBuffer().toDart;
+      return arrayBuffer.toDart.asUint8List();
+    } on Object {
+      return null;
+    }
   }
 }
 

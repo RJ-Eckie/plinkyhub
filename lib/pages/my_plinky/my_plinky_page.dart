@@ -96,13 +96,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       setState(
         () => _statusMessage = 'Reading WAVETAB.UF2...',
       );
-      var wavetableBytes = await readFileFromDirectory(
+      final wavetableBytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
-      );
-      wavetableBytes ??= await readFileFromDirectory(
-        directory,
-        'wavetab.uf2',
       );
 
       // Phase 1: Parse presets and patterns.
