@@ -73,6 +73,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   bool _includeWavetableInPack = true;
   bool _includePatternsInPack = true;
 
+  // Tracks which sample is currently playing so others can stop.
+  final _activeSampleNotifier = ValueNotifier<String?>(null);
+
   // Content hashes computed from Plinky data.
   final _presetHashes = <int, String>{};
   final _sampleHashes = <int, String>{};
@@ -127,6 +130,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     _packNameController.dispose();
     _packDescriptionController.dispose();
     _packYoutubeUrlController.dispose();
+    _activeSampleNotifier.dispose();
     _wavetableNameController.dispose();
     _wavetableDescriptionController.dispose();
     for (final controller in _patternNames.values) {
@@ -862,6 +866,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               matchedSamples: _matchedSamples,
               matchedWavetable: _matchedWavetable,
               matchedPatterns: _matchedPatterns,
+              activeSampleNotifier: _activeSampleNotifier,
               onBack: _reset,
               onSave: _uploadAll,
               onChanged: () => setState(() {}),
@@ -954,6 +959,7 @@ class _LoadReviewStep extends StatelessWidget {
     required this.matchedSamples,
     required this.matchedWavetable,
     required this.matchedPatterns,
+    required this.activeSampleNotifier,
     required this.onBack,
     required this.onSave,
     required this.onChanged,
@@ -984,6 +990,7 @@ class _LoadReviewStep extends StatelessWidget {
   final Map<int, MatchedEntry> matchedSamples;
   final MatchedEntry? matchedWavetable;
   final Map<int, MatchedEntry> matchedPatterns;
+  final ValueNotifier<String?> activeSampleNotifier;
   final VoidCallback onBack;
   final VoidCallback onSave;
   final VoidCallback onChanged;
@@ -1059,6 +1066,7 @@ class _LoadReviewStep extends StatelessWidget {
               _SamplePreviewRow(
                 controller: sampleNames[slotIndex]!,
                 label: 'Sample $slotIndex',
+                activeSampleNotifier: activeSampleNotifier,
                 pcmData: samplePcmData[slotIndex],
                 isMatched: matchedSamples.containsKey(slotIndex),
                 onEdit: matchedSamples.containsKey(slotIndex)
@@ -1222,6 +1230,7 @@ class _SamplePreviewRow extends ConsumerStatefulWidget {
   const _SamplePreviewRow({
     required this.controller,
     required this.label,
+    required this.activeSampleNotifier,
     this.pcmData,
     this.isMatched = false,
     this.onEdit,
@@ -1229,6 +1238,7 @@ class _SamplePreviewRow extends ConsumerStatefulWidget {
 
   final TextEditingController controller;
   final String label;
+  final ValueNotifier<String?> activeSampleNotifier;
   final Uint8List? pcmData;
   final bool isMatched;
   final VoidCallback? onEdit;
@@ -1241,11 +1251,30 @@ class _SamplePreviewRowState extends ConsumerState<_SamplePreviewRow> {
   AudioSource? _audioSource;
   bool _isPlaying = false;
 
+  @override
+  void initState() {
+    super.initState();
+    widget.activeSampleNotifier.addListener(_onActiveSampleChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.activeSampleNotifier.removeListener(_onActiveSampleChanged);
+    super.dispose();
+  }
+
+  void _onActiveSampleChanged() {
+    if (_isPlaying && widget.activeSampleNotifier.value != widget.label) {
+      setState(() => _isPlaying = false);
+    }
+  }
+
   Future<void> _togglePlayback() async {
     final soundService = ref.read(soundServiceProvider);
 
     if (_isPlaying) {
       await soundService.stopPreview();
+      widget.activeSampleNotifier.value = null;
       setState(() => _isPlaying = false);
       return;
     }
@@ -1263,12 +1292,14 @@ class _SamplePreviewRowState extends ConsumerState<_SamplePreviewRow> {
       );
     }
 
+    widget.activeSampleNotifier.value = widget.label;
     await soundService.play(_audioSource!);
     setState(() => _isPlaying = true);
 
     final duration = soundService.getLength(_audioSource!);
     await Future<void>.delayed(duration);
     if (mounted && _isPlaying) {
+      widget.activeSampleNotifier.value = null;
       setState(() => _isPlaying = false);
     }
   }
