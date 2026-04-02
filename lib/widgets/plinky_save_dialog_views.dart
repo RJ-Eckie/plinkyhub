@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
 class TunnelOfLightsInstructions extends StatelessWidget {
   const TunnelOfLightsInstructions({
@@ -55,7 +56,7 @@ class SaveProgressView extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CircularProgressIndicator(),
+        const PlinkyLoadingAnimation(size: 80),
         const SizedBox(height: 16),
         Text(statusMessage),
       ],
