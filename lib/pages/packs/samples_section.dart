@@ -21,11 +21,16 @@ class SamplesSection extends ConsumerWidget {
       savedSamplesProvider.select((state) => state.userSamples),
     );
 
-    final uniqueSampleIds = slots
-        .map((slot) => slot.sampleId)
-        .whereType<String>()
-        .toSet()
-        .toList();
+    // Build a map from sampleId to the preset slot numbers that use it.
+    final sampleToPresetSlots = <String, List<int>>{};
+    for (var i = 0; i < slots.length; i++) {
+      final sampleId = slots[i].sampleId;
+      if (sampleId != null) {
+        sampleToPresetSlots.putIfAbsent(sampleId, () => []).add(i + 1);
+      }
+    }
+
+    final uniqueSampleIds = sampleToPresetSlots.keys.toList();
     final hasOverflow = uniqueSampleIds.length > 8;
 
     return Column(
@@ -130,6 +135,17 @@ class SamplesSection extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
+                      if (sampleId != null &&
+                          sampleToPresetSlots[sampleId] != null)
+                        Text(
+                          'Slots: ${sampleToPresetSlots[sampleId]!.join(', ')}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
                     ],
                   ),
                 ),
