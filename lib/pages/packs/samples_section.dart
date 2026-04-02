@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
+import 'package:plinkyhub/utils/presets_uf2.dart';
 
 class SamplesSection extends ConsumerWidget {
   const SamplesSection({
     required this.slots,
     this.deviceSampleSlots = const {},
+    this.devicePresets = const {},
     super.key,
   });
 
   final List<({String? presetId, String? sampleId, String? patternId})> slots;
   final Set<int> deviceSampleSlots;
+  final Map<int, Preset> devicePresets;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,6 +31,32 @@ class SamplesSection extends ConsumerWidget {
       final sampleId = slots[i].sampleId;
       if (sampleId != null) {
         sampleToPresetSlots.putIfAbsent(sampleId, () => []).add(i + 1);
+      }
+    }
+
+    // Build a map from device sample slot (0-7) to preset slot numbers
+    // that reference it via P_SAMPLE, using the raw parameter values.
+    final deviceSlotToPresetSlots = <int, List<int>>{};
+    final sampleSlotRawValues = <int, int>{
+      for (final slotIndex in deviceSampleSlots)
+        slotIndex: sampleSlotToRaw(slotIndex),
+    };
+    for (final presetEntry in devicePresets.entries) {
+      final preset = presetEntry.value;
+      if (!preset.usesSample) {
+        continue;
+      }
+      final presetRaw = preset.parameterById('P_SAMPLE')?.value;
+      if (presetRaw == null) {
+        continue;
+      }
+      for (final rawEntry in sampleSlotRawValues.entries) {
+        if ((presetRaw - rawEntry.value).abs() < 2) {
+          deviceSlotToPresetSlots
+              .putIfAbsent(rawEntry.key, () => [])
+              .add(presetEntry.key + 1);
+          break;
+        }
       }
     }
 
@@ -136,6 +166,17 @@ class SamplesSection extends ConsumerWidget {
                           sampleToPresetSlots[sampleId] != null)
                         Text(
                           'Slots: ${sampleToPresetSlots[sampleId]!.join(', ')}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        )
+                      else if (deviceSlotToPresetSlots.containsKey(index))
+                        Text(
+                          'Slots: '
+                          '${deviceSlotToPresetSlots[index]!.join(', ')}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 10,
