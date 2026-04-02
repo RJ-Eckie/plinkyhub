@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WavetablePage extends ConsumerStatefulWidget {
@@ -75,7 +76,7 @@ class _WavetablePageState extends ConsumerState<WavetablePage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: PlinkyLoadingAnimation());
     }
 
     if (_errorMessage != null || _wavetable == null) {

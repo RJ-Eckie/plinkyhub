@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/pages/patterns/pattern_card.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PatternPage extends ConsumerStatefulWidget {
@@ -75,7 +76,7 @@ class _PatternPageState extends ConsumerState<PatternPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: PlinkyLoadingAnimation());
     }
 
     if (_errorMessage != null || _pattern == null) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/searchable.dart';
 import 'package:plinkyhub/models/sort_order.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:plinkyhub/widgets/sort_order_button.dart';
 
 class SearchableItemList<T extends Searchable> extends ConsumerStatefulWidget {
@@ -97,7 +98,7 @@ class _SearchableItemListState<T extends Searchable>
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: PlinkyLoadingAnimation());
     }
 
     if (widget.items.isEmpty && widget.starredItems.isEmpty) {

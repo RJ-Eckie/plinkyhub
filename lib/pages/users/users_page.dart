@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/users_search_notifier.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
 class UsersPage extends ConsumerStatefulWidget {
   const UsersPage({super.key});
@@ -85,7 +86,7 @@ class _UsersListContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (searchState.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: PlinkyLoadingAnimation());
     }
 
     if (searchState.users.isEmpty) {

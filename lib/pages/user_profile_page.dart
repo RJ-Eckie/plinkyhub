@@ -6,6 +6,7 @@ import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/user_profile_notifier.dart';
 import 'package:plinkyhub/state/user_profile_state.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
 
 class UserProfilePage extends ConsumerWidget {
@@ -21,7 +22,7 @@ class UserProfilePage extends ConsumerWidget {
         userProfileByUsernameProvider(username),
       );
       return asyncProfile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: PlinkyLoadingAnimation()),
         error: (error, _) => Center(child: Text('$error')),
         data: (profileState) => UserProfileContent(
           profileState: profileState,

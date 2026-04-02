@@ -7,6 +7,7 @@ import 'package:plinkyhub/pages/samples/upload_sample_tab.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
 import 'package:plinkyhub/widgets/sign_in_prompt.dart';
 
@@ -163,7 +164,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                 if (widget.editSampleName != null &&
                     editSample == null &&
                     savedSamplesState.isLoading)
-                  const Center(child: CircularProgressIndicator())
+                  const Center(child: PlinkyLoadingAnimation())
                 else
                   UploadSampleTab(
                     sampleToEdit: editSample,
