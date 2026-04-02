@@ -191,8 +191,10 @@ Future<ParsedSamplesPhase> parseSamplesPhase(
   final sampleHashes = <int, String>{};
 
   for (var i = 0; i < sampleCount; i++) {
-    onSampleParsing?.call(i);
-    await Future<void>.delayed(Duration.zero);
+    if (onSampleParsing != null) {
+      onSampleParsing(i);
+      await Future<void>.delayed(Duration.zero);
+    }
     final sampleUf2 = input.sampleUf2s[i];
     if (sampleUf2 == null || sampleUf2.isEmpty) {
       emptySampleSlots.add(i);
