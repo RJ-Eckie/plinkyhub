@@ -19,6 +19,7 @@ import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/wav.dart';
+import 'package:plinkyhub/widgets/linked_item_icon.dart';
 import 'package:plinkyhub/widgets/loading_indicator.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -92,6 +93,9 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   final _matchedSamples = <int, MatchedEntry>{};
   MatchedEntry? _matchedWavetable;
   final _matchedPatterns = <int, MatchedEntry>{};
+
+  // Existing pack that matches the loaded content (null if none).
+  SavedPack? _matchedPack;
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -212,6 +216,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _matchedSamples.clear();
       _matchedWavetable = null;
       _matchedPatterns.clear();
+      _matchedPack = null;
     });
   }
 
@@ -403,6 +408,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       for (final entry in _matchedPatterns.entries) {
         _patternNames[entry.key]?.text = entry.value.name;
       }
+
+      _matchedPack = await _findDuplicatePack();
 
       setState(() {
         _step = _LoadStep.review;
@@ -959,6 +966,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               matchedSamples: _matchedSamples,
               matchedWavetable: _matchedWavetable,
               matchedPatterns: _matchedPatterns,
+              matchedPack: _matchedPack,
               activeSampleNotifier: _activeSampleNotifier,
               onBack: _reset,
               onSave: _uploadAll,
@@ -1056,6 +1064,7 @@ class _LoadReviewStep extends StatelessWidget {
     required this.onBack,
     required this.onSave,
     required this.onChanged,
+    this.matchedPack,
   });
 
   final Map<int, TextEditingController> presetNames;
@@ -1083,6 +1092,7 @@ class _LoadReviewStep extends StatelessWidget {
   final Map<int, MatchedEntry> matchedSamples;
   final MatchedEntry? matchedWavetable;
   final Map<int, MatchedEntry> matchedPatterns;
+  final SavedPack? matchedPack;
   final ValueNotifier<String?> activeSampleNotifier;
   final VoidCallback onBack;
   final VoidCallback onSave;
@@ -1093,6 +1103,45 @@ class _LoadReviewStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (matchedPack != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Card(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This pack already exists as '
+                        '"${matchedPack!.name}".',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    if (matchedPack!.username.isNotEmpty)
+                      LinkedItemIcon(
+                        onTap: () => context.go(
+                          AppRoute.packs.itemPage(
+                            matchedPack!.username,
+                            matchedPack!.name,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         Text(
           'Found ${presetNames.length} presets, '
           '${sampleNames.length} samples'
