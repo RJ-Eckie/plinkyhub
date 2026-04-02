@@ -6,6 +6,7 @@ import 'package:plinkyhub/pages/patterns/pattern_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
+import 'package:plinkyhub/widgets/linked_item_icon.dart';
 
 class PatternSection extends StatelessWidget {
   const PatternSection({
@@ -116,13 +117,8 @@ class _PatternTile extends ConsumerWidget {
                   ),
                   if (hasDevicePattern && isLinked) ...[
                     const SizedBox(width: 4),
-                    GestureDetector(
+                    LinkedItemIcon(
                       onTap: () => _showLinkedPattern(context, ref),
-                      child: Icon(
-                        Icons.link,
-                        size: 16,
-                        color: theme.colorScheme.primary,
-                      ),
                     ),
                   ],
                 ],

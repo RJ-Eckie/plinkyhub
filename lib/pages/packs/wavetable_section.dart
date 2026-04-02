@@ -5,6 +5,7 @@ import 'package:plinkyhub/pages/packs/wavetable_picker_dialog.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/widgets/linked_item_icon.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class WavetableSection extends ConsumerWidget {
@@ -54,7 +55,7 @@ class WavetableSection extends ConsumerWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             if (isLinked)
-              GestureDetector(
+              LinkedItemIcon(
                 onTap: () {
                   final wavetable =
                       wavetablesState.userWavetables
@@ -90,11 +91,6 @@ class WavetableSection extends ConsumerWidget {
                     ),
                   );
                 },
-                child: Icon(
-                  Icons.link,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
               ),
             Text(
               statusText,

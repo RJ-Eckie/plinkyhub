@@ -5,6 +5,7 @@ import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
+import 'package:plinkyhub/widgets/linked_item_icon.dart';
 
 class SamplesSection extends ConsumerWidget {
   const SamplesSection({
@@ -115,7 +116,7 @@ class SamplesSection extends ConsumerWidget {
                           if (sample != null)
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
-                              child: GestureDetector(
+                              child: LinkedItemIcon(
                                 onTap: () {
                                   final currentUserId = ref
                                       .read(authenticationProvider)
@@ -140,11 +141,6 @@ class SamplesSection extends ConsumerWidget {
                                     ),
                                   );
                                 },
-                                child: Icon(
-                                  Icons.link,
-                                  size: 16,
-                                  color: theme.colorScheme.primary,
-                                ),
                               ),
                             ),
                         ],

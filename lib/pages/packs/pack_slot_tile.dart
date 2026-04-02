@@ -9,6 +9,7 @@ import 'package:plinkyhub/pages/presets/preset_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
+import 'package:plinkyhub/widgets/linked_item_icon.dart';
 
 class PackSlotTile extends ConsumerWidget {
   const PackSlotTile({
@@ -102,13 +103,8 @@ class PackSlotTile extends ConsumerWidget {
                         if (hasDevicePreset && isLinked)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: GestureDetector(
+                            child: LinkedItemIcon(
                               onTap: () => _showLinkedPreset(context, ref),
-                              child: Icon(
-                                Icons.link,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              ),
                             ),
                           ),
                       ],
