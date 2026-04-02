@@ -9,6 +9,7 @@ import 'package:plinkyhub/pages/packs/wavetable_section.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
+import 'package:plinkyhub/utils/constants.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
@@ -30,7 +31,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
         (_) => (presetId: null, sampleId: null, patternId: null),
       );
   String? _editingPackId;
-  String? _wavetableId;
+  String _wavetableId = defaultWavetableId;
   final Map<int, String?> _patternIds = {};
 
   @override
@@ -47,7 +48,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _descriptionController.text = pack.description;
     _youtubeUrlController.text = pack.youtubeUrl;
     _isPublic = pack.isPublic;
-    _wavetableId = pack.wavetableId;
+    _wavetableId = pack.wavetableId ?? defaultWavetableId;
     _patternIds.clear();
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null, patternId: null);
@@ -98,7 +99,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
     _descriptionController.clear();
     _youtubeUrlController.clear();
     _isPublic = false;
-    _wavetableId = null;
+    _wavetableId = defaultWavetableId;
     _patternIds.clear();
     for (var i = 0; i < 32; i++) {
       _slots[i] = (presetId: null, sampleId: null, patternId: null);
@@ -218,8 +219,9 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
           const SizedBox(height: 16),
           WavetableSection(
             wavetableId: _wavetableId,
-            onChanged: (wavetableId) =>
-                setState(() => _wavetableId = wavetableId),
+            onChanged: (wavetableId) => setState(
+              () => _wavetableId = wavetableId ?? defaultWavetableId,
+            ),
           ),
           const SizedBox(height: 16),
           Center(

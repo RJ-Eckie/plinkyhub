@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/pack_write.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_state.dart';
+import 'package:plinkyhub/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// A slot entry for creating or updating a pack.
@@ -147,7 +148,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     required List<PackSlotEntry> slots,
     String description = '',
     bool isPublic = false,
-    String? wavetableId,
+    String wavetableId = defaultWavetableId,
     String youtubeUrl = '',
     String? contentHash,
   }) async {
@@ -261,7 +262,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     required String description,
     required bool isPublic,
     required List<PackSlotEntry> slots,
-    String? wavetableId,
+    String wavetableId = defaultWavetableId,
     String youtubeUrl = '',
   }) async {
     if (_nameExists(name, excludeId: id)) {

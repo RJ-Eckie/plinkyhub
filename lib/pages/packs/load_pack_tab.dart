@@ -14,6 +14,7 @@ import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/sound_service.dart';
+import 'package:plinkyhub/utils/constants.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
@@ -662,7 +663,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       }
 
       // Upload wavetable file (skip if matched).
-      PackUploadWavetable? wavetableUpload;
+      // Every pack must have a wavetable — fall back to the default.
+      PackUploadWavetable wavetableUpload;
       if (_includeWavetableInPack &&
           _wavetableUf2Bytes != null &&
           _wavetableUf2Bytes!.isNotEmpty) {
@@ -699,6 +701,13 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
             contentHash: _wavetableHash,
           );
         }
+      } else {
+        wavetableUpload = const PackUploadWavetable(
+          userId: '',
+          name: 'Wavetable',
+          filePath: '',
+          existingId: defaultWavetableId,
+        );
       }
 
       // Upload pattern files (skip matched entries).
