@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/preset.dart';
+import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/samples/sample_card.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
@@ -22,21 +23,11 @@ class SamplesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final samples = ref.watch(
+    final savedSamples = ref.watch(
       savedSamplesProvider.select((state) => state.userSamples),
     );
 
-    // Build a map from sampleId to the preset slot numbers that use it.
-    final sampleToPresetSlots = <String, List<int>>{};
-    for (var i = 0; i < slots.length; i++) {
-      final sampleId = slots[i].sampleId;
-      if (sampleId != null) {
-        sampleToPresetSlots.putIfAbsent(sampleId, () => []).add(i + 1);
-      }
-    }
-
-    // Build a map from device sample slot (0-7) to preset slot numbers
-    // that reference it via P_SAMPLE.
+    // Map device sample slot (0-7) to preset slot numbers via P_SAMPLE.
     final deviceSlotToPresetSlots = <int, List<int>>{};
     for (final presetEntry in devicePresets.entries) {
       final preset = presetEntry.value;
@@ -55,8 +46,49 @@ class SamplesSection extends ConsumerWidget {
       }
     }
 
-    final uniqueSampleIds = sampleToPresetSlots.keys.toList();
-    final hasOverflow = uniqueSampleIds.length > 8;
+    // Map device sample slot (0-7) to linked sample ID by looking
+    // at preset slots that reference each device slot.
+    final deviceSlotToSampleId = <int, String>{};
+    for (final entry in deviceSlotToPresetSlots.entries) {
+      final deviceSlot = entry.key;
+      for (final presetSlotNumber in entry.value) {
+        final presetIndex = presetSlotNumber - 1;
+        if (presetIndex < slots.length) {
+          final sampleId = slots[presetIndex].sampleId;
+          if (sampleId != null) {
+            deviceSlotToSampleId[deviceSlot] = sampleId;
+            break;
+          }
+        }
+      }
+    }
+
+    // Also pick up any linked samples not mapped through device
+    // presets (for Create Pack where there are no device presets).
+    if (devicePresets.isEmpty) {
+      final uniqueSampleIds = <String>[];
+      for (var i = 0; i < slots.length; i++) {
+        final sampleId = slots[i].sampleId;
+        if (sampleId != null && !uniqueSampleIds.contains(sampleId)) {
+          uniqueSampleIds.add(sampleId);
+        }
+      }
+      for (var i = 0; i < uniqueSampleIds.length && i < sampleCount; i++) {
+        deviceSlotToSampleId[i] = uniqueSampleIds[i];
+      }
+    }
+
+    // Build sampleId -> preset slot numbers for display.
+    final sampleToPresetSlots = <String, List<int>>{};
+    for (var i = 0; i < slots.length; i++) {
+      final sampleId = slots[i].sampleId;
+      if (sampleId != null) {
+        sampleToPresetSlots.putIfAbsent(sampleId, () => []).add(i + 1);
+      }
+    }
+
+    final uniqueSampleCount = sampleToPresetSlots.length;
+    final hasOverflow = uniqueSampleCount > sampleCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,20 +102,20 @@ class SamplesSection extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'A pack can use at most 8 samples. '
-              'Currently using ${uniqueSampleIds.length}.',
+              'A pack can use at most $sampleCount samples. '
+              'Currently using $uniqueSampleCount.',
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
         Row(
-          children: List.generate(8, (index) {
-            final sampleId = index < uniqueSampleIds.length
-                ? uniqueSampleIds[index]
-                : null;
+          children: List.generate(sampleCount, (deviceSlot) {
+            final sampleId = deviceSlotToSampleId[deviceSlot];
             final sample = sampleId != null
-                ? samples.where((sample) => sample.id == sampleId).firstOrNull
+                ? savedSamples
+                      .where((sample) => sample.id == sampleId)
+                      .firstOrNull
                 : null;
-            final hasDeviceSample = deviceSampleSlots.contains(index);
+            final hasDeviceSample = deviceSampleSlots.contains(deviceSlot);
 
             String displayName;
             if (sample != null) {
@@ -93,6 +125,11 @@ class SamplesSection extends ConsumerWidget {
             } else {
               displayName = 'Empty';
             }
+
+            // Prefer preset slots from sampleId, fall back to device.
+            final presetSlots = sampleId != null
+                ? sampleToPresetSlots[sampleId]
+                : deviceSlotToPresetSlots[deviceSlot];
 
             return Expanded(
               child: Card(
@@ -108,7 +145,7 @@ class SamplesSection extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '${index + 1}',
+                            '${deviceSlot + 1}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -116,31 +153,9 @@ class SamplesSection extends ConsumerWidget {
                           if (sample != null)
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
-                              child: LinkedItemIcon(
-                                onTap: () {
-                                  final currentUserId = ref
-                                      .read(authenticationProvider)
-                                      .user
-                                      ?.id;
-                                  showDialog<void>(
-                                    context: context,
-                                    builder: (context) => Dialog(
-                                      child: ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          maxWidth: 600,
-                                        ),
-                                        child: SingleChildScrollView(
-                                          padding: const EdgeInsets.all(16),
-                                          child: SampleCard(
-                                            sample: sample,
-                                            isOwned:
-                                                sample.userId == currentUserId,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
+                              child: _SampleLinkIcon(
+                                sample: sample,
+                                ref: ref,
                               ),
                             ),
                         ],
@@ -152,21 +167,9 @@ class SamplesSection extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
-                      if (sampleId != null &&
-                          sampleToPresetSlots[sampleId] != null)
+                      if (presetSlots != null && presetSlots.isNotEmpty)
                         Text(
-                          'Slots: ${sampleToPresetSlots[sampleId]!.join(', ')}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 10,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                        )
-                      else if (deviceSlotToPresetSlots.containsKey(index))
-                        Text(
-                          'Slots: '
-                          '${deviceSlotToPresetSlots[index]!.join(', ')}',
+                          'Slots: ${presetSlots.join(', ')}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 10,
@@ -182,6 +185,40 @@ class SamplesSection extends ConsumerWidget {
           }),
         ),
       ],
+    );
+  }
+}
+
+class _SampleLinkIcon extends StatelessWidget {
+  const _SampleLinkIcon({
+    required this.sample,
+    required this.ref,
+  });
+
+  final SavedSample sample;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    return LinkedItemIcon(
+      onTap: () {
+        final currentUserId = ref.read(authenticationProvider).user?.id;
+        showDialog<void>(
+          context: context,
+          builder: (context) => Dialog(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: SampleCard(
+                  sample: sample,
+                  isOwned: sample.userId == currentUserId,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
