@@ -1173,6 +1173,26 @@ class _LoadReviewStep extends StatelessWidget {
           value: packIsPublic,
           onChanged: onPackIsPublicChanged,
         ),
+        if (presetNames.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Presets',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          for (final slotIndex in presetNames.keys.toList()..sort())
+            _NamedItemRow(
+              controller: presetNames[slotIndex]!,
+              label: 'Preset ${slotIndex + 1}',
+              isMatched: matchedPresets.containsKey(slotIndex),
+              onEdit: matchedPresets.containsKey(slotIndex)
+                  ? null
+                  : () => _showPresetEditDialog(
+                      context,
+                      slotIndex,
+                    ),
+            ),
+        ],
         if (sampleNames.isNotEmpty || emptySampleSlots.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text(
@@ -1248,26 +1268,6 @@ class _LoadReviewStep extends StatelessWidget {
                         patternIndex,
                       ),
               ),
-        ],
-        if (presetNames.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Presets',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          for (final slotIndex in presetNames.keys.toList()..sort())
-            _NamedItemRow(
-              controller: presetNames[slotIndex]!,
-              label: 'Preset ${slotIndex + 1}',
-              isMatched: matchedPresets.containsKey(slotIndex),
-              onEdit: matchedPresets.containsKey(slotIndex)
-                  ? null
-                  : () => _showPresetEditDialog(
-                      context,
-                      slotIndex,
-                    ),
-            ),
         ],
         const SizedBox(height: 16),
         Center(
