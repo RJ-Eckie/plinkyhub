@@ -927,6 +927,10 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (_step == _LoadStep.uploading) {
+      return LoadingIndicator(message: _statusMessage);
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Center(
@@ -972,9 +976,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
               onSave: _uploadAll,
               onChanged: () => setState(() {}),
             ),
-            _LoadStep.uploading => LoadingIndicator(
-              message: _statusMessage,
-            ),
+            _LoadStep.uploading => const SizedBox.shrink(),
             _LoadStep.done => _LoadDoneStep(
               onLoadAnother: _reset,
             ),
