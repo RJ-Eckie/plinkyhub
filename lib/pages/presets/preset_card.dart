@@ -215,7 +215,6 @@ class PresetCard extends ConsumerWidget {
             onPressed: () {
               Navigator.of(dialogContext).pop();
               ref.read(savedPresetsProvider.notifier).deletePreset(preset.id);
-              Navigator.of(context).maybePop();
             },
             icon: Icons.delete,
             label: 'Delete',
