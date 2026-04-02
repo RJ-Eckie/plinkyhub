@@ -267,20 +267,15 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     Map<int, _MatchedEntry> matches,
   ) async {
     if (hashes.isEmpty) {
-      debugPrint('_findMatches($table): no hashes to match');
       return;
     }
 
     final uniqueHashes = hashes.values.toSet().toList();
-    debugPrint(
-      '_findMatches($table): querying ${uniqueHashes.length} hashes',
-    );
     final results = await _supabase
         .from(table)
         .select('id, name, content_hash')
         .inFilter('content_hash', uniqueHashes);
 
-    debugPrint('_findMatches($table): got ${results.length} results');
     final hashToEntry = <String, _MatchedEntry>{};
     for (final row in results) {
       final hash = row['content_hash'] as String?;
@@ -298,7 +293,6 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         matches[entry.key] = matched;
       }
     }
-    debugPrint('_findMatches($table): matched ${matches.length} entries');
   }
 
   Future<_MatchedEntry?> _findWavetableMatch(String hash) async {
