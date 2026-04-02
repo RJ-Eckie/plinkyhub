@@ -166,24 +166,17 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   }
 
   void _reset() {
-    for (final controller in _presetNames.values) {
-      controller.dispose();
-    }
-    for (final controller in _presetDescriptions.values) {
-      controller.dispose();
-    }
-    for (final controller in _sampleNames.values) {
-      controller.dispose();
-    }
-    for (final controller in _sampleDescriptions.values) {
-      controller.dispose();
-    }
-    for (final controller in _patternNames.values) {
-      controller.dispose();
-    }
-    for (final controller in _patternDescriptions.values) {
-      controller.dispose();
-    }
+    // Collect controllers to dispose after clearing the maps,
+    // so _updateDerivedNames doesn't touch disposed controllers.
+    final controllersToDispose = [
+      ..._presetNames.values,
+      ..._presetDescriptions.values,
+      ..._sampleNames.values,
+      ..._sampleDescriptions.values,
+      ..._patternNames.values,
+      ..._patternDescriptions.values,
+    ];
+
     setState(() {
       _step = _LoadStep.select;
       _statusMessage = '';
@@ -194,10 +187,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _samplePcmData = {};
       _emptySampleSlots = {};
       _wavetableUf2Bytes = null;
-      _packNameController.text = '';
-      _packDescriptionController.clear();
-      _packYoutubeUrlController.clear();
-      _packIsPublic = true;
       _presetNames.clear();
       _presetDescriptions.clear();
       _presetCategories.clear();
@@ -206,6 +195,17 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _sampleDescriptions.clear();
       _patternNames.clear();
       _patternDescriptions.clear();
+      _matchedPresets.clear();
+      _matchedSamples.clear();
+      _matchedWavetable = null;
+      _matchedPatterns.clear();
+      _matchedPack = null;
+      // Set pack name after clearing maps so the listener
+      // iterates empty maps instead of disposed controllers.
+      _packNameController.text = '';
+      _packDescriptionController.clear();
+      _packYoutubeUrlController.clear();
+      _packIsPublic = true;
       _wavetableNameController.clear();
       _wavetableDescriptionController.clear();
       _includeWavetableInPack = true;
@@ -214,12 +214,11 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       _sampleHashes.clear();
       _wavetableHash = null;
       _patternHashes.clear();
-      _matchedPresets.clear();
-      _matchedSamples.clear();
-      _matchedWavetable = null;
-      _matchedPatterns.clear();
-      _matchedPack = null;
     });
+
+    for (final controller in controllersToDispose) {
+      controller.dispose();
+    }
   }
 
   Future<void> _readFromPlinky() async {
