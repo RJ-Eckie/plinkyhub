@@ -4,10 +4,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/pack_upload_request.dart';
 import 'package:plinkyhub/models/preset.dart';
+import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
 import 'package:plinkyhub/state/sound_service.dart';
@@ -468,9 +471,128 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     }
   }
 
+  /// Checks if an existing pack already contains all the same content.
+  /// Returns the matching pack, or null if no duplicate exists.
+  Future<SavedPack?> _findDuplicatePack() async {
+    // Only check when every item was matched to an existing entry.
+    final allPresetsMatched = _presetHashes.keys.every(
+      _matchedPresets.containsKey,
+    );
+    final allSamplesMatched = _sampleHashes.keys.every(
+      _matchedSamples.containsKey,
+    );
+    final allPatternsMatched = _patternHashes.keys.every(
+      _matchedPatterns.containsKey,
+    );
+    final wavetableMatched =
+        _wavetableHash == null || _matchedWavetable != null;
+
+    if (!allPresetsMatched ||
+        !allSamplesMatched ||
+        !allPatternsMatched ||
+        !wavetableMatched) {
+      return null;
+    }
+
+    // Find packs that reference the first matched preset.
+    final firstPresetId = _matchedPresets.values.firstOrNull?.id;
+    if (firstPresetId == null) {
+      return null;
+    }
+
+    final packsState = ref.read(savedPacksProvider);
+    final allPacks = {
+      ...packsState.userPacks,
+      ...packsState.publicPacks,
+    };
+
+    final matchedPresetIds = _matchedPresets.values
+        .map((entry) => entry.id)
+        .toSet();
+    final matchedSampleIds = _matchedSamples.values
+        .map((entry) => entry.id)
+        .toSet();
+    final matchedPatternIds = _matchedPatterns.values
+        .map((entry) => entry.id)
+        .toSet();
+    final matchedWavetableId = _matchedWavetable?.id;
+
+    for (final pack in allPacks) {
+      // Check wavetable.
+      if (pack.wavetableId != matchedWavetableId) {
+        continue;
+      }
+
+      // Check that the pack has the same preset and sample IDs.
+      final packPresetIds = pack.slots
+          .map((slot) => slot.presetId)
+          .whereType<String>()
+          .toSet();
+      final packSampleIds = pack.slots
+          .map((slot) => slot.sampleId)
+          .whereType<String>()
+          .toSet();
+      final packPatternIds = pack.slots
+          .map((slot) => slot.patternId)
+          .whereType<String>()
+          .toSet();
+
+      if (packPresetIds.length == matchedPresetIds.length &&
+          packPresetIds.containsAll(matchedPresetIds) &&
+          packSampleIds.length == matchedSampleIds.length &&
+          packSampleIds.containsAll(matchedSampleIds) &&
+          packPatternIds.length == matchedPatternIds.length &&
+          packPatternIds.containsAll(matchedPatternIds)) {
+        return pack;
+      }
+    }
+    return null;
+  }
+
+  void _showDuplicatePackDialog(SavedPack pack) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Pack already exists'),
+        content: Text(
+          'A pack with the same content already exists: '
+          '"${pack.name}".',
+        ),
+        actions: [
+          PlinkyButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            icon: Icons.close,
+            label: 'Cancel',
+          ),
+          if (pack.username.isNotEmpty)
+            PlinkyButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.go(
+                  AppRoute.packs.itemPage(
+                    pack.username,
+                    pack.name,
+                  ),
+                );
+              },
+              icon: Icons.open_in_new,
+              label: 'View pack',
+            ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _uploadAll() async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
+      return;
+    }
+
+    // Check for duplicate pack before uploading.
+    final duplicatePack = await _findDuplicatePack();
+    if (duplicatePack != null && mounted) {
+      _showDuplicatePackDialog(duplicatePack);
       return;
     }
 
