@@ -10,13 +10,15 @@ String computeContentHash(Uint8List data) {
 
 /// Computes a deterministic SHA-256 hash for a pack based on all its
 /// content hashes. The hash is stable regardless of the order items
-/// were parsed — preset and pattern hashes are sorted by slot/index,
-/// sample hashes by slot index, and the wavetable hash is appended.
+/// were parsed — preset and pattern hashes are sorted by slot/index
+/// and sample hashes by slot index.
+///
+/// The wavetable hash is intentionally excluded because the wavetable
+/// only appears on the emulated drive when transferred in the same session.
 String computePackContentHash({
   required Map<int, String> presetHashes,
   required Map<int, String> sampleHashes,
   required Map<int, String> patternHashes,
-  String? wavetableHash,
 }) {
   final parts = <String>[];
 
@@ -36,11 +38,6 @@ String computePackContentHash({
   final patternKeys = patternHashes.keys.toList()..sort();
   for (final key in patternKeys) {
     parts.add('t$key:${patternHashes[key]}');
-  }
-
-  // Wavetable.
-  if (wavetableHash != null) {
-    parts.add('w:$wavetableHash');
   }
 
   final combined = utf8.encode(parts.join('|'));

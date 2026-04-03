@@ -487,7 +487,6 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       presetHashes: _presetHashes,
       sampleHashes: _sampleHashes,
       patternHashes: _patternHashes,
-      wavetableHash: _wavetableHash,
     );
   }
 

@@ -263,7 +263,6 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         presetHashes: presetsResult.presetHashes,
         sampleHashes: samplesResult.sampleHashes,
         patternHashes: presetsResult.patternHashes,
-        wavetableHash: wavetableResult.wavetableHash,
       );
       _matchedPack = await _findMatchingPack(packHash);
 
