@@ -13,8 +13,8 @@ import 'package:plinkyhub/utils/midi_import.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
-/// Available step counts for pattern length.
-const _stepCountOptions = [8, 16, 32, 64];
+/// The Plinky sequencer uses a fixed 16-step pattern length.
+const fixedStepCount = 16;
 
 class CreatePatternTab extends ConsumerStatefulWidget {
   const CreatePatternTab({this.onCreated, super.key});
@@ -30,14 +30,13 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
   final _descriptionController = TextEditingController();
   bool _isPublic = true;
   bool _isSaving = false;
-  int _stepCount = 16;
   PlinkyScale _scale = PlinkyScale.major;
   late List<List<bool>> _grid;
 
   @override
   void initState() {
     super.initState();
-    _grid = _createEmptyGrid(_stepCount);
+    _grid = _createEmptyGrid(fixedStepCount);
   }
 
   @override
@@ -53,26 +52,9 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
     ];
   }
 
-  void _updateStepCount(int newCount) {
-    setState(() {
-      if (newCount > _stepCount) {
-        // Extend grid with empty steps.
-        _grid = [
-          ..._grid,
-          for (var s = _stepCount; s < newCount; s++)
-            [for (var r = 0; r < 8; r++) false],
-        ];
-      } else {
-        // Truncate grid.
-        _grid = _grid.sublist(0, newCount);
-      }
-      _stepCount = newCount;
-    });
-  }
-
   void _clearGrid() {
     setState(() {
-      _grid = _createEmptyGrid(_stepCount);
+      _grid = _createEmptyGrid(fixedStepCount);
     });
   }
 
@@ -82,9 +64,8 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
       _descriptionController.clear();
       _isPublic = true;
       _isSaving = false;
-      _stepCount = 16;
       _scale = PlinkyScale.major;
-      _grid = _createEmptyGrid(_stepCount);
+      _grid = _createEmptyGrid(fixedStepCount);
     });
   }
 
@@ -138,7 +119,6 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
 
   void _applyMidiImport(MidiImportResult result, String fileName) {
     setState(() {
-      _stepCount = result.stepCount;
       _grid = result.grid;
       if (_nameController.text.isEmpty) {
         final baseName = fileName.contains('.')
@@ -183,7 +163,6 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
 
     try {
       final patternData = PatternData(
-        stepCount: _stepCount,
         scaleIndex: _scale.index,
         grid: [
           for (final step in _grid) [for (final cell in step) cell ? 1 : 0],
@@ -272,71 +251,35 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
             enabled: !_isSaving,
           ),
           const SizedBox(height: 16),
-          // Scale and step count selectors
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<PlinkyScale>(
-                  initialValue: _scale,
-                  decoration: const InputDecoration(
-                    labelText: 'Scale',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: [
-                    for (final scale in PlinkyScale.values)
-                      DropdownMenuItem(
-                        value: scale,
-                        child: Text(scale.displayName),
-                      ),
-                  ],
-                  onChanged: _isSaving
-                      ? null
-                      : (value) {
-                          if (value != null) {
-                            setState(() => _scale = value);
-                          }
-                        },
-                ),
+          // Scale selector
+          DropdownButtonFormField<PlinkyScale>(
+            initialValue: _scale,
+            decoration: const InputDecoration(
+              labelText: 'Scale',
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 120,
-                child: DropdownButtonFormField<int>(
-                  initialValue: _stepCount,
-                  decoration: const InputDecoration(
-                    labelText: 'Steps',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: [
-                    for (final count in _stepCountOptions)
-                      DropdownMenuItem(
-                        value: count,
-                        child: Text('$count'),
-                      ),
-                  ],
-                  onChanged: _isSaving
-                      ? null
-                      : (value) {
-                          if (value != null) {
-                            _updateStepCount(value);
-                          }
-                        },
+            ),
+            items: [
+              for (final scale in PlinkyScale.values)
+                DropdownMenuItem(
+                  value: scale,
+                  child: Text(scale.displayName),
                 ),
-              ),
             ],
+            onChanged: _isSaving
+                ? null
+                : (value) {
+                    if (value != null) {
+                      setState(() => _scale = value);
+                    }
+                  },
           ),
           const SizedBox(height: 16),
           PatternGridEditor(
             grid: _grid,
-            stepCount: _stepCount,
             scale: _scale,
             enabled: !_isSaving,
             onGridChanged: (newGrid) => setState(() => _grid = newGrid),

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PatternData {
 
- int get version; int get stepCount; int get scaleIndex; List<List<int>> get grid;
+ int get version; int get scaleIndex; List<List<int>> get grid;
 /// Create a copy of PatternData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PatternDataCopyWith<PatternData> get copyWith => _$PatternDataCopyWithImpl<Patt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatternData&&(identical(other.version, version) || other.version == version)&&(identical(other.stepCount, stepCount) || other.stepCount == stepCount)&&(identical(other.scaleIndex, scaleIndex) || other.scaleIndex == scaleIndex)&&const DeepCollectionEquality().equals(other.grid, grid));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatternData&&(identical(other.version, version) || other.version == version)&&(identical(other.scaleIndex, scaleIndex) || other.scaleIndex == scaleIndex)&&const DeepCollectionEquality().equals(other.grid, grid));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,stepCount,scaleIndex,const DeepCollectionEquality().hash(grid));
+int get hashCode => Object.hash(runtimeType,version,scaleIndex,const DeepCollectionEquality().hash(grid));
 
 @override
 String toString() {
-  return 'PatternData(version: $version, stepCount: $stepCount, scaleIndex: $scaleIndex, grid: $grid)';
+  return 'PatternData(version: $version, scaleIndex: $scaleIndex, grid: $grid)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PatternDataCopyWith<$Res>  {
   factory $PatternDataCopyWith(PatternData value, $Res Function(PatternData) _then) = _$PatternDataCopyWithImpl;
 @useResult
 $Res call({
- int version, int stepCount, int scaleIndex, List<List<int>> grid
+ int version, int scaleIndex, List<List<int>> grid
 });
 
 
@@ -65,10 +65,9 @@ class _$PatternDataCopyWithImpl<$Res>
 
 /// Create a copy of PatternData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? stepCount = null,Object? scaleIndex = null,Object? grid = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? scaleIndex = null,Object? grid = null,}) {
   return _then(_self.copyWith(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
-as int,stepCount: null == stepCount ? _self.stepCount : stepCount // ignore: cast_nullable_to_non_nullable
 as int,scaleIndex: null == scaleIndex ? _self.scaleIndex : scaleIndex // ignore: cast_nullable_to_non_nullable
 as int,grid: null == grid ? _self.grid : grid // ignore: cast_nullable_to_non_nullable
 as List<List<int>>,
@@ -156,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  int stepCount,  int scaleIndex,  List<List<int>> grid)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  int scaleIndex,  List<List<int>> grid)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatternData() when $default != null:
-return $default(_that.version,_that.stepCount,_that.scaleIndex,_that.grid);case _:
+return $default(_that.version,_that.scaleIndex,_that.grid);case _:
   return orElse();
 
 }
@@ -177,10 +176,10 @@ return $default(_that.version,_that.stepCount,_that.scaleIndex,_that.grid);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  int stepCount,  int scaleIndex,  List<List<int>> grid)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  int scaleIndex,  List<List<int>> grid)  $default,) {final _that = this;
 switch (_that) {
 case _PatternData():
-return $default(_that.version,_that.stepCount,_that.scaleIndex,_that.grid);case _:
+return $default(_that.version,_that.scaleIndex,_that.grid);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +196,10 @@ return $default(_that.version,_that.stepCount,_that.scaleIndex,_that.grid);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  int stepCount,  int scaleIndex,  List<List<int>> grid)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  int scaleIndex,  List<List<int>> grid)?  $default,) {final _that = this;
 switch (_that) {
 case _PatternData() when $default != null:
-return $default(_that.version,_that.stepCount,_that.scaleIndex,_that.grid);case _:
+return $default(_that.version,_that.scaleIndex,_that.grid);case _:
   return null;
 
 }
@@ -212,11 +211,10 @@ return $default(_that.version,_that.stepCount,_that.scaleIndex,_that.grid);case 
 @JsonSerializable()
 
 class _PatternData implements PatternData {
-  const _PatternData({this.version = 1, this.stepCount = 16, this.scaleIndex = 0, final  List<List<int>> grid = const []}): _grid = grid;
+  const _PatternData({this.version = 1, this.scaleIndex = 0, final  List<List<int>> grid = const []}): _grid = grid;
   factory _PatternData.fromJson(Map<String, dynamic> json) => _$PatternDataFromJson(json);
 
 @override@JsonKey() final  int version;
-@override@JsonKey() final  int stepCount;
 @override@JsonKey() final  int scaleIndex;
  final  List<List<int>> _grid;
 @override@JsonKey() List<List<int>> get grid {
@@ -239,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatternData&&(identical(other.version, version) || other.version == version)&&(identical(other.stepCount, stepCount) || other.stepCount == stepCount)&&(identical(other.scaleIndex, scaleIndex) || other.scaleIndex == scaleIndex)&&const DeepCollectionEquality().equals(other._grid, _grid));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatternData&&(identical(other.version, version) || other.version == version)&&(identical(other.scaleIndex, scaleIndex) || other.scaleIndex == scaleIndex)&&const DeepCollectionEquality().equals(other._grid, _grid));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,stepCount,scaleIndex,const DeepCollectionEquality().hash(_grid));
+int get hashCode => Object.hash(runtimeType,version,scaleIndex,const DeepCollectionEquality().hash(_grid));
 
 @override
 String toString() {
-  return 'PatternData(version: $version, stepCount: $stepCount, scaleIndex: $scaleIndex, grid: $grid)';
+  return 'PatternData(version: $version, scaleIndex: $scaleIndex, grid: $grid)';
 }
 
 
@@ -259,7 +257,7 @@ abstract mixin class _$PatternDataCopyWith<$Res> implements $PatternDataCopyWith
   factory _$PatternDataCopyWith(_PatternData value, $Res Function(_PatternData) _then) = __$PatternDataCopyWithImpl;
 @override @useResult
 $Res call({
- int version, int stepCount, int scaleIndex, List<List<int>> grid
+ int version, int scaleIndex, List<List<int>> grid
 });
 
 
@@ -276,10 +274,9 @@ class __$PatternDataCopyWithImpl<$Res>
 
 /// Create a copy of PatternData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? stepCount = null,Object? scaleIndex = null,Object? grid = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? scaleIndex = null,Object? grid = null,}) {
   return _then(_PatternData(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
-as int,stepCount: null == stepCount ? _self.stepCount : stepCount // ignore: cast_nullable_to_non_nullable
 as int,scaleIndex: null == scaleIndex ? _self.scaleIndex : scaleIndex // ignore: cast_nullable_to_non_nullable
 as int,grid: null == grid ? _self._grid : grid // ignore: cast_nullable_to_non_nullable
 as List<List<int>>,

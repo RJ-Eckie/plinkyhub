@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plinkyhub/pages/patterns/create_pattern_tab.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 
 const _noteNames = [
@@ -30,7 +31,6 @@ String _midiNoteName(int midi) {
 class PatternGridEditor extends StatefulWidget {
   const PatternGridEditor({
     required this.grid,
-    required this.stepCount,
     required this.scale,
     required this.onGridChanged,
     this.enabled = true,
@@ -39,7 +39,6 @@ class PatternGridEditor extends StatefulWidget {
 
   // 2D grid indexed by step then row, true = active.
   final List<List<bool>> grid;
-  final int stepCount;
   final PlinkyScale scale;
   final ValueChanged<List<List<bool>>> onGridChanged;
   final bool enabled;
@@ -155,7 +154,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                             children: [
                               for (
                                 var step = 0;
-                                step < widget.stepCount;
+                                step < fixedStepCount;
                                 step++
                               )
                                 SizedBox(
@@ -179,7 +178,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                               children: [
                                 for (
                                   var step = 0;
-                                  step < widget.stepCount;
+                                  step < fixedStepCount;
                                   step++
                                 )
                                   _GridCell(
