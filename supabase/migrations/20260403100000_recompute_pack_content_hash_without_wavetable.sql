@@ -15,7 +15,7 @@
 
 UPDATE packs
 SET content_hash = encode(
-  digest(
+  extensions.digest(
     (
       SELECT string_agg(part, '|' ORDER BY type_order, idx)
       FROM (
