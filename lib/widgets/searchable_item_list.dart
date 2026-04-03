@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:plinkyhub/models/searchable.dart';
 import 'package:plinkyhub/models/sort_order.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -200,30 +201,12 @@ class _SearchableItemListState<T extends Searchable>
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList.builder(
-                    itemCount: (filtered.length + 1) ~/ 2,
-                    itemBuilder: (context, index) {
-                      final itemIndex = index * 2;
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: widget.itemBuilder(
-                              filtered[itemIndex],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (itemIndex + 1 < filtered.length)
-                            Expanded(
-                              child: widget.itemBuilder(
-                                filtered[itemIndex + 1],
-                              ),
-                            )
-                          else
-                            const Expanded(child: SizedBox()),
-                        ],
-                      );
-                    },
+                  sliver: SliverMasonryGrid.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 8,
+                    childCount: filtered.length,
+                    itemBuilder: (context, index) =>
+                        widget.itemBuilder(filtered[index]),
                   ),
                 ),
               ],
