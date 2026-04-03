@@ -11,6 +11,7 @@ import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_save_dialog_views.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum _DialogStep {
@@ -306,15 +307,23 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        switch (_step) {
-          _DialogStep.instructions => 'Save to Plinky',
-          _DialogStep.progress => 'Uploading to Plinky...',
-          _DialogStep.done => 'Done',
-          _DialogStep.error => 'Error',
-        },
-      ),
+    return PointerInterceptor(
+      child: AlertDialog(
+      title: switch (_step) {
+        _DialogStep.instructions => const Text('Save to Plinky'),
+        _DialogStep.progress => const Text('Uploading to Plinky...'),
+        _DialogStep.done => Row(
+          children: [
+            const Text('Done'),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ],
+        ),
+        _DialogStep.error => const Text('Error'),
+      },
       content: SizedBox(
         width: 400,
         child: switch (_step) {
@@ -348,6 +357,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
           ),
         ],
       },
+    ),
     );
   }
 }

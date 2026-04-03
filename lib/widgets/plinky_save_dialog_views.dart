@@ -74,21 +74,10 @@ class SaveDoneView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.check_circle,
-          size: 48,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          '${itemType[0].toUpperCase()}${itemType.substring(1)} '
-          'saved to Plinky successfully! '
-          'Eject the drive and restart your Plinky.',
-        ),
-      ],
+    return Text(
+      '${itemType[0].toUpperCase()}${itemType.substring(1)} '
+      'saved to Plinky successfully! '
+      'Eject the drive and restart your Plinky.',
     );
   }
 }

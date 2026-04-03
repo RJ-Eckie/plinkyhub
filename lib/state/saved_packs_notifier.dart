@@ -29,6 +29,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     final authenticationState = ref.watch(authenticationProvider);
     if (authenticationState.user != null) {
       Future.microtask(fetchUserPacks);
+      return const SavedPacksState(isLoading: true);
     }
     return const SavedPacksState();
   }
