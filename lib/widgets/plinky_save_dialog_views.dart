@@ -56,7 +56,7 @@ class SaveProgressView extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const PlinkyLoadingAnimation(size: 80),
+        const PlinkyLoadingAnimation(),
         const SizedBox(height: 16),
         Text(statusMessage),
       ],

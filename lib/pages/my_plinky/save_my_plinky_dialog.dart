@@ -213,8 +213,9 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
         final quarters = deserializePatternQuarters(patternBlob);
         final baseIndex = patternIndex * 4;
         for (var q = 0; q < 4; q++) {
-          if (baseIndex + q < patternQuarters.length && q < quarters.length) {
-            patternQuarters[baseIndex + q] = quarters[q];
+          if (baseIndex + q < patternQuarters.length &&
+              baseIndex + q < quarters.length) {
+            patternQuarters[baseIndex + q] = quarters[baseIndex + q];
           }
         }
       }

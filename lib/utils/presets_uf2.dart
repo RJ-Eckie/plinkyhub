@@ -140,9 +140,6 @@ Map<int, Uint8List> _scanFlashPages(Uint8List flashImage) {
   return bestPage;
 }
 
-/// Number of sample ID values (NUM_SAMPLES + 1 = 9, including NO_SAMPLE).
-const _sampleRange = 9;
-
 /// Computes the firmware flash hash (CRC) over [length] bytes of [data].
 ///
 /// Matches the firmware's `compute_hash()` function.
@@ -157,27 +154,36 @@ int computeFlashHash(Uint8List data, int length) {
 /// Returns the raw P_SAMPLE parameter value for the given firmware
 /// [slotIndex] (0-7). Returns 0 for no sample.
 ///
-/// The firmware stores P_SAMPLE 1-based:
+/// Matches the firmware's `save_param_index(P_SAMPLE, slotIndex)`:
 ///   storedIndex = (slotIndex + 1) % 9
 ///   raw = INDEX_TO_RAW(storedIndex, 9)
 int sampleSlotToRaw(int slotIndex) {
-  final storedIndex = (slotIndex + 1) % _sampleRange;
+  const range = sampleCount + 1; // 9 = NUM_SAMPLES + 1
+  final storedIndex = (slotIndex + 1) % range;
   if (storedIndex == 0) {
     return 0;
   }
-  return ((storedIndex << 10) + (_sampleRange - 1)) ~/ _sampleRange;
+  return ((storedIndex << 10) + (range - 1)) ~/ range;
 }
 
 /// Converts a raw P_SAMPLE parameter value back to a firmware sample
 /// slot index (0-7). Returns -1 if the value represents no sample.
 ///
-/// The firmware encodes sample slots as 0-based in the 0-1024 range
-/// with 8 equal segments: slot = round(raw * 8 / 1024).
+/// Matches the firmware's `param_index(P_SAMPLE)`:
+///   storedIndex = raw_to_index(raw, 9)  =  ((raw << 6) * 9) >> 16
+///   sampleSlot  = (storedIndex - 1 + 9) % 9
+/// where storedIndex 0 maps to NO_SAMPLE (slot 8 → -1).
 int rawToSampleSlot(int rawValue) {
   if (rawValue == 0) {
     return -1;
   }
-  return (rawValue * sampleCount / 1024).round().clamp(0, sampleCount - 1);
+  const range = sampleCount + 1; // 9 = NUM_SAMPLES + 1
+  final storedIndex = ((rawValue << 6) * range) >> 16;
+  final slot = (storedIndex - 1 + range) % range;
+  if (slot >= sampleCount) {
+    return -1; // NO_SAMPLE
+  }
+  return slot;
 }
 
 /// Creates a default SysParams block (16 bytes).

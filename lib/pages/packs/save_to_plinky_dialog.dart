@@ -185,15 +185,17 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       // Clone the preset bytes so we can modify P_SAMPLE.
       final presetBytes = Uint8List.fromList(originalPresetBytes);
 
-      // Find the sample for this preset via its P_SAMPLE parameter.
+      // Remap P_SAMPLE to the target slot for this device.
       final preset = Preset(presetBytes.buffer);
       if (preset.usesSample) {
-        for (final entry in sampleSlotMapping.entries) {
-          final raw = sampleSlotToRaw(entry.value);
-          final presetRaw = preset.parameterById('P_SAMPLE')?.value;
-          if (presetRaw != null && (presetRaw - raw).abs() < 2) {
-            setPresetSampleSlot(presetBytes, entry.value);
-            break;
+        final presetRaw = preset.parameterById('P_SAMPLE')?.value;
+        if (presetRaw != null && presetRaw != 0) {
+          final originalSlot = rawToSampleSlot(presetRaw);
+          for (final entry in sampleSlotMapping.entries) {
+            if (entry.value == originalSlot) {
+              setPresetSampleSlot(presetBytes, entry.value);
+              break;
+            }
           }
         }
       }
@@ -230,8 +232,9 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         final patternIndex = slot.slotNumber - patternSlotStart;
         final baseIndex = patternIndex * 4;
         for (var q = 0; q < 4; q++) {
-          if (baseIndex + q < patternQuarters.length && q < quarters.length) {
-            patternQuarters[baseIndex + q] = quarters[q];
+          if (baseIndex + q < patternQuarters.length &&
+              baseIndex + q < quarters.length) {
+            patternQuarters[baseIndex + q] = quarters[baseIndex + q];
           }
         }
       }

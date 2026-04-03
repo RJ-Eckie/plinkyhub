@@ -4,6 +4,7 @@ import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/parameter.dart';
 import 'package:plinkyhub/models/plinky_params.dart';
 import 'package:plinkyhub/utils/pitch.dart';
+import 'package:plinkyhub/utils/presets_uf2.dart';
 
 /// Represents a single Plinky synthesizer preset stored as
 /// a 1552-byte binary buffer.
@@ -149,17 +150,11 @@ class Preset {
     return (octaveParameter.value / 256).round().clamp(-4, 4);
   }
 
-  /// Sample slot number (0-127) used by this preset.
-  int get sampleSlot {
-    final sampleParameter = parameterById('P_SAMPLE');
-    if (sampleParameter == null) {
-      return 0;
-    }
-    return (sampleParameter.value / 1024 * 127).round().clamp(0, 127);
-  }
+  /// Sample slot index (0-7) used by this preset, or -1 if none.
+  int get sampleSlot => rawToSampleSlot(parameterById('P_SAMPLE')?.value ?? 0);
 
-  /// Whether this preset uses a sample (sample slot > 0).
-  bool get usesSample => sampleSlot > 0;
+  /// Whether this preset uses a sample.
+  bool get usesSample => sampleSlot >= 0;
 
   /// Whether this preset is effectively empty (all parameters at zero).
   bool get isEmpty => parameters.every((parameter) => parameter.value == 0);
