@@ -1,6 +1,6 @@
--- Recompute pack content_hash excluding wavetable.
--- The wavetable only appears on the emulated drive when transferred in the
--- same session, so it should not affect pack identity.
+-- Recompute pack content_hash excluding wavetable and using updated preset
+-- hashes (with P_SAMPLE zeroed out). Must run after
+-- 20260403200000_recompute_preset_hash_without_sample_slot.sql.
 --
 -- Hash format matches the Dart computePackContentHash():
 --   sorted preset parts "p{index}:{hash}" joined by "|"

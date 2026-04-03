@@ -144,7 +144,7 @@ ParsedPresetsPhase parsePresetsPhase(Uint8List presetsUf2) {
   for (var i = 0; i < presetCount; i++) {
     final presetBytes = parsed.presets[i];
     if (presetBytes != null && !presetBytes.every((b) => b == 0)) {
-      presetHashes[i] = computeContentHash(presetBytes);
+      presetHashes[i] = computePresetContentHash(presetBytes);
     }
   }
 

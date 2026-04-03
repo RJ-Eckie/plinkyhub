@@ -92,7 +92,7 @@ bool _allSameByte(Uint8List data, int value) {
 /// Byte offset of P_SAMPLE base value in the preset binary.
 /// eParams index 52 × 16 bytes per parameter = 832.
 /// The raw Int16 value occupies bytes 832-833 (little-endian).
-const _sampleParameterOffset = 832;
+const sampleParameterOffset = 832;
 
 /// Scans all pages in a raw PRESETS flash image and returns a map from
 /// item ID to the page data with the highest wear-leveling sequence number.
@@ -339,7 +339,7 @@ void _generateWaveform(ByteData info, Uint8List pcmData, int sampleLength) {
 void setPresetSampleSlot(Uint8List presetBytes, int firmwareSlotIndex) {
   final raw = sampleSlotToRaw(firmwareSlotIndex);
   final byteData = ByteData.sublistView(presetBytes);
-  byteData.setInt16(_sampleParameterOffset, raw, Endian.little);
+  byteData.setInt16(sampleParameterOffset, raw, Endian.little);
 }
 
 /// Parsed sample metadata extracted from a SampleInfo struct in PRESETS.UF2.
