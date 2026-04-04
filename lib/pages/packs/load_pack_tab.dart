@@ -47,6 +47,7 @@ class LoadPackTab extends ConsumerStatefulWidget {
 class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   _LoadStep _step = _LoadStep.select;
   String _statusMessage = '';
+  double? _progress;
   String? _errorMessage;
 
   // Parsed data from Plinky.
@@ -227,9 +228,24 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       return;
     }
 
+    // Total steps: 1 (presets) + sampleCount (samples) + 1 (wavetable)
+    // + 1 (parse presets) + 1 (parse samples) + 1 (check wavetable)
+    // = sampleCount + 5.
+    const totalSteps = sampleCount + 5;
+    var completedSteps = 0;
+
+    void updateProgress(String message) {
+      completedSteps++;
+      setState(() {
+        _statusMessage = message;
+        _progress = completedSteps / totalSteps;
+      });
+    }
+
     setState(() {
       _step = _LoadStep.uploading;
       _statusMessage = 'Reading files from Plinky...';
+      _progress = 0;
       _errorMessage = null;
     });
 
@@ -248,17 +264,13 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
 
       final sampleUf2s = <Uint8List?>[];
       for (var i = 0; i < sampleCount; i++) {
-        setState(() {
-          _statusMessage = 'Reading SAMPLE$i.UF2...';
-        });
+        updateProgress('Reading SAMPLE$i.UF2...');
         sampleUf2s.add(
           await readFileFromDirectory(directory, 'SAMPLE$i.UF2'),
         );
       }
 
-      setState(() {
-        _statusMessage = 'Reading WAVETAB.UF2...';
-      });
+      updateProgress('Reading WAVETAB.UF2...');
       _wavetableUf2Bytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
@@ -268,7 +280,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       // between phases (Isolate.run is not supported in WASM).
 
       // Phase 1: Parse presets and patterns.
-      setState(() => _statusMessage = 'Parsing presets...');
+      updateProgress('Parsing presets...');
       await Future<void>.delayed(Duration.zero);
       final presetsResult = parsePresetsPhase(presetsUf2Bytes);
 
@@ -284,7 +296,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
       );
 
       // Phase 3: Check wavetable.
-      setState(() => _statusMessage = 'Checking wavetable...');
+      updateProgress('Checking wavetable...');
       await Future<void>.delayed(Duration.zero);
       final wavetableResult = parseWavetablePhase(_wavetableUf2Bytes);
 
@@ -933,7 +945,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
   @override
   Widget build(BuildContext context) {
     if (_step == _LoadStep.uploading) {
-      return LoadingIndicator(message: _statusMessage);
+      return LoadingIndicator(message: _statusMessage, progress: _progress);
     }
 
     return SingleChildScrollView(

@@ -46,10 +46,12 @@ class TunnelOfLightsInstructions extends StatelessWidget {
 class SaveProgressView extends StatelessWidget {
   const SaveProgressView({
     required this.statusMessage,
+    this.progress,
     super.key,
   });
 
   final String statusMessage;
+  final double? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,11 @@ class SaveProgressView extends StatelessWidget {
         const PlinkyLoadingAnimation(),
         const SizedBox(height: 16),
         Text(statusMessage),
+        const SizedBox(height: 12),
+        LinearProgressIndicator(
+          value: progress,
+          borderRadius: BorderRadius.circular(4),
+        ),
       ],
     );
   }

@@ -35,6 +35,7 @@ class MyPlinkyPage extends ConsumerStatefulWidget {
 class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   _PageState _state = _PageState.connect;
   String _statusMessage = '';
+  double? _progress;
   String? _errorMessage;
 
   // Directory handle from the initial connect (null until user selects drive).
@@ -76,9 +77,24 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     }
     _directory = directory;
 
+    // Total steps: 1 (presets) + sampleCount (samples) + 1 (wavetable)
+    // + 1 (parse presets) + 1 (parse samples) + 1 (check wavetable)
+    // + 1 (match content) = sampleCount + 6.
+    const totalSteps = sampleCount + 6;
+    var completedSteps = 0;
+
+    void updateProgress(String message) {
+      completedSteps++;
+      setState(() {
+        _statusMessage = message;
+        _progress = completedSteps / totalSteps;
+      });
+    }
+
     setState(() {
       _state = _PageState.loading;
       _statusMessage = 'Reading files from Plinky...';
+      _progress = 0;
       _errorMessage = null;
     });
 
@@ -97,24 +113,20 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
 
       final sampleUf2s = <Uint8List?>[];
       for (var i = 0; i < sampleCount; i++) {
-        setState(
-          () => _statusMessage = 'Reading SAMPLE$i.UF2...',
-        );
+        updateProgress('Reading SAMPLE$i.UF2...');
         sampleUf2s.add(
           await readFileFromDirectory(directory, 'SAMPLE$i.UF2'),
         );
       }
 
-      setState(
-        () => _statusMessage = 'Reading WAVETAB.UF2...',
-      );
+      updateProgress('Reading WAVETAB.UF2...');
       final wavetableBytes = await readFileFromDirectory(
         directory,
         'WAVETAB.UF2',
       );
 
       // Phase 1: Parse presets and patterns.
-      setState(() => _statusMessage = 'Parsing presets...');
+      updateProgress('Parsing presets...');
       await Future<void>.delayed(Duration.zero);
       final presetsResult = parsePresetsPhase(presetsUf2Bytes);
 
@@ -130,7 +142,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       );
 
       // Phase 3: Check wavetable.
-      setState(() => _statusMessage = 'Checking wavetable...');
+      updateProgress('Checking wavetable...');
       await Future<void>.delayed(Duration.zero);
       final wavetableResult = parseWavetablePhase(wavetableBytes);
 
@@ -165,7 +177,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
         ..addAll(presetsResult.nonEmptyPatternIndices);
 
       // Match content hashes against saved entries.
-      setState(() => _statusMessage = 'Matching saved content...');
+      updateProgress('Matching saved content...');
 
       final matchedPresets = <int, _MatchedEntry>{};
       final matchedSamples = <int, _MatchedEntry>{};
@@ -449,7 +461,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   }
 
   Widget _buildLoadingView() {
-    return LoadingIndicator(message: _statusMessage);
+    return LoadingIndicator(message: _statusMessage, progress: _progress);
   }
 
   Widget _buildErrorView() {
