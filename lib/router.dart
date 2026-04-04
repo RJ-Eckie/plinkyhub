@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/pages/about_page.dart';
 import 'package:plinkyhub/pages/editor/editor_page.dart';
+import 'package:plinkyhub/pages/firmware/firmware_page.dart';
 import 'package:plinkyhub/pages/my_plinky/my_plinky_page.dart';
 import 'package:plinkyhub/pages/packs/pack_page.dart';
 import 'package:plinkyhub/pages/packs/saved_packs_page.dart';
@@ -155,7 +156,16 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 9: About
+          // Branch 9: Firmware
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoute.firmware.path,
+                builder: (context, state) => const FirmwarePage(),
+              ),
+            ],
+          ),
+          // Branch 10: About
           StatefulShellBranch(
             routes: [
               GoRoute(

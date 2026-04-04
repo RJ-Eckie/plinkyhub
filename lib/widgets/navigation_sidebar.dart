@@ -92,10 +92,17 @@ class NavigationSidebar extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ArcIconButton(
-              icon: Icons.info,
-              label: 'About',
+              icon: Icons.system_update,
+              label: 'Firmware',
               isSelected: selectedIndex == 9,
               onPressed: () => onDestinationSelected(9),
+            ),
+            const SizedBox(height: 8),
+            ArcIconButton(
+              icon: Icons.info,
+              label: 'About',
+              isSelected: selectedIndex == 10,
+              onPressed: () => onDestinationSelected(10),
             ),
             const Spacer(),
             const Padding(

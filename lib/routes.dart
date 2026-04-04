@@ -9,6 +9,7 @@ enum AppRoute {
   patterns('/patterns', itemSegment: 'pattern'),
   users('/users'),
   profile('/profile'),
+  firmware('/firmware'),
   about('/about'),
   ;
 
