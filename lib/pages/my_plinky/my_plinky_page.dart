@@ -300,11 +300,14 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Restart Plinky'),
-        content: const Text(
-          'To edit a preset, your Plinky needs to be in normal mode '
-          '(not Tunnel of Lights).\n\n'
-          'Please restart your Plinky by turning it off and then '
-          'turning it back on without holding the encoder.',
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: const Text(
+            'To edit a preset, your Plinky needs to be in normal mode '
+            '(not Tunnel of Lights).\n\n'
+            'Please restart your Plinky by turning it off and then '
+            'turning it back on without holding the encoder.',
+          ),
         ),
         actions: [
           TextButton(

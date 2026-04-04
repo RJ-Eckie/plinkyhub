@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,8 +26,10 @@ class SettingsDialog extends ConsumerStatefulWidget {
 }
 
 class _SettingsDialogState extends ConsumerState<SettingsDialog> {
+  // Local color tracks the wheel during drag so shouldUpdate can be
+  // toggled off while the user is interacting with the wheel.
   late Color _wheelColor;
-  Timer? _debounceTimer;
+  bool _isDragging = false;
 
   @override
   void initState() {
@@ -38,28 +38,13 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
   }
 
   @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
-
-  void _onWheelColorChanged(Color color) {
-    setState(() => _wheelColor = color);
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(seconds: 2), () {
-      ref.read(primaryColorProvider.notifier).setColor(color);
-    });
-  }
-
-  void _onPresetColorSelected(Color color) {
-    _debounceTimer?.cancel();
-    setState(() => _wheelColor = color);
-    ref.read(primaryColorProvider.notifier).setColor(color);
-  }
-
-  @override
   Widget build(BuildContext context) {
     final currentColor = ref.watch(primaryColorProvider);
+
+    // Sync wheel when provider changes externally (e.g. preset tap).
+    if (!_isDragging && _wheelColor != currentColor) {
+      _wheelColor = currentColor;
+    }
 
     return AlertDialog(
       title: const Text('Settings'),
@@ -80,11 +65,42 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                 height: 200,
                 child: ColorWheelPicker(
                   color: _wheelColor,
-                  shouldUpdate: true,
-                  onChanged: _onWheelColorChanged,
+                  shouldUpdate: !_isDragging,
+                  onChanged: (color) {
+                    setState(() => _wheelColor = color);
+                  },
+                  onChangeStart: (_) {
+                    _isDragging = true;
+                  },
+                  onChangeEnd: (color) {
+                    _isDragging = false;
+                    ref.read(primaryColorProvider.notifier).setColor(color);
+                  },
                   onWheel: (_) {},
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Selected color:',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: _wheelColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -97,7 +113,9 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                   message: option.label,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
-                    onTap: () => _onPresetColorSelected(option.color),
+                    onTap: () => ref
+                        .read(primaryColorProvider.notifier)
+                        .setColor(option.color),
                     child: Container(
                       width: 40,
                       height: 40,
