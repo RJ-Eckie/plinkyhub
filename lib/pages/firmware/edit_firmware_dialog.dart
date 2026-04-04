@@ -1,24 +1,37 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/models/saved_firmware.dart';
 import 'package:plinkyhub/state/firmwares_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
-class UploadFirmwareDialog extends ConsumerStatefulWidget {
-  const UploadFirmwareDialog({super.key});
+class EditFirmwareDialog extends ConsumerStatefulWidget {
+  const EditFirmwareDialog({required this.firmware, super.key});
+
+  final SavedFirmware firmware;
 
   @override
-  ConsumerState<UploadFirmwareDialog> createState() =>
-      _UploadFirmwareDialogState();
+  ConsumerState<EditFirmwareDialog> createState() => _EditFirmwareDialogState();
 }
 
-class _UploadFirmwareDialogState extends ConsumerState<UploadFirmwareDialog> {
-  final _nameController = TextEditingController();
-  final _versionController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  var _isBeta = false;
-  PlatformFile? _selectedFile;
-  var _isUploading = false;
+class _EditFirmwareDialogState extends ConsumerState<EditFirmwareDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _versionController;
+  late final TextEditingController _descriptionController;
+  late bool _isBeta;
+  late bool _isPinned;
+  var _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.firmware.name);
+    _versionController = TextEditingController(text: widget.firmware.version);
+    _descriptionController = TextEditingController(
+      text: widget.firmware.description,
+    );
+    _isBeta = widget.firmware.isBeta;
+    _isPinned = widget.firmware.isPinned;
+  }
 
   @override
   void dispose() {
@@ -28,35 +41,24 @@ class _UploadFirmwareDialogState extends ConsumerState<UploadFirmwareDialog> {
     super.dispose();
   }
 
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['uf2'],
-      withData: true,
-    );
-    if (result != null && result.files.isNotEmpty) {
-      setState(() => _selectedFile = result.files.first);
-    }
-  }
-
-  Future<void> _upload() async {
+  Future<void> _save() async {
     final name = _nameController.text.trim();
     final version = _versionController.text.trim();
-    final file = _selectedFile;
-    if (name.isEmpty || version.isEmpty || file?.bytes == null) {
+    if (name.isEmpty || version.isEmpty) {
       return;
     }
 
-    setState(() => _isUploading = true);
+    setState(() => _isSaving = true);
     try {
       await ref
           .read(firmwaresProvider.notifier)
-          .uploadFirmware(
+          .updateFirmware(
+            id: widget.firmware.id,
             name: name,
             version: version,
             description: _descriptionController.text.trim(),
             isBeta: _isBeta,
-            fileBytes: file!.bytes!,
+            isPinned: _isPinned,
           );
       if (mounted) {
         Navigator.of(context).pop();
@@ -69,21 +71,20 @@ class _UploadFirmwareDialogState extends ConsumerState<UploadFirmwareDialog> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isUploading = false);
+        setState(() => _isSaving = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final canUpload =
+    final canSave =
         _nameController.text.trim().isNotEmpty &&
         _versionController.text.trim().isNotEmpty &&
-        _selectedFile?.bytes != null &&
-        !_isUploading;
+        !_isSaving;
 
     return AlertDialog(
-      title: const Text('Upload firmware'),
+      title: const Text('Edit firmware'),
       content: SizedBox(
         width: 400,
         child: Column(
@@ -122,23 +123,10 @@ class _UploadFirmwareDialogState extends ConsumerState<UploadFirmwareDialog> {
               value: _isBeta,
               onChanged: (value) => setState(() => _isBeta = value),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                PlinkyButton(
-                  onPressed: _pickFile,
-                  icon: Icons.attach_file,
-                  label: 'Select .uf2 file',
-                ),
-                const SizedBox(width: 8),
-                if (_selectedFile != null)
-                  Expanded(
-                    child: Text(
-                      _selectedFile!.name,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
+            SwitchListTile(
+              title: const Text('Pinned'),
+              value: _isPinned,
+              onChanged: (value) => setState(() => _isPinned = value),
             ),
           ],
         ),
@@ -149,9 +137,9 @@ class _UploadFirmwareDialogState extends ConsumerState<UploadFirmwareDialog> {
           label: 'Cancel',
         ),
         PlinkyButton(
-          onPressed: canUpload ? _upload : null,
-          icon: Icons.upload,
-          label: _isUploading ? 'Uploading...' : 'Upload',
+          onPressed: canSave ? _save : null,
+          icon: Icons.save,
+          label: _isSaving ? 'Saving...' : 'Save',
         ),
       ],
     );

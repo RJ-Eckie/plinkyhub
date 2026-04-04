@@ -17,6 +17,7 @@ _SavedFirmware _$SavedFirmwareFromJson(Map<String, dynamic> json) =>
       updatedAt: DateTime.parse(json['updated_at'] as String),
       description: json['description'] as String? ?? '',
       isBeta: json['is_beta'] as bool? ?? false,
+      isPinned: json['is_pinned'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$SavedFirmwareToJson(_SavedFirmware instance) =>
@@ -30,4 +31,5 @@ Map<String, dynamic> _$SavedFirmwareToJson(_SavedFirmware instance) =>
       'updated_at': instance.updatedAt.toIso8601String(),
       'description': instance.description,
       'is_beta': instance.isBeta,
+      'is_pinned': instance.isPinned,
     };

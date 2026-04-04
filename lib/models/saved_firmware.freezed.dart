@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedFirmware {
 
- String get id; String get userId; String get name; String get version; String get filePath; DateTime get createdAt; DateTime get updatedAt; String get description; bool get isBeta;
+ String get id; String get userId; String get name; String get version; String get filePath; DateTime get createdAt; DateTime get updatedAt; String get description; bool get isBeta; bool get isPinned;
 /// Create a copy of SavedFirmware
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SavedFirmwareCopyWith<SavedFirmware> get copyWith => _$SavedFirmwareCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedFirmware&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.version, version) || other.version == version)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isBeta, isBeta) || other.isBeta == isBeta));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedFirmware&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.version, version) || other.version == version)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isBeta, isBeta) || other.isBeta == isBeta)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,name,version,filePath,createdAt,updatedAt,description,isBeta);
+int get hashCode => Object.hash(runtimeType,id,userId,name,version,filePath,createdAt,updatedAt,description,isBeta,isPinned);
 
 @override
 String toString() {
-  return 'SavedFirmware(id: $id, userId: $userId, name: $name, version: $version, filePath: $filePath, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isBeta: $isBeta)';
+  return 'SavedFirmware(id: $id, userId: $userId, name: $name, version: $version, filePath: $filePath, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isBeta: $isBeta, isPinned: $isPinned)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $SavedFirmwareCopyWith<$Res>  {
   factory $SavedFirmwareCopyWith(SavedFirmware value, $Res Function(SavedFirmware) _then) = _$SavedFirmwareCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String name, String version, String filePath, DateTime createdAt, DateTime updatedAt, String description, bool isBeta
+ String id, String userId, String name, String version, String filePath, DateTime createdAt, DateTime updatedAt, String description, bool isBeta, bool isPinned
 });
 
 
@@ -65,7 +65,7 @@ class _$SavedFirmwareCopyWithImpl<$Res>
 
 /// Create a copy of SavedFirmware
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? version = null,Object? filePath = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isBeta = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? version = null,Object? filePath = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isBeta = null,Object? isPinned = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -76,6 +76,7 @@ as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: 
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,isBeta: null == isBeta ? _self.isBeta : isBeta // ignore: cast_nullable_to_non_nullable
+as bool,isPinned: null == isPinned ? _self.isPinned : isPinned // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  String version,  String filePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isBeta)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  String version,  String filePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isBeta,  bool isPinned)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedFirmware() when $default != null:
-return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_that.createdAt,_that.updatedAt,_that.description,_that.isBeta);case _:
+return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_that.createdAt,_that.updatedAt,_that.description,_that.isBeta,_that.isPinned);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  String version,  String filePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isBeta)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String name,  String version,  String filePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isBeta,  bool isPinned)  $default,) {final _that = this;
 switch (_that) {
 case _SavedFirmware():
-return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_that.createdAt,_that.updatedAt,_that.description,_that.isBeta);case _:
+return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_that.createdAt,_that.updatedAt,_that.description,_that.isBeta,_that.isPinned);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String name,  String version,  String filePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isBeta)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String name,  String version,  String filePath,  DateTime createdAt,  DateTime updatedAt,  String description,  bool isBeta,  bool isPinned)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedFirmware() when $default != null:
-return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_that.createdAt,_that.updatedAt,_that.description,_that.isBeta);case _:
+return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_that.createdAt,_that.updatedAt,_that.description,_that.isBeta,_that.isPinned);case _:
   return null;
 
 }
@@ -217,7 +218,7 @@ return $default(_that.id,_that.userId,_that.name,_that.version,_that.filePath,_t
 @JsonSerializable()
 
 class _SavedFirmware implements SavedFirmware {
-  const _SavedFirmware({required this.id, required this.userId, required this.name, required this.version, required this.filePath, required this.createdAt, required this.updatedAt, this.description = '', this.isBeta = false});
+  const _SavedFirmware({required this.id, required this.userId, required this.name, required this.version, required this.filePath, required this.createdAt, required this.updatedAt, this.description = '', this.isBeta = false, this.isPinned = false});
   factory _SavedFirmware.fromJson(Map<String, dynamic> json) => _$SavedFirmwareFromJson(json);
 
 @override final  String id;
@@ -229,6 +230,7 @@ class _SavedFirmware implements SavedFirmware {
 @override final  DateTime updatedAt;
 @override@JsonKey() final  String description;
 @override@JsonKey() final  bool isBeta;
+@override@JsonKey() final  bool isPinned;
 
 /// Create a copy of SavedFirmware
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +245,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedFirmware&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.version, version) || other.version == version)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isBeta, isBeta) || other.isBeta == isBeta));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedFirmware&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.name, name) || other.name == name)&&(identical(other.version, version) || other.version == version)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.isBeta, isBeta) || other.isBeta == isBeta)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,name,version,filePath,createdAt,updatedAt,description,isBeta);
+int get hashCode => Object.hash(runtimeType,id,userId,name,version,filePath,createdAt,updatedAt,description,isBeta,isPinned);
 
 @override
 String toString() {
-  return 'SavedFirmware(id: $id, userId: $userId, name: $name, version: $version, filePath: $filePath, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isBeta: $isBeta)';
+  return 'SavedFirmware(id: $id, userId: $userId, name: $name, version: $version, filePath: $filePath, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, isBeta: $isBeta, isPinned: $isPinned)';
 }
 
 
@@ -263,7 +265,7 @@ abstract mixin class _$SavedFirmwareCopyWith<$Res> implements $SavedFirmwareCopy
   factory _$SavedFirmwareCopyWith(_SavedFirmware value, $Res Function(_SavedFirmware) _then) = __$SavedFirmwareCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String name, String version, String filePath, DateTime createdAt, DateTime updatedAt, String description, bool isBeta
+ String id, String userId, String name, String version, String filePath, DateTime createdAt, DateTime updatedAt, String description, bool isBeta, bool isPinned
 });
 
 
@@ -280,7 +282,7 @@ class __$SavedFirmwareCopyWithImpl<$Res>
 
 /// Create a copy of SavedFirmware
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? version = null,Object? filePath = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isBeta = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? name = null,Object? version = null,Object? filePath = null,Object? createdAt = null,Object? updatedAt = null,Object? description = null,Object? isBeta = null,Object? isPinned = null,}) {
   return _then(_SavedFirmware(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -291,6 +293,7 @@ as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: 
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,isBeta: null == isBeta ? _self.isBeta : isBeta // ignore: cast_nullable_to_non_nullable
+as bool,isPinned: null == isPinned ? _self.isPinned : isPinned // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

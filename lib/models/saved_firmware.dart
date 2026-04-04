@@ -15,6 +15,7 @@ abstract class SavedFirmware with _$SavedFirmware {
     required DateTime updatedAt,
     @Default('') String description,
     @Default(false) bool isBeta,
+    @Default(false) bool isPinned,
   }) = _SavedFirmware;
 
   factory SavedFirmware.fromJson(Map<String, dynamic> json) =>

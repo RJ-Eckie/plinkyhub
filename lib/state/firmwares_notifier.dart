@@ -24,6 +24,7 @@ class FirmwaresNotifier extends Notifier<FirmwaresState> {
       final response = await _supabase
           .from('firmwares')
           .select()
+          .order('is_pinned', ascending: false)
           .order('created_at', ascending: false);
       final firmwares = (response as List)
           .map(
@@ -46,14 +47,14 @@ class FirmwaresNotifier extends Notifier<FirmwaresState> {
     required String description,
     required bool isBeta,
     required Uint8List fileBytes,
-    required String fileName,
   }) async {
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
     }
 
-    final storagePath = '$userId/$fileName';
+    final uuid = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final storagePath = '$userId/$uuid.uf2';
     await _supabase.storage
         .from('firmwares')
         .uploadBinary(storagePath, fileBytes);
@@ -68,6 +69,45 @@ class FirmwaresNotifier extends Notifier<FirmwaresState> {
     });
 
     await fetchFirmwares();
+  }
+
+  Future<void> updateFirmware({
+    required String id,
+    required String name,
+    required String version,
+    required String description,
+    required bool isBeta,
+    required bool isPinned,
+  }) async {
+    try {
+      await _supabase
+          .from('firmwares')
+          .update({
+            'name': name,
+            'version': version,
+            'description': description,
+            'is_beta': isBeta,
+            'is_pinned': isPinned,
+          })
+          .eq('id', id);
+      await fetchFirmwares();
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
+    }
+  }
+
+  Future<void> togglePinned(SavedFirmware firmware) async {
+    try {
+      await _supabase
+          .from('firmwares')
+          .update({'is_pinned': !firmware.isPinned})
+          .eq('id', firmware.id);
+      await fetchFirmwares();
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(errorMessage: error.toString());
+    }
   }
 
   Future<void> deleteFirmware(String id, String filePath) async {

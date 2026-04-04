@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_firmware.dart';
+import 'package:plinkyhub/pages/firmware/edit_firmware_dialog.dart';
 import 'package:plinkyhub/pages/firmware/flash_firmware_dialog.dart';
 import 'package:plinkyhub/state/firmwares_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -38,6 +39,10 @@ class FirmwareCard extends ConsumerWidget {
                   label: Text(firmware.version),
                   visualDensity: VisualDensity.compact,
                 ),
+                if (firmware.isPinned) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.push_pin, size: 16),
+                ],
                 if (firmware.isBeta) ...[
                   const SizedBox(width: 4),
                   Chip(
@@ -70,6 +75,26 @@ class FirmwareCard extends ConsumerWidget {
                   label: 'Flash to Plinky',
                 ),
                 if (isAdmin) ...[
+                  const SizedBox(width: 8),
+                  PlinkyButton(
+                    onPressed: () => ref
+                        .read(firmwaresProvider.notifier)
+                        .togglePinned(firmware),
+                    icon: firmware.isPinned
+                        ? Icons.push_pin
+                        : Icons.push_pin_outlined,
+                    label: firmware.isPinned ? 'Unpin' : 'Pin',
+                  ),
+                  const SizedBox(width: 8),
+                  PlinkyButton(
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (context) =>
+                          EditFirmwareDialog(firmware: firmware),
+                    ),
+                    icon: Icons.edit,
+                    label: 'Edit',
+                  ),
                   const SizedBox(width: 8),
                   PlinkyButton(
                     onPressed: () => _confirmDelete(context, ref),
