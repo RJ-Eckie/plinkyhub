@@ -1,12 +1,13 @@
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/main.dart';
 
 const _colorOptions = <({String label, Color color})>[
-  (label: 'Teal', color: Color(0xFF00897B)),
+  (label: 'Teal', color: defaultPrimaryColor),
+  (label: 'Purple', color: Color(0xFF6A1B9A)),
   (label: 'Blue', color: Color(0xFF1565C0)),
   (label: 'Indigo', color: Color(0xFF283593)),
-  (label: 'Purple', color: Color(0xFF6A1B9A)),
   (label: 'Pink', color: Color(0xFFC2185B)),
   (label: 'Red', color: Color(0xFFC62828)),
   (label: 'Orange', color: Color(0xFFE65100)),
@@ -37,6 +38,19 @@ class SettingsDialog extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 12),
+            Center(
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: ColorWheelPicker(
+                  color: currentColor,
+                  onChanged: (color) =>
+                      ref.read(primaryColorProvider.notifier).setColor(color),
+                  onWheel: (_) {},
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 8,
