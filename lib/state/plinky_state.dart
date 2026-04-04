@@ -9,6 +9,8 @@ enum PlinkyConnectionState {
   connected,
   loadingPreset,
   savingPreset,
+  sendingSample,
+  sendingWavetable,
   error,
 }
 

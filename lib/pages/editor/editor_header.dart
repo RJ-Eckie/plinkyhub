@@ -38,14 +38,18 @@ class EditorHeader extends ConsumerWidget {
                   PlinkyConnectionState.connected => Icons.usb,
                   PlinkyConnectionState.connecting => Icons.sync,
                   PlinkyConnectionState.loadingPreset => Icons.download,
-                  PlinkyConnectionState.savingPreset => Icons.upload,
+                  PlinkyConnectionState.savingPreset ||
+                  PlinkyConnectionState.sendingSample ||
+                  PlinkyConnectionState.sendingWavetable => Icons.upload,
                   PlinkyConnectionState.error => Icons.error_outline,
                   PlinkyConnectionState.disconnected => Icons.usb_off,
                 },
                 color: switch (state.connectionState) {
                   PlinkyConnectionState.connected ||
                   PlinkyConnectionState.loadingPreset ||
-                  PlinkyConnectionState.savingPreset => Colors.green,
+                  PlinkyConnectionState.savingPreset ||
+                  PlinkyConnectionState.sendingSample ||
+                  PlinkyConnectionState.sendingWavetable => Colors.green,
                   PlinkyConnectionState.connecting => Colors.orange,
                   PlinkyConnectionState.error => Colors.red,
                   PlinkyConnectionState.disconnected => Theme.of(

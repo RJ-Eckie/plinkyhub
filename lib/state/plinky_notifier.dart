@@ -10,6 +10,16 @@ import 'package:plinkyhub/utils/compress.dart';
 
 const _usbBufferSize = 64;
 const _magicHeader = [0xF3, 0x0F, 0xAB, 0xCA];
+const _magicHeaderExtended = [0xF3, 0x0F, 0xAB, 0xCB];
+
+/// Maximum bytes per SPI RAM write chunk (firmware clamps to 64KB).
+const _spiChunkSize = 65536;
+
+/// Delay between SPI RAM write chunks to allow firmware to erase + program.
+const _spiChunkDelay = Duration(milliseconds: 500);
+
+/// Delay after writing SampleInfo before starting SPI writes.
+const _sampleInfoDelay = Duration(milliseconds: 200);
 
 final plinkyProvider = NotifierProvider<PlinkyNotifier, PlinkyState>(
   PlinkyNotifier.new,
@@ -236,6 +246,181 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
         errorMessage: error.toString(),
       );
     }
+  }
+
+  /// Sends a sample to Plinky over WebUSB.
+  ///
+  /// [slotIndex] is the sample slot (0-7).
+  /// [pcmData] is the raw PCM audio data (16-bit signed, mono, 31250 Hz).
+  /// [sampleInfo] is the 1072-byte SampleInfo struct.
+  /// [onProgress] is called with a value between 0.0 and 1.0.
+  Future<void> sendSample({
+    required int slotIndex,
+    required Uint8List pcmData,
+    required Uint8List sampleInfo,
+    ValueChanged<double>? onProgress,
+  }) async {
+    state = state.copyWith(
+      connectionState: PlinkyConnectionState.sendingSample,
+    );
+
+    try {
+      await _webUsbService.resetInterface();
+      _receivedData.clear();
+
+      // Step 1: Send SampleInfo (cmd=1, idx=64+slot, 16-bit header).
+      onProgress?.call(0);
+      await _sendWithHeader(
+        command: 1,
+        index: 64 + slotIndex,
+        data: sampleInfo,
+      );
+
+      await Future<void>.delayed(_sampleInfoDelay);
+
+      // Step 2: Send PCM data in 64KB chunks (cmd=3, 32-bit header).
+      final totalBytes = pcmData.length;
+      var sentBytes = 0;
+
+      while (sentBytes < totalBytes) {
+        final remaining = totalBytes - sentBytes;
+        final chunkLength = remaining < _spiChunkSize
+            ? remaining
+            : _spiChunkSize;
+        final chunkData = pcmData.sublist(sentBytes, sentBytes + chunkLength);
+
+        await _sendWithExtendedHeader(
+          command: 3,
+          index: slotIndex,
+          offset: sentBytes,
+          data: chunkData,
+        );
+
+        sentBytes += chunkLength;
+        onProgress?.call(sentBytes / totalBytes);
+
+        // Wait for firmware to erase + program SPI flash.
+        if (sentBytes < totalBytes) {
+          await Future<void>.delayed(_spiChunkDelay);
+        }
+      }
+
+      state = state.copyWith(
+        connectionState: PlinkyConnectionState.connected,
+      );
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        connectionState: PlinkyConnectionState.error,
+        errorMessage: error.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Sends a wavetable to Plinky over WebUSB.
+  ///
+  /// [wavetableData] is the raw wavetable bytes (17×1031 Int16 samples).
+  /// [onProgress] is called with a value between 0.0 and 1.0.
+  Future<void> sendWavetable({
+    required Uint8List wavetableData,
+    ValueChanged<double>? onProgress,
+  }) async {
+    state = state.copyWith(
+      connectionState: PlinkyConnectionState.sendingWavetable,
+    );
+
+    try {
+      await _webUsbService.resetInterface();
+      _receivedData.clear();
+
+      onProgress?.call(0);
+      await _sendWithHeader(
+        command: 5,
+        index: 0,
+        data: wavetableData,
+      );
+      onProgress?.call(1);
+
+      state = state.copyWith(
+        connectionState: PlinkyConnectionState.connected,
+      );
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        connectionState: PlinkyConnectionState.error,
+        errorMessage: error.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Sends data with a standard 10-byte (16-bit) WebUSB header.
+  Future<void> _sendWithHeader({
+    required int command,
+    required int index,
+    required Uint8List data,
+    int offset = 0,
+  }) async {
+    final byteCount = data.length;
+    final header = Uint8List.fromList([
+      ..._magicHeader,
+      command,
+      index,
+      offset & 0xFF,
+      (offset >> 8) & 0xFF,
+      byteCount & 0xFF,
+      (byteCount >> 8) & 0xFF,
+    ]);
+
+    final futures = <Future<void>>[];
+    futures.add(_webUsbService.send(header));
+
+    var position = 0;
+    while (position < data.length) {
+      final end = (position + _usbBufferSize).clamp(0, data.length);
+      futures.add(_webUsbService.send(data.sublist(position, end)));
+      position += _usbBufferSize;
+    }
+
+    await Future.wait(futures);
+  }
+
+  /// Sends data with an extended 14-byte (32-bit) WebUSB header.
+  Future<void> _sendWithExtendedHeader({
+    required int command,
+    required int index,
+    required int offset,
+    required Uint8List data,
+  }) async {
+    final byteCount = data.length;
+    final header = Uint8List(14);
+    header[0] = _magicHeaderExtended[0];
+    header[1] = _magicHeaderExtended[1];
+    header[2] = _magicHeaderExtended[2];
+    header[3] = _magicHeaderExtended[3];
+    header[4] = command;
+    header[5] = index;
+    header[6] = offset & 0xFF;
+    header[7] = (offset >> 8) & 0xFF;
+    header[8] = (offset >> 16) & 0xFF;
+    header[9] = (offset >> 24) & 0xFF;
+    header[10] = byteCount & 0xFF;
+    header[11] = (byteCount >> 8) & 0xFF;
+    header[12] = (byteCount >> 16) & 0xFF;
+    header[13] = (byteCount >> 24) & 0xFF;
+
+    final futures = <Future<void>>[];
+    futures.add(_webUsbService.send(header));
+
+    var position = 0;
+    while (position < data.length) {
+      final end = (position + _usbBufferSize).clamp(0, data.length);
+      futures.add(_webUsbService.send(data.sublist(position, end)));
+      position += _usbBufferSize;
+    }
+
+    await Future.wait(futures);
   }
 
   set presetNumber(int number) {

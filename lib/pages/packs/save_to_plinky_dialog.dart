@@ -309,55 +309,55 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
   Widget build(BuildContext context) {
     return PointerInterceptor(
       child: AlertDialog(
-      title: switch (_step) {
-        _DialogStep.instructions => const Text('Save to Plinky'),
-        _DialogStep.progress => const Text('Uploading to Plinky...'),
-        _DialogStep.done => Row(
-          children: [
-            const Text('Done'),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.check_circle,
-              color: Theme.of(context).colorScheme.primary,
+        title: switch (_step) {
+          _DialogStep.instructions => const Text('Save to Plinky'),
+          _DialogStep.progress => const Text('Uploading to Plinky...'),
+          _DialogStep.done => Row(
+            children: [
+              const Text('Done'),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.check_circle,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ],
+          ),
+          _DialogStep.error => const Text('Error'),
+        },
+        content: SizedBox(
+          width: 400,
+          child: switch (_step) {
+            _DialogStep.instructions => const TunnelOfLightsInstructions(
+              itemType: 'pack',
+            ),
+            _DialogStep.progress => SaveProgressView(
+              statusMessage: _statusMessage,
+            ),
+            _DialogStep.done => const SaveDoneView(itemType: 'pack'),
+            _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
+          },
+        ),
+        actions: switch (_step) {
+          _DialogStep.instructions => [
+            PlinkyButton(
+              onPressed: () => Navigator.of(context).pop(),
+              label: 'Cancel',
+            ),
+            PlinkyButton(
+              onPressed: _startSave,
+              icon: Icons.folder_open,
+              label: 'Select Plinky drive',
             ),
           ],
-        ),
-        _DialogStep.error => const Text('Error'),
-      },
-      content: SizedBox(
-        width: 400,
-        child: switch (_step) {
-          _DialogStep.instructions => const TunnelOfLightsInstructions(
-            itemType: 'pack',
-          ),
-          _DialogStep.progress => SaveProgressView(
-            statusMessage: _statusMessage,
-          ),
-          _DialogStep.done => const SaveDoneView(itemType: 'pack'),
-          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
+          _DialogStep.progress => [],
+          _DialogStep.done || _DialogStep.error => [
+            PlinkyButton(
+              onPressed: () => Navigator.of(context).pop(),
+              label: 'Close',
+            ),
+          ],
         },
       ),
-      actions: switch (_step) {
-        _DialogStep.instructions => [
-          PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
-            label: 'Cancel',
-          ),
-          PlinkyButton(
-            onPressed: _startSave,
-            icon: Icons.folder_open,
-            label: 'Select Plinky drive',
-          ),
-        ],
-        _DialogStep.progress => [],
-        _DialogStep.done || _DialogStep.error => [
-          PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
-            label: 'Close',
-          ),
-        ],
-      },
-    ),
     );
   }
 }

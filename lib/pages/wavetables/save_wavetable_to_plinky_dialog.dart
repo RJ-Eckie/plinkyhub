@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
+import 'package:plinkyhub/services/webusb_service.dart';
+import 'package:plinkyhub/state/plinky_notifier.dart';
+import 'package:plinkyhub/state/plinky_state.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
+import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_save_dialog_views.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 enum _DialogStep {
+  methodSelection,
   instructions,
   progress,
   done,
   error,
+}
+
+enum _SaveMethod {
+  webUsb,
+  tunnelOfLights,
 }
 
 class SaveWavetableToPlinkyDialog extends ConsumerStatefulWidget {
@@ -29,11 +39,69 @@ class SaveWavetableToPlinkyDialog extends ConsumerStatefulWidget {
 
 class _SaveWavetableToPlinkyDialogState
     extends ConsumerState<SaveWavetableToPlinkyDialog> {
-  _DialogStep _step = _DialogStep.instructions;
+  _DialogStep _step = _DialogStep.methodSelection;
+  _SaveMethod _method = _SaveMethod.webUsb;
   String _statusMessage = '';
   String? _errorMessage;
+  double? _progress;
 
-  Future<void> _startSave() async {
+  Future<void> _startWebUsbSave() async {
+    setState(() {
+      _step = _DialogStep.progress;
+      _statusMessage = 'Connecting to Plinky...';
+      _progress = null;
+    });
+
+    try {
+      final notifier = ref.read(plinkyProvider.notifier);
+      final currentState = ref.read(plinkyProvider);
+
+      if (currentState.connectionState == PlinkyConnectionState.disconnected ||
+          currentState.connectionState == PlinkyConnectionState.error) {
+        await notifier.connect();
+        final afterConnect = ref.read(plinkyProvider);
+        if (afterConnect.connectionState != PlinkyConnectionState.connected) {
+          setState(() {
+            _step = _DialogStep.error;
+            _errorMessage =
+                afterConnect.errorMessage ?? 'Failed to connect to Plinky.';
+          });
+          return;
+        }
+      }
+
+      setState(() => _statusMessage = 'Downloading wavetable...');
+      final uf2Bytes = await ref
+          .read(savedWavetablesProvider.notifier)
+          .downloadUf2(widget.wavetable.filePath);
+
+      setState(() => _statusMessage = 'Extracting wavetable data...');
+      final wavetableData = uf2ToData(uf2Bytes);
+
+      setState(() => _statusMessage = 'Sending wavetable to Plinky...');
+      await notifier.sendWavetable(
+        wavetableData: wavetableData,
+        onProgress: (value) {
+          if (mounted) {
+            setState(() => _progress = value);
+          }
+        },
+      );
+
+      if (mounted) {
+        setState(() => _step = _DialogStep.done);
+      }
+    } on Exception catch (error) {
+      if (mounted) {
+        setState(() {
+          _step = _DialogStep.error;
+          _errorMessage = error.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _startTunnelOfLightsSave() async {
     final directory = await showDirectoryPicker(readwrite: true);
     if (directory == null) {
       return;
@@ -42,6 +110,7 @@ class _SaveWavetableToPlinkyDialogState
     setState(() {
       _step = _DialogStep.progress;
       _statusMessage = 'Downloading wavetable...';
+      _progress = null;
     });
 
     try {
@@ -67,55 +136,160 @@ class _SaveWavetableToPlinkyDialogState
   Widget build(BuildContext context) {
     return PointerInterceptor(
       child: AlertDialog(
-      title: switch (_step) {
-        _DialogStep.instructions => const Text('Save to Plinky'),
-        _DialogStep.progress => const Text('Uploading to Plinky...'),
-        _DialogStep.done => Row(
-          children: [
-            const Text('Done'),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.check_circle,
-              color: Theme.of(context).colorScheme.primary,
+        title: switch (_step) {
+          _DialogStep.methodSelection => const Text('Save to Plinky'),
+          _DialogStep.instructions => const Text('Save to Plinky'),
+          _DialogStep.progress => const Text('Uploading to Plinky...'),
+          _DialogStep.done => Row(
+            children: [
+              const Text('Done'),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.check_circle,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ],
+          ),
+          _DialogStep.error => const Text('Error'),
+        },
+        content: SizedBox(
+          width: 400,
+          child: switch (_step) {
+            _DialogStep.methodSelection => const _MethodSelectionView(),
+            _DialogStep.instructions => const TunnelOfLightsInstructions(
+              itemType: 'wavetable',
+            ),
+            _DialogStep.progress => SaveProgressView(
+              statusMessage: _statusMessage,
+              progress: _progress,
+            ),
+            _DialogStep.done => SaveDoneView(
+              itemType: 'wavetable',
+              usedWebUsb: _method == _SaveMethod.webUsb,
+            ),
+            _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
+          },
+        ),
+        actions: switch (_step) {
+          _DialogStep.methodSelection => [
+            PlinkyButton(
+              onPressed: () => Navigator.of(context).pop(),
+              label: 'Cancel',
+            ),
+            if (WebUsbService.isSupported)
+              PlinkyButton(
+                onPressed: () {
+                  _method = _SaveMethod.webUsb;
+                  _startWebUsbSave();
+                },
+                icon: Icons.usb,
+                label: 'Send via USB',
+              ),
+            PlinkyButton(
+              onPressed: () {
+                _method = _SaveMethod.tunnelOfLights;
+                setState(() => _step = _DialogStep.instructions);
+              },
+              icon: Icons.folder_open,
+              label: 'Tunnel of Lights',
             ),
           ],
-        ),
-        _DialogStep.error => const Text('Error'),
-      },
-      content: SizedBox(
-        width: 400,
-        child: switch (_step) {
-          _DialogStep.instructions => const TunnelOfLightsInstructions(
-            itemType: 'wavetable',
-          ),
-          _DialogStep.progress => SaveProgressView(
-            statusMessage: _statusMessage,
-          ),
-          _DialogStep.done => const SaveDoneView(itemType: 'wavetable'),
-          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
+          _DialogStep.instructions => [
+            PlinkyButton(
+              onPressed: () =>
+                  setState(() => _step = _DialogStep.methodSelection),
+              label: 'Back',
+            ),
+            PlinkyButton(
+              onPressed: _startTunnelOfLightsSave,
+              icon: Icons.folder_open,
+              label: 'Select Plinky drive',
+            ),
+          ],
+          _DialogStep.progress => [],
+          _DialogStep.done || _DialogStep.error => [
+            PlinkyButton(
+              onPressed: () => Navigator.of(context).pop(),
+              label: 'Close',
+            ),
+          ],
         },
       ),
-      actions: switch (_step) {
-        _DialogStep.instructions => [
-          PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
-            label: 'Cancel',
+    );
+  }
+}
+
+class _MethodSelectionView extends StatelessWidget {
+  const _MethodSelectionView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Choose how to save the wavetable to your Plinky:'),
+        const SizedBox(height: 16),
+        if (WebUsbService.isSupported) ...[
+          const _MethodOption(
+            icon: Icons.usb,
+            title: 'Send via USB',
+            description:
+                'Send directly over WebUSB while Plinky is running '
+                'normally. No need for Tunnel of Lights mode.',
           ),
-          PlinkyButton(
-            onPressed: _startSave,
-            icon: Icons.folder_open,
-            label: 'Select Plinky drive',
-          ),
+          const SizedBox(height: 12),
         ],
-        _DialogStep.progress => [],
-        _DialogStep.done || _DialogStep.error => [
-          PlinkyButton(
-            onPressed: () => Navigator.of(context).pop(),
-            label: 'Close',
+        const _MethodOption(
+          icon: Icons.folder_open,
+          title: 'Tunnel of Lights',
+          description:
+              'Write UF2 files to the Plinky drive. Requires putting '
+              'Plinky into Tunnel of Lights mode first.',
+        ),
+      ],
+    );
+  }
+}
+
+class _MethodOption extends StatelessWidget {
+  const _MethodOption({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 24, color: theme.colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-        ],
-      },
-    ),
+        ),
+      ],
     );
   }
 }

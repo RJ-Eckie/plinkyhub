@@ -74,16 +74,21 @@ class SaveProgressView extends StatelessWidget {
 class SaveDoneView extends StatelessWidget {
   const SaveDoneView({
     required this.itemType,
+    this.usedWebUsb = false,
     super.key,
   });
 
   final String itemType;
+  final bool usedWebUsb;
 
   @override
   Widget build(BuildContext context) {
+    final label = '${itemType[0].toUpperCase()}${itemType.substring(1)}';
+    if (usedWebUsb) {
+      return Text('$label sent to Plinky successfully!');
+    }
     return Text(
-      '${itemType[0].toUpperCase()}${itemType.substring(1)} '
-      'saved to Plinky successfully! '
+      '$label saved to Plinky successfully! '
       'Eject the drive and restart your Plinky.',
     );
   }

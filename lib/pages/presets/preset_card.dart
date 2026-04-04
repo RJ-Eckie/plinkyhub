@@ -124,13 +124,9 @@ class PresetCard extends ConsumerWidget {
               Row(
                 children: [
                   PlinkyButton(
-                    onPressed: () {
-                      ref
-                          .read(savedPresetsProvider.notifier)
-                          .loadPresetIntoEditor(preset);
-                    },
-                    icon: Icons.download,
-                    label: 'Load into editor',
+                    onPressed: () => _saveToPlinky(context),
+                    icon: Icons.upload,
+                    label: 'Upload to Plinky',
                   ),
                   const SizedBox(width: 8),
                   PresetStarButton(preset: preset),
@@ -141,9 +137,14 @@ class PresetCard extends ConsumerWidget {
                       itemName: preset.name,
                     ),
                   IconButton(
-                    icon: const Icon(Icons.usb, size: 20),
-                    tooltip: 'Save to Plinky',
-                    onPressed: () => _saveToPlinky(context),
+                    icon: const Icon(Icons.edit, size: 20),
+                    tooltip: 'Edit in editor',
+                    onPressed: () {
+                      ref
+                          .read(savedPresetsProvider.notifier)
+                          .loadPresetIntoEditor(preset);
+                      context.go(AppRoute.editor.path);
+                    },
                   ),
                   const Spacer(),
                   if (isOwned) ...[

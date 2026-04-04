@@ -152,11 +152,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                           // Step numbers header
                           Row(
                             children: [
-                              for (
-                                var step = 0;
-                                step < fixedStepCount;
-                                step++
-                              )
+                              for (var step = 0; step < fixedStepCount; step++)
                                 SizedBox(
                                   width: cellWithMargin,
                                   height: 20,
