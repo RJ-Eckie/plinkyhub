@@ -19,6 +19,7 @@ class PackSlotTile extends ConsumerWidget {
     required this.onPresetChanged,
     required this.onSampleChanged,
     this.devicePreset,
+    this.onEditPressed,
     super.key,
   });
 
@@ -28,6 +29,7 @@ class PackSlotTile extends ConsumerWidget {
   final ValueChanged<String?> onPresetChanged;
   final ValueChanged<String?> onSampleChanged;
   final Preset? devicePreset;
+  final VoidCallback? onEditPressed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -133,6 +135,11 @@ class PackSlotTile extends ConsumerWidget {
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 16),
                 itemBuilder: (context) => [
+                  if (onEditPressed != null)
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Text('Edit'),
+                    ),
                   const PopupMenuItem(
                     value: 'preset',
                     child: Text('Pick preset'),
@@ -149,6 +156,8 @@ class PackSlotTile extends ConsumerWidget {
                 ],
                 onSelected: (value) {
                   switch (value) {
+                    case 'edit':
+                      onEditPressed?.call();
                     case 'preset':
                       _showPresetPicker(context, ref, presets);
                     case 'sample':
