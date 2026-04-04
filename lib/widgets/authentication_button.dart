@@ -18,6 +18,8 @@ const reservedUsernames = {
   'about',
 };
 
+enum _AccountMenuAction { viewProfile, settings, signOut }
+
 class AuthenticationButton extends ConsumerWidget {
   const AuthenticationButton({super.key});
 
@@ -53,22 +55,25 @@ class AuthenticationButton extends ConsumerWidget {
     final username = authenticationState.username;
     final displayName = username ?? user.email ?? 'Account';
 
-    return PopupMenuButton<String>(
+    return PopupMenuButton<_AccountMenuAction>(
       tooltip: displayName,
-      onSelected: (value) {
-        if (value == 'view_profile' && username != null) {
-          context.go(AppRoute.userPage(username));
-        } else if (value == 'settings') {
-          showDialog<void>(
-            context: context,
-            builder: (context) => const SettingsDialog(),
-          );
-        } else if (value == 'sign_out') {
-          ref.read(authenticationProvider.notifier).signOut();
+      onSelected: (action) {
+        switch (action) {
+          case _AccountMenuAction.viewProfile:
+            if (username != null) {
+              context.go(AppRoute.userPage(username));
+            }
+          case _AccountMenuAction.settings:
+            showDialog<void>(
+              context: context,
+              builder: (context) => const SettingsDialog(),
+            );
+          case _AccountMenuAction.signOut:
+            ref.read(authenticationProvider.notifier).signOut();
         }
       },
       itemBuilder: (context) => [
-        PopupMenuItem<String>(
+        PopupMenuItem<_AccountMenuAction>(
           enabled: false,
           child: Text(
             displayName,
@@ -77,16 +82,16 @@ class AuthenticationButton extends ConsumerWidget {
         ),
         const PopupMenuDivider(),
         if (username != null)
-          const PopupMenuItem<String>(
-            value: 'view_profile',
+          const PopupMenuItem<_AccountMenuAction>(
+            value: _AccountMenuAction.viewProfile,
             child: Text('View profile'),
           ),
-        const PopupMenuItem<String>(
-          value: 'settings',
+        const PopupMenuItem<_AccountMenuAction>(
+          value: _AccountMenuAction.settings,
           child: Text('Settings'),
         ),
-        const PopupMenuItem<String>(
-          value: 'sign_out',
+        const PopupMenuItem<_AccountMenuAction>(
+          value: _AccountMenuAction.signOut,
           child: Text('Sign out'),
         ),
       ],

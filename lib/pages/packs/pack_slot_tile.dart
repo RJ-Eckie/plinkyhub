@@ -11,6 +11,8 @@ import 'package:plinkyhub/state/saved_presets_notifier.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/linked_item_icon.dart';
 
+enum _SlotMenuAction { edit, pickPreset, pickSample, clear }
+
 class PackSlotTile extends ConsumerWidget {
   const PackSlotTile({
     required this.slotNumber,
@@ -132,37 +134,37 @@ class PackSlotTile extends ConsumerWidget {
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
+              PopupMenuButton<_SlotMenuAction>(
                 icon: const Icon(Icons.more_vert, size: 16),
                 itemBuilder: (context) => [
                   if (onEditPressed != null)
                     const PopupMenuItem(
-                      value: 'edit',
+                      value: _SlotMenuAction.edit,
                       child: Text('Edit'),
                     ),
                   const PopupMenuItem(
-                    value: 'preset',
+                    value: _SlotMenuAction.pickPreset,
                     child: Text('Pick preset'),
                   ),
                   const PopupMenuItem(
-                    value: 'sample',
+                    value: _SlotMenuAction.pickSample,
                     child: Text('Pick sample'),
                   ),
                   if (presetId != null || sampleId != null)
                     const PopupMenuItem(
-                      value: 'clear',
+                      value: _SlotMenuAction.clear,
                       child: Text('Clear slot'),
                     ),
                 ],
-                onSelected: (value) {
-                  switch (value) {
-                    case 'edit':
+                onSelected: (action) {
+                  switch (action) {
+                    case _SlotMenuAction.edit:
                       onEditPressed?.call();
-                    case 'preset':
+                    case _SlotMenuAction.pickPreset:
                       _showPresetPicker(context, ref, presets);
-                    case 'sample':
+                    case _SlotMenuAction.pickSample:
                       _showSamplePicker(context, ref, samples);
-                    case 'clear':
+                    case _SlotMenuAction.clear:
                       onPresetChanged(null);
                       onSampleChanged(null);
                   }
