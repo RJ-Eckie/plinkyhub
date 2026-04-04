@@ -114,7 +114,8 @@ class _UploadFirmwareDialogState extends ConsumerState<UploadFirmwareDialog> {
                 labelText: 'Description (optional)',
                 border: OutlineInputBorder(),
               ),
-              maxLines: 3,
+              minLines: 3,
+              maxLines: null,
             ),
             const SizedBox(height: 12),
             SwitchListTile(

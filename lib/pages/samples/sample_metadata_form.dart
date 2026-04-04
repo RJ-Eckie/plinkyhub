@@ -76,7 +76,8 @@ class SampleMetadataForm extends StatelessWidget {
             labelText: 'Description',
             border: OutlineInputBorder(),
           ),
-          maxLines: 3,
+          minLines: 3,
+          maxLines: null,
         ),
         const SizedBox(height: 8),
         SwitchListTile(

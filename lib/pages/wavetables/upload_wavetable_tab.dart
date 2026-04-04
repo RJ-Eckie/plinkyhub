@@ -201,7 +201,8 @@ class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
                   labelText: 'Description',
                   border: OutlineInputBorder(),
                 ),
-                maxLines: 3,
+                minLines: 3,
+                maxLines: null,
               ),
               const SizedBox(height: 16),
               SwitchListTile(

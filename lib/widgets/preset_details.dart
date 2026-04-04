@@ -254,7 +254,8 @@ class _SaveToCloudButton extends ConsumerWidget {
                     labelText: 'Description (optional)',
                     border: OutlineInputBorder(),
                   ),
-                  maxLines: 3,
+                  minLines: 3,
+                  maxLines: null,
                 ),
                 const SizedBox(height: 12),
                 _SampleSelector(

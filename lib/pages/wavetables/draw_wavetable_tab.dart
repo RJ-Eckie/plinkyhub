@@ -231,7 +231,8 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
             labelText: 'Description',
             border: OutlineInputBorder(),
           ),
-          maxLines: 3,
+          minLines: 3,
+          maxLines: null,
         ),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -421,7 +422,8 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
                       labelText: 'Description',
                       border: OutlineInputBorder(),
                     ),
-                    maxLines: 3,
+                    minLines: 3,
+                    maxLines: null,
                   ),
                   const SizedBox(height: 16),
                   SwitchListTile(
