@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:plinkyhub/router.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
 import 'package:plinkyhub/widgets/terms_of_service_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
@@ -54,6 +55,36 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   }
 }
 
+const defaultPrimaryColor = Color(0xFF00897B);
+
+final primaryColorProvider = NotifierProvider<PrimaryColorNotifier, Color>(
+  PrimaryColorNotifier.new,
+);
+
+class PrimaryColorNotifier extends Notifier<Color> {
+  static const _storageKey = 'primary_color';
+
+  @override
+  Color build() {
+    _load();
+    return defaultPrimaryColor;
+  }
+
+  Future<void> _load() async {
+    final preferences = await SharedPreferences.getInstance();
+    final value = preferences.getInt(_storageKey);
+    if (value != null) {
+      state = Color(value);
+    }
+  }
+
+  Future<void> setColor(Color color) async {
+    state = color;
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setInt(_storageKey, color.toARGB32());
+  }
+}
+
 class PlinkyHubApp extends ConsumerWidget {
   const PlinkyHubApp({required this.router, super.key});
 
@@ -62,6 +93,7 @@ class PlinkyHubApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final primaryColor = ref.watch(primaryColorProvider);
     final textTheme = TextTheme(
       headlineLarge: GoogleFonts.fingerPaint(),
       headlineMedium: GoogleFonts.fingerPaint(),
@@ -72,13 +104,13 @@ class PlinkyHubApp extends ConsumerWidget {
       title: 'PlinkyHub',
       themeMode: themeMode,
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF00897B),
+        colorSchemeSeed: primaryColor,
         brightness: Brightness.light,
         useMaterial3: true,
         textTheme: textTheme,
       ),
       darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF00897B),
+        colorSchemeSeed: primaryColor,
         brightness: Brightness.dark,
         useMaterial3: true,
         textTheme: textTheme,

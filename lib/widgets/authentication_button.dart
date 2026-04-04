@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/settings_dialog.dart';
 
 const reservedUsernames = {
   'editor',
@@ -57,6 +58,11 @@ class AuthenticationButton extends ConsumerWidget {
       onSelected: (value) {
         if (value == 'view_profile' && username != null) {
           context.go(AppRoute.userPage(username));
+        } else if (value == 'settings') {
+          showDialog<void>(
+            context: context,
+            builder: (context) => const SettingsDialog(),
+          );
         } else if (value == 'sign_out') {
           ref.read(authenticationProvider.notifier).signOut();
         }
@@ -75,6 +81,10 @@ class AuthenticationButton extends ConsumerWidget {
             value: 'view_profile',
             child: Text('View profile'),
           ),
+        const PopupMenuItem<String>(
+          value: 'settings',
+          child: Text('Settings'),
+        ),
         const PopupMenuItem<String>(
           value: 'sign_out',
           child: Text('Sign out'),
