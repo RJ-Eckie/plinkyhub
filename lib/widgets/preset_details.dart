@@ -208,15 +208,31 @@ class _SaveToCloudButton extends ConsumerWidget {
   ) {
     final nameController = TextEditingController(text: preset.name);
     final descriptionController = TextEditingController();
-    var isPublic = false;
-    String? selectedSampleId;
     final sourcePresetId = plinkyState.sourcePresetId;
+    final userPresets = ref.read(savedPresetsProvider).userPresets;
+
+    // When overwriting an existing preset, inherit its public setting;
+    // otherwise default to public.
+    final sourcePreset = sourcePresetId != null
+        ? userPresets.where((p) => p.id == sourcePresetId).firstOrNull
+        : null;
+    var isPublic = sourcePreset?.isPublic ?? true;
+    var selectedSampleId = sourcePreset?.sampleId;
 
     showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           final samples = ref.read(savedSamplesProvider).userSamples;
+          final name = nameController.text.trim();
+          final existingByName = userPresets
+              .where(
+                (p) => p.name == name && p.id != sourcePresetId,
+              )
+              .firstOrNull;
+          final canOverwriteSource = sourcePresetId != null;
+          final canOverwriteByName = existingByName != null;
+
           return AlertDialog(
             title: const Text('Save preset to cloud'),
             content: Column(
@@ -229,6 +245,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                     border: OutlineInputBorder(),
                   ),
                   maxLength: 8,
+                  onChanged: (_) => setDialogState(() {}),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -269,7 +286,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                 icon: Icons.close,
                 label: 'Cancel',
               ),
-              if (sourcePresetId != null)
+              if (canOverwriteSource)
                 PlinkyButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -282,6 +299,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                           description: descriptionController.text.isEmpty
                               ? null
                               : descriptionController.text,
+                          isPublic: isPublic,
                           sampleId: selectedSampleId,
                         );
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -293,27 +311,53 @@ class _SaveToCloudButton extends ConsumerWidget {
                   icon: Icons.save,
                   label: 'Overwrite',
                 ),
-              PlinkyButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  preset.name = nameController.text;
-                  ref
-                      .read(savedPresetsProvider.notifier)
-                      .savePreset(
-                        preset,
-                        description: descriptionController.text,
-                        isPublic: isPublic,
-                        sampleId: selectedSampleId,
-                      );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Preset saved to cloud'),
-                    ),
-                  );
-                },
-                icon: Icons.add,
-                label: 'Save new',
-              ),
+              if (canOverwriteByName)
+                PlinkyButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    preset.name = nameController.text;
+                    ref
+                        .read(savedPresetsProvider.notifier)
+                        .overwritePreset(
+                          existingByName.id,
+                          preset,
+                          description: descriptionController.text.isEmpty
+                              ? null
+                              : descriptionController.text,
+                          isPublic: isPublic,
+                          sampleId: selectedSampleId,
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Preset overwritten'),
+                      ),
+                    );
+                  },
+                  icon: Icons.save,
+                  label: 'Overwrite "${existingByName.name}"',
+                ),
+              if (!canOverwriteByName)
+                PlinkyButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    preset.name = nameController.text;
+                    ref
+                        .read(savedPresetsProvider.notifier)
+                        .savePreset(
+                          preset,
+                          description: descriptionController.text,
+                          isPublic: isPublic,
+                          sampleId: selectedSampleId,
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Preset saved to cloud'),
+                      ),
+                    );
+                  },
+                  icon: Icons.add,
+                  label: 'Save new',
+                ),
             ],
           );
         },

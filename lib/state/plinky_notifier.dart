@@ -242,6 +242,10 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     _presetNumber = number.clamp(0, 31);
   }
 
+  set sourcePresetId(String? id) {
+    state = state.copyWith(sourcePresetId: id);
+  }
+
   int _presetNumber = 0;
 
   void parsePresetFromUrl(String encodedPreset) {

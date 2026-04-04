@@ -319,6 +319,10 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     if (ref.read(plinkyProvider).connectionState ==
         PlinkyConnectionState.connected) {
       await notifier.loadPreset();
+      final slot = _slots[slotIndex];
+      if (slot.presetId != null) {
+        notifier.sourcePresetId = slot.presetId;
+      }
     }
   }
 

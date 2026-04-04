@@ -185,6 +185,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     String id,
     Preset preset, {
     String? description,
+    bool? isPublic,
     String? sampleId,
   }) async {
     final existing = state.userPresets.where((p) => p.id == id).firstOrNull;
@@ -206,7 +207,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
         category: preset.category.name,
         presetData: base64Encode(Uint8List.view(preset.buffer)),
         description: description ?? existing.description,
-        isPublic: existing.isPublic,
+        isPublic: isPublic ?? existing.isPublic,
         sampleId: sampleId,
       );
       final json = write.toJson();
