@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,11 +20,45 @@ const _colorOptions = <({String label, Color color})>[
   (label: 'Grey', color: Color(0xFF546E7A)),
 ];
 
-class SettingsDialog extends ConsumerWidget {
+class SettingsDialog extends ConsumerStatefulWidget {
   const SettingsDialog({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsDialog> createState() => _SettingsDialogState();
+}
+
+class _SettingsDialogState extends ConsumerState<SettingsDialog> {
+  late Color _wheelColor;
+  Timer? _debounceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _wheelColor = ref.read(primaryColorProvider);
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onWheelColorChanged(Color color) {
+    setState(() => _wheelColor = color);
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(seconds: 2), () {
+      ref.read(primaryColorProvider.notifier).setColor(color);
+    });
+  }
+
+  void _onPresetColorSelected(Color color) {
+    _debounceTimer?.cancel();
+    setState(() => _wheelColor = color);
+    ref.read(primaryColorProvider.notifier).setColor(color);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentColor = ref.watch(primaryColorProvider);
 
     return AlertDialog(
@@ -43,9 +79,9 @@ class SettingsDialog extends ConsumerWidget {
                 width: 200,
                 height: 200,
                 child: ColorWheelPicker(
-                  color: currentColor,
-                  onChanged: (color) =>
-                      ref.read(primaryColorProvider.notifier).setColor(color),
+                  color: _wheelColor,
+                  shouldUpdate: true,
+                  onChanged: _onWheelColorChanged,
                   onWheel: (_) {},
                 ),
               ),
@@ -61,9 +97,7 @@ class SettingsDialog extends ConsumerWidget {
                   message: option.label,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
-                    onTap: () => ref
-                        .read(primaryColorProvider.notifier)
-                        .setColor(option.color),
+                    onTap: () => _onPresetColorSelected(option.color),
                     child: Container(
                       width: 40,
                       height: 40,
