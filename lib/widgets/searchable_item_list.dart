@@ -134,6 +134,16 @@ class _SearchableItemListState<T extends Searchable>
             decoration: InputDecoration(
               hintText: 'Search ${widget.itemLabel}s...',
               prefixIcon: const Icon(Icons.search, size: 20),
+              suffixIcon: _query.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      tooltip: 'Clear search',
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _query = '');
+                      },
+                    )
+                  : null,
               border: const OutlineInputBorder(),
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 8),

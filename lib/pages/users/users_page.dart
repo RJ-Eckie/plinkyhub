@@ -91,12 +91,22 @@ class _SearchTab extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: TextField(
             controller: searchController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Search users...',
-              prefixIcon: Icon(Icons.search, size: 20),
-              border: OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              suffixIcon: searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      tooltip: 'Clear search',
+                      onPressed: () {
+                        searchController.clear();
+                        onSearch('');
+                      },
+                    )
+                  : null,
+              border: const OutlineInputBorder(),
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
             ),
             onChanged: onSearch,
           ),
