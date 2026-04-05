@@ -192,15 +192,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      _expanded ? Icons.expand_less : Icons.expand_more,
-                      size: 20,
+                  if (sample.pcmFilePath.isNotEmpty) ...[
+                    PlinkyButton(
+                      onPressed: () => _saveToPlinky(context),
+                      icon: Icons.upload,
+                      label: 'Upload to Plinky',
                     ),
-                    tooltip: _expanded ? 'Hide slices' : 'Show slices',
-                    onPressed: _toggleExpanded,
-                  ),
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
+                  ],
                   StarButton(
                     isStarred: sample.isStarred,
                     starCount: sample.starCount,
@@ -213,12 +212,6 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                       username: sample.username,
                       itemType: 'sample',
                       itemName: sample.name,
-                    ),
-                  if (sample.pcmFilePath.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.usb, size: 20),
-                      tooltip: 'Save to Plinky',
-                      onPressed: () => _saveToPlinky(context),
                     ),
                   if (!isOwned)
                     IconButton(
@@ -268,6 +261,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                       onPressed: () => _confirmDelete(context),
                     ),
                   ],
+                  IconButton(
+                    icon: Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 20,
+                    ),
+                    tooltip: _expanded ? 'Hide slices' : 'Show slices',
+                    onPressed: _toggleExpanded,
+                  ),
                 ],
               ),
               if (_expanded) ...[

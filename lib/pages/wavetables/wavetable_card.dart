@@ -64,6 +64,12 @@ class WavetableCard extends ConsumerWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
+                  PlinkyButton(
+                    onPressed: () => _saveToPlinky(context),
+                    icon: Icons.upload,
+                    label: 'Upload to Plinky',
+                  ),
+                  const SizedBox(width: 8),
                   StarButton(
                     isStarred: wavetable.isStarred,
                     starCount: wavetable.starCount,
@@ -77,11 +83,6 @@ class WavetableCard extends ConsumerWidget {
                       itemType: 'wavetable',
                       itemName: wavetable.name,
                     ),
-                  IconButton(
-                    icon: const Icon(Icons.usb, size: 20),
-                    tooltip: 'Save to Plinky',
-                    onPressed: () => _saveToPlinky(context),
-                  ),
                   const Spacer(),
                   if (isOwned) ...[
                     IconButton(
