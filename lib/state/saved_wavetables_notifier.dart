@@ -180,6 +180,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       await _supabase.from('wavetables').insert(write.toJson());
 
       await fetchUserWavetables();
+      await fetchPublicWavetables();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -211,6 +212,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
           .update(write.toJson())
           .eq('id', wavetable.id);
       await fetchUserWavetables();
+      await fetchPublicWavetables();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

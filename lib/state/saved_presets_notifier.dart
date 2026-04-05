@@ -191,6 +191,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
       );
       await _supabase.from('presets').insert(write.toJson());
       await fetchUserPresets();
+      await fetchPublicPresets();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -232,6 +233,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
       final json = write.toJson();
       await _supabase.from('presets').update(json).eq('id', id);
       await fetchUserPresets();
+      await fetchPublicPresets();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -265,6 +267,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
 
       await _supabase.from('presets').update(updates).eq('id', id);
       await fetchUserPresets();
+      await fetchPublicPresets();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

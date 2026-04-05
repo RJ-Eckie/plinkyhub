@@ -195,6 +195,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       await _insertSlots(packId, slots);
 
       await fetchUserPacks();
+      await fetchPublicPacks();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -231,6 +232,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
       await _supabase.from('packs').update(updates).eq('id', id);
       await fetchUserPacks();
+      await fetchPublicPacks();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -302,6 +304,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       await _insertSlots(id, slots);
 
       await fetchUserPacks();
+      await fetchPublicPacks();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

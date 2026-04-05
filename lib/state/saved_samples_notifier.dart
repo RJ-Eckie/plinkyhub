@@ -192,6 +192,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       await _supabase.from('samples').insert(write.toJson());
 
       await fetchUserSamples();
+      await fetchPublicSamples();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -229,6 +230,7 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
           .update(write.toJson())
           .eq('id', sample.id);
       await fetchUserSamples();
+      await fetchPublicSamples();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(

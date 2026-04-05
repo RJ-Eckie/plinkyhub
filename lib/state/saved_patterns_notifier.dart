@@ -178,6 +178,7 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
       await _supabase.from('patterns').insert(write.toJson());
 
       await fetchUserPatterns();
+      await fetchPublicPatterns();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
@@ -209,6 +210,7 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
           .update(write.toJson())
           .eq('id', pattern.id);
       await fetchUserPatterns();
+      await fetchPublicPatterns();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
