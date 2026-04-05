@@ -14,7 +14,7 @@ Always run `dart format .` before committing to ensure consistent formatting. Th
 
 ## Database
 
-All DDL and schema changes must be written as migration files under `supabase/migrations/` (named `YYYYMMDDHHMMSS_description.sql`). Never apply DDL directly via `execute_sql` or the `apply_migration` MCP tool — always create a migration file first. Migrations are applied automatically by the CI/CD pipeline and should not be applied manually.
+**IMPORTANT:** All DDL and schema changes **must be** written as migration files under `supabase/migrations/` (named `YYYYMMDDHHMMSS_description.sql`). Never apply DDL directly via `execute_sql` or the `apply_migration` MCP tool — always create a migration file first. Migrations are applied automatically by the CI/CD pipeline and should not be applied manually.
 
 ## Hardware Reference
 
