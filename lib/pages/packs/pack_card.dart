@@ -85,6 +85,12 @@ class PackCard extends ConsumerWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
+                  PlinkyButton(
+                    onPressed: () => _saveToPlinky(context),
+                    icon: Icons.upload,
+                    label: 'Upload to Plinky',
+                  ),
+                  const SizedBox(width: 8),
                   StarButton(
                     isStarred: pack.isStarred,
                     starCount: pack.starCount,
@@ -97,11 +103,6 @@ class PackCard extends ConsumerWidget {
                       itemType: 'pack',
                       itemName: pack.name,
                     ),
-                  IconButton(
-                    icon: const Icon(Icons.usb, size: 20),
-                    tooltip: 'Save to Plinky',
-                    onPressed: () => _saveToPlinky(context),
-                  ),
                   const Spacer(),
                   if (isOwned) ...[
                     IconButton(
