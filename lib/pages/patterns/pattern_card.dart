@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
+import 'package:plinkyhub/pages/patterns/save_pattern_to_plinky_dialog.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
@@ -60,6 +61,17 @@ class PatternCard extends ConsumerWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
+                  PlinkyButton(
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) =>
+                          SavePatternToPlinkyDialog(pattern: pattern),
+                    ),
+                    icon: Icons.upload,
+                    label: 'Upload to Plinky',
+                  ),
+                  const SizedBox(width: 8),
                   StarButton(
                     isStarred: pattern.isStarred,
                     starCount: pattern.starCount,
