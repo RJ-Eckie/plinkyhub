@@ -318,7 +318,9 @@ class _SavePresetToPlinkyDialogState
             _DialogStep.methodSelection => const TransferMethodSelection(
               itemType: 'preset',
             ),
-            _DialogStep.slotSelection => _PresetSlotSelectionView(
+            _DialogStep.slotSelection => SlotSelectionGrid(
+              itemType: 'preset',
+              slotCount: presetCount,
               selectedSlot: _selectedSlot,
               onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
             ),
@@ -414,63 +416,6 @@ class _SavePresetToPlinkyDialogState
           ],
         },
       ),
-    );
-  }
-}
-
-class _PresetSlotSelectionView extends StatelessWidget {
-  const _PresetSlotSelectionView({
-    required this.selectedSlot,
-    required this.onSlotChanged,
-  });
-
-  final int selectedSlot;
-  final ValueChanged<int> onSlotChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Select the preset slot on your Plinky:'),
-        const SizedBox(height: 12),
-        for (var row = 0; row < 8; row++)
-          Row(
-            children: [
-              for (var col = 0; col < 4; col++)
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: col < 3 ? 8 : 0,
-                      bottom: row < 7 ? 8 : 0,
-                    ),
-                    child: ChoiceChip(
-                      label: SizedBox(
-                        width: double.infinity,
-                        child: Text(
-                          '${row * 4 + col + 1}',
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      selected: selectedSlot == row * 4 + col,
-                      showCheckmark: false,
-                      onSelected: (_) => onSlotChanged(row * 4 + col),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        const SizedBox(height: 16),
-        Text(
-          'Note: This will overwrite the existing preset in slot '
-          '${selectedSlot + 1} on your Plinky.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 }

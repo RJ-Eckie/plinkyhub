@@ -104,9 +104,13 @@ class _SavePatternToPlinkyDialogState
         content: SizedBox(
           width: 400,
           child: switch (_step) {
-            _DialogStep.slotSelection => _PatternSlotSelection(
+            _DialogStep.slotSelection => SlotSelectionGrid(
+              itemType: 'pattern',
+              slotCount: patternCount,
+              columns: 3,
               selectedSlot: _selectedSlot,
               onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
+              displayOffset: 33,
             ),
             _DialogStep.instructions => const TunnelOfLightsInstructions(
               itemType: 'pattern',
@@ -153,44 +157,6 @@ class _SavePatternToPlinkyDialogState
           ],
         },
       ),
-    );
-  }
-}
-
-class _PatternSlotSelection extends StatelessWidget {
-  const _PatternSlotSelection({
-    required this.selectedSlot,
-    required this.onSlotChanged,
-  });
-
-  final int selectedSlot;
-  final ValueChanged<int> onSlotChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Choose which pattern slot to write to on your Plinky:'),
-        const SizedBox(height: 16),
-        DropdownButton<int>(
-          value: selectedSlot,
-          isExpanded: true,
-          items: List.generate(
-            patternCount,
-            (index) => DropdownMenuItem(
-              value: index,
-              child: Text('Pattern ${index + 1}'),
-            ),
-          ),
-          onChanged: (value) {
-            if (value != null) {
-              onSlotChanged(value);
-            }
-          },
-        ),
-      ],
     );
   }
 }

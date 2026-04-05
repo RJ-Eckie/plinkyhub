@@ -89,7 +89,7 @@ class SaveDoneView extends StatelessWidget {
       return Text('$label sent to Plinky successfully!');
     }
     return Text(
-      '$label saved to Plinky successfully! '
+      '$label saved to Plinky successfully!\n'
       'Eject the drive and restart your Plinky.',
     );
   }
@@ -183,6 +183,78 @@ class _TransferMethodOption extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class SlotSelectionGrid extends StatelessWidget {
+  const SlotSelectionGrid({
+    required this.itemType,
+    required this.slotCount,
+    required this.selectedSlot,
+    required this.onSlotChanged,
+    this.columns = 4,
+    this.rows = 8,
+    this.displayOffset = 1,
+    super.key,
+  });
+
+  final String itemType;
+  final int slotCount;
+  final int selectedSlot;
+  final ValueChanged<int> onSlotChanged;
+  final int columns;
+  final int rows;
+  final int displayOffset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select the $itemType slot on your Plinky:'),
+        const SizedBox(height: 12),
+        for (var row = 0; row < rows; row++)
+          Row(
+            children: [
+              for (var col = 0; col < columns; col++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: col < columns - 1 ? 8 : 0,
+                      bottom: row < rows - 1 ? 8 : 0,
+                    ),
+                    child: row * columns + col < slotCount
+                        ? ChoiceChip(
+                            label: SizedBox(
+                              width: double.infinity,
+                              child: Text(
+                                '${row * columns + col + displayOffset}',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            selected: selectedSlot == row * columns + col,
+                            showCheckmark: false,
+                            onSelected: (_) =>
+                                onSlotChanged(row * columns + col),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+            ],
+          ),
+        const SizedBox(height: 16),
+        Text(
+          'Note: This will overwrite the existing $itemType in slot '
+          '${selectedSlot + displayOffset} on your Plinky.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],

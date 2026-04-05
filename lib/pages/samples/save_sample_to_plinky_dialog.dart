@@ -226,7 +226,10 @@ class _SaveSampleToPlinkyDialogState
             _DialogStep.methodSelection => const TransferMethodSelection(
               itemType: 'sample',
             ),
-            _DialogStep.slotSelection => _SlotSelectionView(
+            _DialogStep.slotSelection => SlotSelectionGrid(
+              itemType: 'sample',
+              slotCount: sampleCount,
+              rows: 2,
               selectedSlot: _selectedSlot,
               onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
             ),
@@ -306,50 +309,6 @@ class _SaveSampleToPlinkyDialogState
           ],
         },
       ),
-    );
-  }
-}
-
-class _SlotSelectionView extends StatelessWidget {
-  const _SlotSelectionView({
-    required this.selectedSlot,
-    required this.onSlotChanged,
-  });
-
-  final int selectedSlot;
-  final ValueChanged<int> onSlotChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Select the sample slot on your Plinky:'),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < sampleCount; i++)
-              ChoiceChip(
-                label: Text('Slot ${i + 1}'),
-                selected: selectedSlot == i,
-                showCheckmark: false,
-                onSelected: (_) => onSlotChanged(i),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Note: All presets on your Plinky that use sample slot '
-          '${selectedSlot + 1} will use this sample after saving.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 }
