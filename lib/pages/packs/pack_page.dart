@@ -104,6 +104,11 @@ class _PackPageState extends ConsumerState<PackPage> {
               PackCard(
                 pack: _pack!,
                 isOwned: isOwned,
+                onEdit: isOwned
+                    ? () => context.go(
+                        AppRoute.packs.tab('create'),
+                      )
+                    : null,
                 onDeleted: () => context.go(AppRoute.packs.path),
               ),
             ],

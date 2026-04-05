@@ -115,7 +115,7 @@ class _PatternTile extends ConsumerWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (hasDevicePattern && isLinked) ...[
+                  if (isLinked) ...[
                     const SizedBox(width: 4),
                     LinkedItemIcon(
                       onTap: () => _showLinkedPattern(context, ref),

@@ -223,7 +223,9 @@ class _SaveSampleToPlinkyDialogState
         content: SizedBox(
           width: 400,
           child: switch (_step) {
-            _DialogStep.methodSelection => const _MethodSelectionView(),
+            _DialogStep.methodSelection => const TransferMethodSelection(
+              itemType: 'sample',
+            ),
             _DialogStep.slotSelection => _SlotSelectionView(
               selectedSlot: _selectedSlot,
               onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
@@ -304,81 +306,6 @@ class _SaveSampleToPlinkyDialogState
           ],
         },
       ),
-    );
-  }
-}
-
-class _MethodSelectionView extends StatelessWidget {
-  const _MethodSelectionView();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Choose how to save the sample to your Plinky:'),
-        const SizedBox(height: 16),
-        if (WebUsbService.isSupported) ...[
-          const _MethodOption(
-            icon: Icons.usb,
-            title: 'Send via USB',
-            description:
-                'Send directly over WebUSB while Plinky is running '
-                'normally. No need for Tunnel of Lights mode.',
-          ),
-          const SizedBox(height: 12),
-        ],
-        const _MethodOption(
-          icon: Icons.folder_open,
-          title: 'Tunnel of Lights',
-          description:
-              'Write UF2 files to the Plinky drive. Requires putting '
-              'Plinky into Tunnel of Lights mode first.',
-        ),
-      ],
-    );
-  }
-}
-
-class _MethodOption extends StatelessWidget {
-  const _MethodOption({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 24, color: theme.colorScheme.primary),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

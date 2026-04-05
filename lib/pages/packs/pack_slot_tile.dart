@@ -104,7 +104,7 @@ class PackSlotTile extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (hasDevicePreset && isLinked)
+                        if (isLinked)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
                             child: LinkedItemIcon(

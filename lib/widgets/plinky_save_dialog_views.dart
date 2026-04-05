@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plinkyhub/services/webusb_service.dart';
 import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
 class TunnelOfLightsInstructions extends StatelessWidget {
@@ -90,6 +91,101 @@ class SaveDoneView extends StatelessWidget {
     return Text(
       '$label saved to Plinky successfully! '
       'Eject the drive and restart your Plinky.',
+    );
+  }
+}
+
+/// Reusable method selection view for choosing between WebUSB and
+/// Tunnel of Lights when saving to a Plinky device.
+class TransferMethodSelection extends StatelessWidget {
+  const TransferMethodSelection({
+    required this.itemType,
+    this.webUsbNote,
+    super.key,
+  });
+
+  /// Label like 'preset', 'sample', 'wavetable', or 'pack'.
+  final String itemType;
+
+  /// Optional warning shown below the WebUSB option (e.g. pattern caveat).
+  final String? webUsbNote;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Choose how to save the $itemType to your Plinky:'),
+        const SizedBox(height: 16),
+        if (WebUsbService.isSupported) ...[
+          const _TransferMethodOption(
+            icon: Icons.usb,
+            title: 'Send via USB',
+            description:
+                'Send directly over WebUSB while Plinky is running '
+                'normally. No need for Tunnel of Lights mode.',
+          ),
+          if (webUsbNote != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 36, top: 4),
+              child: Text(
+                webUsbNote!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ),
+          const SizedBox(height: 12),
+        ],
+        const _TransferMethodOption(
+          icon: Icons.folder_open,
+          title: 'Tunnel of Lights',
+          description:
+              'Write UF2 files to the Plinky drive. Requires putting '
+              'Plinky into Tunnel of Lights mode first.',
+        ),
+      ],
+    );
+  }
+}
+
+class _TransferMethodOption extends StatelessWidget {
+  const _TransferMethodOption({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 24, color: theme.colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

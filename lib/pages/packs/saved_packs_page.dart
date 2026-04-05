@@ -129,7 +129,9 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                     pack: pack,
                     isOwned: pack.userId == authenticationState.user?.id,
                     onEdit: pack.userId == authenticationState.user?.id
-                        ? () => _tabController.animateTo(2)
+                        ? () => context.go(
+                            AppRoute.packs.tab(PackTab.create.name),
+                          )
                         : null,
                   ),
                   itemLabel: 'pack',
