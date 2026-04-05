@@ -68,12 +68,17 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
       final starredIds = await _fetchStarredWavetableIds();
       final wavetables = _applyStarred(response as List, starredIds);
 
-      state = state.copyWith(userWavetables: wavetables, isLoading: false);
+      state = state.copyWith(
+        userWavetables: wavetables,
+        isLoading: false,
+        hasLoadedUserItems: true,
+      );
       await fetchStarredWavetables();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedUserItems: true,
         errorMessage: error.toString(),
       );
     }
@@ -118,11 +123,16 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
 
       final starredIds = await _fetchStarredWavetableIds();
       final wavetables = _applyStarred(response as List, starredIds);
-      state = state.copyWith(publicWavetables: wavetables, isLoading: false);
+      state = state.copyWith(
+        publicWavetables: wavetables,
+        isLoading: false,
+        hasLoadedPublicItems: true,
+      );
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedPublicItems: true,
         errorMessage: error.toString(),
       );
     }

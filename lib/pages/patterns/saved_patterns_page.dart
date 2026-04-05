@@ -118,7 +118,7 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
                 SearchableItemList(
                   items: savedPatternsState.userPatterns,
                   starredItems: savedPatternsState.starredPatterns,
-                  isLoading: savedPatternsState.isLoading,
+                  isLoading: !savedPatternsState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () => ref
                       .read(savedPatternsProvider.notifier)
@@ -135,7 +135,7 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
                 ),
               SearchableItemList(
                 items: savedPatternsState.publicPatterns,
-                isLoading: savedPatternsState.isLoading,
+                isLoading: !savedPatternsState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () => ref
                     .read(savedPatternsProvider.notifier)

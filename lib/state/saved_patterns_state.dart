@@ -10,6 +10,8 @@ abstract class SavedPatternsState with _$SavedPatternsState {
     @Default([]) List<SavedPattern> starredPatterns,
     @Default([]) List<SavedPattern> publicPatterns,
     @Default(false) bool isLoading,
+    @Default(false) bool hasLoadedUserItems,
+    @Default(false) bool hasLoadedPublicItems,
     String? errorMessage,
   }) = _SavedPatternsState;
 }

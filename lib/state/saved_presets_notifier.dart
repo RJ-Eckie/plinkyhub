@@ -65,12 +65,17 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
           .order('updated_at', ascending: false);
 
       final presets = await _parsePresetRows(response as List);
-      state = state.copyWith(userPresets: presets, isLoading: false);
+      state = state.copyWith(
+        userPresets: presets,
+        isLoading: false,
+        hasLoadedUserItems: true,
+      );
       await fetchStarredPresets();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedUserItems: true,
         errorMessage: error.toString(),
       );
     }
@@ -126,11 +131,16 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
           .eq('is_public', true);
 
       final presets = await _parsePresetRows(response as List);
-      state = state.copyWith(publicPresets: presets, isLoading: false);
+      state = state.copyWith(
+        publicPresets: presets,
+        isLoading: false,
+        hasLoadedPublicItems: true,
+      );
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedPublicItems: true,
         errorMessage: error.toString(),
       );
     }

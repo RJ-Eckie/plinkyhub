@@ -122,7 +122,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                 SearchableItemList(
                   items: savedWavetablesState.userWavetables,
                   starredItems: savedWavetablesState.starredWavetables,
-                  isLoading: savedWavetablesState.isLoading,
+                  isLoading: !savedWavetablesState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () => ref
                       .read(savedWavetablesProvider.notifier)
@@ -139,7 +139,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                 ),
               SearchableItemList(
                 items: savedWavetablesState.publicWavetables,
-                isLoading: savedWavetablesState.isLoading,
+                isLoading: !savedWavetablesState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () => ref
                     .read(savedWavetablesProvider.notifier)

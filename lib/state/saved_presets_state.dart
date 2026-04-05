@@ -10,6 +10,8 @@ abstract class SavedPresetsState with _$SavedPresetsState {
     @Default([]) List<SavedPreset> starredPresets,
     @Default([]) List<SavedPreset> publicPresets,
     @Default(false) bool isLoading,
+    @Default(false) bool hasLoadedUserItems,
+    @Default(false) bool hasLoadedPublicItems,
     String? errorMessage,
   }) = _SavedPresetsState;
 }

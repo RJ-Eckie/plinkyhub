@@ -10,6 +10,8 @@ abstract class SavedSamplesState with _$SavedSamplesState {
     @Default([]) List<SavedSample> starredSamples,
     @Default([]) List<SavedSample> publicSamples,
     @Default(false) bool isLoading,
+    @Default(false) bool hasLoadedUserItems,
+    @Default(false) bool hasLoadedPublicItems,
     String? errorMessage,
   }) = _SavedSamplesState;
 }

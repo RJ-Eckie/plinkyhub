@@ -132,7 +132,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                 SearchableItemList(
                   items: savedSamplesState.userSamples,
                   starredItems: savedSamplesState.starredSamples,
-                  isLoading: savedSamplesState.isLoading,
+                  isLoading: !savedSamplesState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () => ref
                       .read(savedSamplesProvider.notifier)
@@ -149,7 +149,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                 ),
               SearchableItemList(
                 items: savedSamplesState.publicSamples,
-                isLoading: savedSamplesState.isLoading,
+                isLoading: !savedSamplesState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () => ref
                     .read(savedSamplesProvider.notifier)

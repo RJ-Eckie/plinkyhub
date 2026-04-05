@@ -115,7 +115,7 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
                 SearchableItemList(
                   items: savedPresetsState.userPresets,
                   starredItems: savedPresetsState.starredPresets,
-                  isLoading: savedPresetsState.isLoading,
+                  isLoading: !savedPresetsState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () => ref
                       .read(savedPresetsProvider.notifier)
@@ -132,7 +132,7 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
                 ),
               SearchableItemList(
                 items: savedPresetsState.publicPresets,
-                isLoading: savedPresetsState.isLoading,
+                isLoading: !savedPresetsState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () => ref
                     .read(savedPresetsProvider.notifier)

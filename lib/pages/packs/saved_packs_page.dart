@@ -121,7 +121,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                 SearchableItemList(
                   items: savedPacksState.userPacks,
                   starredItems: savedPacksState.starredPacks,
-                  isLoading: savedPacksState.isLoading,
+                  isLoading: !savedPacksState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () =>
                       ref.read(savedPacksProvider.notifier).fetchUserPacks(),
@@ -140,7 +140,7 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                 ),
               SearchableItemList(
                 items: savedPacksState.publicPacks,
-                isLoading: savedPacksState.isLoading,
+                isLoading: !savedPacksState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () =>
                     ref.read(savedPacksProvider.notifier).fetchPublicPacks(),

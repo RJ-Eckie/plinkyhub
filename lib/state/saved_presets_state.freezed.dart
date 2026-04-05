@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedPresetsState {
 
- List<SavedPreset> get userPresets; List<SavedPreset> get starredPresets; List<SavedPreset> get publicPresets; bool get isLoading; String? get errorMessage;
+ List<SavedPreset> get userPresets; List<SavedPreset> get starredPresets; List<SavedPreset> get publicPresets; bool get isLoading; bool get hasLoadedUserItems; bool get hasLoadedPublicItems; String? get errorMessage;
 /// Create a copy of SavedPresetsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SavedPresetsStateCopyWith<SavedPresetsState> get copyWith => _$SavedPresetsStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedPresetsState&&const DeepCollectionEquality().equals(other.userPresets, userPresets)&&const DeepCollectionEquality().equals(other.starredPresets, starredPresets)&&const DeepCollectionEquality().equals(other.publicPresets, publicPresets)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedPresetsState&&const DeepCollectionEquality().equals(other.userPresets, userPresets)&&const DeepCollectionEquality().equals(other.starredPresets, starredPresets)&&const DeepCollectionEquality().equals(other.publicPresets, publicPresets)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.hasLoadedUserItems, hasLoadedUserItems) || other.hasLoadedUserItems == hasLoadedUserItems)&&(identical(other.hasLoadedPublicItems, hasLoadedPublicItems) || other.hasLoadedPublicItems == hasLoadedPublicItems)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userPresets),const DeepCollectionEquality().hash(starredPresets),const DeepCollectionEquality().hash(publicPresets),isLoading,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userPresets),const DeepCollectionEquality().hash(starredPresets),const DeepCollectionEquality().hash(publicPresets),isLoading,hasLoadedUserItems,hasLoadedPublicItems,errorMessage);
 
 @override
 String toString() {
-  return 'SavedPresetsState(userPresets: $userPresets, starredPresets: $starredPresets, publicPresets: $publicPresets, isLoading: $isLoading, errorMessage: $errorMessage)';
+  return 'SavedPresetsState(userPresets: $userPresets, starredPresets: $starredPresets, publicPresets: $publicPresets, isLoading: $isLoading, hasLoadedUserItems: $hasLoadedUserItems, hasLoadedPublicItems: $hasLoadedPublicItems, errorMessage: $errorMessage)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SavedPresetsStateCopyWith<$Res>  {
   factory $SavedPresetsStateCopyWith(SavedPresetsState value, $Res Function(SavedPresetsState) _then) = _$SavedPresetsStateCopyWithImpl;
 @useResult
 $Res call({
- List<SavedPreset> userPresets, List<SavedPreset> starredPresets, List<SavedPreset> publicPresets, bool isLoading, String? errorMessage
+ List<SavedPreset> userPresets, List<SavedPreset> starredPresets, List<SavedPreset> publicPresets, bool isLoading, bool hasLoadedUserItems, bool hasLoadedPublicItems, String? errorMessage
 });
 
 
@@ -62,12 +62,14 @@ class _$SavedPresetsStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedPresetsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userPresets = null,Object? starredPresets = null,Object? publicPresets = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userPresets = null,Object? starredPresets = null,Object? publicPresets = null,Object? isLoading = null,Object? hasLoadedUserItems = null,Object? hasLoadedPublicItems = null,Object? errorMessage = freezed,}) {
   return _then(_self.copyWith(
 userPresets: null == userPresets ? _self.userPresets : userPresets // ignore: cast_nullable_to_non_nullable
 as List<SavedPreset>,starredPresets: null == starredPresets ? _self.starredPresets : starredPresets // ignore: cast_nullable_to_non_nullable
 as List<SavedPreset>,publicPresets: null == publicPresets ? _self.publicPresets : publicPresets // ignore: cast_nullable_to_non_nullable
 as List<SavedPreset>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedUserItems: null == hasLoadedUserItems ? _self.hasLoadedUserItems : hasLoadedUserItems // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedPublicItems: null == hasLoadedPublicItems ? _self.hasLoadedPublicItems : hasLoadedPublicItems // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -154,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedPreset> userPresets,  List<SavedPreset> starredPresets,  List<SavedPreset> publicPresets,  bool isLoading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedPreset> userPresets,  List<SavedPreset> starredPresets,  List<SavedPreset> publicPresets,  bool isLoading,  bool hasLoadedUserItems,  bool hasLoadedPublicItems,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedPresetsState() when $default != null:
-return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that.isLoading,_that.hasLoadedUserItems,_that.hasLoadedPublicItems,_that.errorMessage);case _:
   return orElse();
 
 }
@@ -175,10 +177,10 @@ return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedPreset> userPresets,  List<SavedPreset> starredPresets,  List<SavedPreset> publicPresets,  bool isLoading,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedPreset> userPresets,  List<SavedPreset> starredPresets,  List<SavedPreset> publicPresets,  bool isLoading,  bool hasLoadedUserItems,  bool hasLoadedPublicItems,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _SavedPresetsState():
-return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that.isLoading,_that.hasLoadedUserItems,_that.hasLoadedPublicItems,_that.errorMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +197,10 @@ return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedPreset> userPresets,  List<SavedPreset> starredPresets,  List<SavedPreset> publicPresets,  bool isLoading,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedPreset> userPresets,  List<SavedPreset> starredPresets,  List<SavedPreset> publicPresets,  bool isLoading,  bool hasLoadedUserItems,  bool hasLoadedPublicItems,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedPresetsState() when $default != null:
-return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that.isLoading,_that.hasLoadedUserItems,_that.hasLoadedPublicItems,_that.errorMessage);case _:
   return null;
 
 }
@@ -210,7 +212,7 @@ return $default(_that.userPresets,_that.starredPresets,_that.publicPresets,_that
 
 
 class _SavedPresetsState implements SavedPresetsState {
-  const _SavedPresetsState({final  List<SavedPreset> userPresets = const [], final  List<SavedPreset> starredPresets = const [], final  List<SavedPreset> publicPresets = const [], this.isLoading = false, this.errorMessage}): _userPresets = userPresets,_starredPresets = starredPresets,_publicPresets = publicPresets;
+  const _SavedPresetsState({final  List<SavedPreset> userPresets = const [], final  List<SavedPreset> starredPresets = const [], final  List<SavedPreset> publicPresets = const [], this.isLoading = false, this.hasLoadedUserItems = false, this.hasLoadedPublicItems = false, this.errorMessage}): _userPresets = userPresets,_starredPresets = starredPresets,_publicPresets = publicPresets;
   
 
  final  List<SavedPreset> _userPresets;
@@ -235,6 +237,8 @@ class _SavedPresetsState implements SavedPresetsState {
 }
 
 @override@JsonKey() final  bool isLoading;
+@override@JsonKey() final  bool hasLoadedUserItems;
+@override@JsonKey() final  bool hasLoadedPublicItems;
 @override final  String? errorMessage;
 
 /// Create a copy of SavedPresetsState
@@ -247,16 +251,16 @@ _$SavedPresetsStateCopyWith<_SavedPresetsState> get copyWith => __$SavedPresetsS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedPresetsState&&const DeepCollectionEquality().equals(other._userPresets, _userPresets)&&const DeepCollectionEquality().equals(other._starredPresets, _starredPresets)&&const DeepCollectionEquality().equals(other._publicPresets, _publicPresets)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedPresetsState&&const DeepCollectionEquality().equals(other._userPresets, _userPresets)&&const DeepCollectionEquality().equals(other._starredPresets, _starredPresets)&&const DeepCollectionEquality().equals(other._publicPresets, _publicPresets)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.hasLoadedUserItems, hasLoadedUserItems) || other.hasLoadedUserItems == hasLoadedUserItems)&&(identical(other.hasLoadedPublicItems, hasLoadedPublicItems) || other.hasLoadedPublicItems == hasLoadedPublicItems)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userPresets),const DeepCollectionEquality().hash(_starredPresets),const DeepCollectionEquality().hash(_publicPresets),isLoading,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userPresets),const DeepCollectionEquality().hash(_starredPresets),const DeepCollectionEquality().hash(_publicPresets),isLoading,hasLoadedUserItems,hasLoadedPublicItems,errorMessage);
 
 @override
 String toString() {
-  return 'SavedPresetsState(userPresets: $userPresets, starredPresets: $starredPresets, publicPresets: $publicPresets, isLoading: $isLoading, errorMessage: $errorMessage)';
+  return 'SavedPresetsState(userPresets: $userPresets, starredPresets: $starredPresets, publicPresets: $publicPresets, isLoading: $isLoading, hasLoadedUserItems: $hasLoadedUserItems, hasLoadedPublicItems: $hasLoadedPublicItems, errorMessage: $errorMessage)';
 }
 
 
@@ -267,7 +271,7 @@ abstract mixin class _$SavedPresetsStateCopyWith<$Res> implements $SavedPresetsS
   factory _$SavedPresetsStateCopyWith(_SavedPresetsState value, $Res Function(_SavedPresetsState) _then) = __$SavedPresetsStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<SavedPreset> userPresets, List<SavedPreset> starredPresets, List<SavedPreset> publicPresets, bool isLoading, String? errorMessage
+ List<SavedPreset> userPresets, List<SavedPreset> starredPresets, List<SavedPreset> publicPresets, bool isLoading, bool hasLoadedUserItems, bool hasLoadedPublicItems, String? errorMessage
 });
 
 
@@ -284,12 +288,14 @@ class __$SavedPresetsStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedPresetsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userPresets = null,Object? starredPresets = null,Object? publicPresets = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userPresets = null,Object? starredPresets = null,Object? publicPresets = null,Object? isLoading = null,Object? hasLoadedUserItems = null,Object? hasLoadedPublicItems = null,Object? errorMessage = freezed,}) {
   return _then(_SavedPresetsState(
 userPresets: null == userPresets ? _self._userPresets : userPresets // ignore: cast_nullable_to_non_nullable
 as List<SavedPreset>,starredPresets: null == starredPresets ? _self._starredPresets : starredPresets // ignore: cast_nullable_to_non_nullable
 as List<SavedPreset>,publicPresets: null == publicPresets ? _self._publicPresets : publicPresets // ignore: cast_nullable_to_non_nullable
 as List<SavedPreset>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedUserItems: null == hasLoadedUserItems ? _self.hasLoadedUserItems : hasLoadedUserItems // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedPublicItems: null == hasLoadedPublicItems ? _self.hasLoadedPublicItems : hasLoadedPublicItems // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

@@ -10,6 +10,8 @@ abstract class SavedWavetablesState with _$SavedWavetablesState {
     @Default([]) List<SavedWavetable> starredWavetables,
     @Default([]) List<SavedWavetable> publicWavetables,
     @Default(false) bool isLoading,
+    @Default(false) bool hasLoadedUserItems,
+    @Default(false) bool hasLoadedPublicItems,
     String? errorMessage,
   }) = _SavedWavetablesState;
 }

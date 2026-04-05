@@ -68,12 +68,17 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
       final starredIds = await _fetchStarredPatternIds();
       final patterns = _applyStarred(response as List, starredIds);
 
-      state = state.copyWith(userPatterns: patterns, isLoading: false);
+      state = state.copyWith(
+        userPatterns: patterns,
+        isLoading: false,
+        hasLoadedUserItems: true,
+      );
       await fetchStarredPatterns();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedUserItems: true,
         errorMessage: error.toString(),
       );
     }
@@ -116,11 +121,16 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
 
       final starredIds = await _fetchStarredPatternIds();
       final patterns = _applyStarred(response as List, starredIds);
-      state = state.copyWith(publicPatterns: patterns, isLoading: false);
+      state = state.copyWith(
+        publicPatterns: patterns,
+        isLoading: false,
+        hasLoadedPublicItems: true,
+      );
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedPublicItems: true,
         errorMessage: error.toString(),
       );
     }

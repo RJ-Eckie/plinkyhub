@@ -68,12 +68,17 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       final starredIds = await _fetchStarredSampleIds();
       final samples = _applyStarred(response as List, starredIds);
 
-      state = state.copyWith(userSamples: samples, isLoading: false);
+      state = state.copyWith(
+        userSamples: samples,
+        isLoading: false,
+        hasLoadedUserItems: true,
+      );
       await fetchStarredSamples();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedUserItems: true,
         errorMessage: error.toString(),
       );
     }
@@ -116,11 +121,16 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
 
       final starredIds = await _fetchStarredSampleIds();
       final samples = _applyStarred(response as List, starredIds);
-      state = state.copyWith(publicSamples: samples, isLoading: false);
+      state = state.copyWith(
+        publicSamples: samples,
+        isLoading: false,
+        hasLoadedPublicItems: true,
+      );
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedPublicItems: true,
         errorMessage: error.toString(),
       );
     }

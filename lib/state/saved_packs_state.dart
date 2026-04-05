@@ -10,6 +10,8 @@ abstract class SavedPacksState with _$SavedPacksState {
     @Default([]) List<SavedPack> starredPacks,
     @Default([]) List<SavedPack> publicPacks,
     @Default(false) bool isLoading,
+    @Default(false) bool hasLoadedUserItems,
+    @Default(false) bool hasLoadedPublicItems,
     String? errorMessage,
     SavedPack? editingPack,
   }) = _SavedPacksState;

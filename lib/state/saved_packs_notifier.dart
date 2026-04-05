@@ -29,7 +29,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     final authenticationState = ref.watch(authenticationProvider);
     if (authenticationState.user != null) {
       Future.microtask(fetchUserPacks);
-      return const SavedPacksState(isLoading: true);
+      return const SavedPacksState();
     }
     return const SavedPacksState();
   }
@@ -78,12 +78,17 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       final starredIds = await _fetchStarredPackIds();
       final packs = _applyStarred(response as List, starredIds);
 
-      state = state.copyWith(userPacks: packs, isLoading: false);
+      state = state.copyWith(
+        userPacks: packs,
+        isLoading: false,
+        hasLoadedUserItems: true,
+      );
       await fetchStarredPacks();
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedUserItems: true,
         errorMessage: error.toString(),
       );
     }
@@ -128,11 +133,16 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
 
       final starredIds = await _fetchStarredPackIds();
       final packs = _applyStarred(response as List, starredIds);
-      state = state.copyWith(publicPacks: packs, isLoading: false);
+      state = state.copyWith(
+        publicPacks: packs,
+        isLoading: false,
+        hasLoadedPublicItems: true,
+      );
     } on Exception catch (error) {
       debugPrint('$error');
       state = state.copyWith(
         isLoading: false,
+        hasLoadedPublicItems: true,
         errorMessage: error.toString(),
       );
     }

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedWavetablesState {
 
- List<SavedWavetable> get userWavetables; List<SavedWavetable> get starredWavetables; List<SavedWavetable> get publicWavetables; bool get isLoading; String? get errorMessage;
+ List<SavedWavetable> get userWavetables; List<SavedWavetable> get starredWavetables; List<SavedWavetable> get publicWavetables; bool get isLoading; bool get hasLoadedUserItems; bool get hasLoadedPublicItems; String? get errorMessage;
 /// Create a copy of SavedWavetablesState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SavedWavetablesStateCopyWith<SavedWavetablesState> get copyWith => _$SavedWavet
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedWavetablesState&&const DeepCollectionEquality().equals(other.userWavetables, userWavetables)&&const DeepCollectionEquality().equals(other.starredWavetables, starredWavetables)&&const DeepCollectionEquality().equals(other.publicWavetables, publicWavetables)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedWavetablesState&&const DeepCollectionEquality().equals(other.userWavetables, userWavetables)&&const DeepCollectionEquality().equals(other.starredWavetables, starredWavetables)&&const DeepCollectionEquality().equals(other.publicWavetables, publicWavetables)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.hasLoadedUserItems, hasLoadedUserItems) || other.hasLoadedUserItems == hasLoadedUserItems)&&(identical(other.hasLoadedPublicItems, hasLoadedPublicItems) || other.hasLoadedPublicItems == hasLoadedPublicItems)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userWavetables),const DeepCollectionEquality().hash(starredWavetables),const DeepCollectionEquality().hash(publicWavetables),isLoading,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(userWavetables),const DeepCollectionEquality().hash(starredWavetables),const DeepCollectionEquality().hash(publicWavetables),isLoading,hasLoadedUserItems,hasLoadedPublicItems,errorMessage);
 
 @override
 String toString() {
-  return 'SavedWavetablesState(userWavetables: $userWavetables, starredWavetables: $starredWavetables, publicWavetables: $publicWavetables, isLoading: $isLoading, errorMessage: $errorMessage)';
+  return 'SavedWavetablesState(userWavetables: $userWavetables, starredWavetables: $starredWavetables, publicWavetables: $publicWavetables, isLoading: $isLoading, hasLoadedUserItems: $hasLoadedUserItems, hasLoadedPublicItems: $hasLoadedPublicItems, errorMessage: $errorMessage)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SavedWavetablesStateCopyWith<$Res>  {
   factory $SavedWavetablesStateCopyWith(SavedWavetablesState value, $Res Function(SavedWavetablesState) _then) = _$SavedWavetablesStateCopyWithImpl;
 @useResult
 $Res call({
- List<SavedWavetable> userWavetables, List<SavedWavetable> starredWavetables, List<SavedWavetable> publicWavetables, bool isLoading, String? errorMessage
+ List<SavedWavetable> userWavetables, List<SavedWavetable> starredWavetables, List<SavedWavetable> publicWavetables, bool isLoading, bool hasLoadedUserItems, bool hasLoadedPublicItems, String? errorMessage
 });
 
 
@@ -62,12 +62,14 @@ class _$SavedWavetablesStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedWavetablesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userWavetables = null,Object? starredWavetables = null,Object? publicWavetables = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userWavetables = null,Object? starredWavetables = null,Object? publicWavetables = null,Object? isLoading = null,Object? hasLoadedUserItems = null,Object? hasLoadedPublicItems = null,Object? errorMessage = freezed,}) {
   return _then(_self.copyWith(
 userWavetables: null == userWavetables ? _self.userWavetables : userWavetables // ignore: cast_nullable_to_non_nullable
 as List<SavedWavetable>,starredWavetables: null == starredWavetables ? _self.starredWavetables : starredWavetables // ignore: cast_nullable_to_non_nullable
 as List<SavedWavetable>,publicWavetables: null == publicWavetables ? _self.publicWavetables : publicWavetables // ignore: cast_nullable_to_non_nullable
 as List<SavedWavetable>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedUserItems: null == hasLoadedUserItems ? _self.hasLoadedUserItems : hasLoadedUserItems // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedPublicItems: null == hasLoadedPublicItems ? _self.hasLoadedPublicItems : hasLoadedPublicItems // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -154,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedWavetable> userWavetables,  List<SavedWavetable> starredWavetables,  List<SavedWavetable> publicWavetables,  bool isLoading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SavedWavetable> userWavetables,  List<SavedWavetable> starredWavetables,  List<SavedWavetable> publicWavetables,  bool isLoading,  bool hasLoadedUserItems,  bool hasLoadedPublicItems,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedWavetablesState() when $default != null:
-return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetables,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetables,_that.isLoading,_that.hasLoadedUserItems,_that.hasLoadedPublicItems,_that.errorMessage);case _:
   return orElse();
 
 }
@@ -175,10 +177,10 @@ return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetab
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedWavetable> userWavetables,  List<SavedWavetable> starredWavetables,  List<SavedWavetable> publicWavetables,  bool isLoading,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SavedWavetable> userWavetables,  List<SavedWavetable> starredWavetables,  List<SavedWavetable> publicWavetables,  bool isLoading,  bool hasLoadedUserItems,  bool hasLoadedPublicItems,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _SavedWavetablesState():
-return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetables,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetables,_that.isLoading,_that.hasLoadedUserItems,_that.hasLoadedPublicItems,_that.errorMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +197,10 @@ return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetab
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedWavetable> userWavetables,  List<SavedWavetable> starredWavetables,  List<SavedWavetable> publicWavetables,  bool isLoading,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SavedWavetable> userWavetables,  List<SavedWavetable> starredWavetables,  List<SavedWavetable> publicWavetables,  bool isLoading,  bool hasLoadedUserItems,  bool hasLoadedPublicItems,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedWavetablesState() when $default != null:
-return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetables,_that.isLoading,_that.errorMessage);case _:
+return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetables,_that.isLoading,_that.hasLoadedUserItems,_that.hasLoadedPublicItems,_that.errorMessage);case _:
   return null;
 
 }
@@ -210,7 +212,7 @@ return $default(_that.userWavetables,_that.starredWavetables,_that.publicWavetab
 
 
 class _SavedWavetablesState implements SavedWavetablesState {
-  const _SavedWavetablesState({final  List<SavedWavetable> userWavetables = const [], final  List<SavedWavetable> starredWavetables = const [], final  List<SavedWavetable> publicWavetables = const [], this.isLoading = false, this.errorMessage}): _userWavetables = userWavetables,_starredWavetables = starredWavetables,_publicWavetables = publicWavetables;
+  const _SavedWavetablesState({final  List<SavedWavetable> userWavetables = const [], final  List<SavedWavetable> starredWavetables = const [], final  List<SavedWavetable> publicWavetables = const [], this.isLoading = false, this.hasLoadedUserItems = false, this.hasLoadedPublicItems = false, this.errorMessage}): _userWavetables = userWavetables,_starredWavetables = starredWavetables,_publicWavetables = publicWavetables;
   
 
  final  List<SavedWavetable> _userWavetables;
@@ -235,6 +237,8 @@ class _SavedWavetablesState implements SavedWavetablesState {
 }
 
 @override@JsonKey() final  bool isLoading;
+@override@JsonKey() final  bool hasLoadedUserItems;
+@override@JsonKey() final  bool hasLoadedPublicItems;
 @override final  String? errorMessage;
 
 /// Create a copy of SavedWavetablesState
@@ -247,16 +251,16 @@ _$SavedWavetablesStateCopyWith<_SavedWavetablesState> get copyWith => __$SavedWa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedWavetablesState&&const DeepCollectionEquality().equals(other._userWavetables, _userWavetables)&&const DeepCollectionEquality().equals(other._starredWavetables, _starredWavetables)&&const DeepCollectionEquality().equals(other._publicWavetables, _publicWavetables)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedWavetablesState&&const DeepCollectionEquality().equals(other._userWavetables, _userWavetables)&&const DeepCollectionEquality().equals(other._starredWavetables, _starredWavetables)&&const DeepCollectionEquality().equals(other._publicWavetables, _publicWavetables)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.hasLoadedUserItems, hasLoadedUserItems) || other.hasLoadedUserItems == hasLoadedUserItems)&&(identical(other.hasLoadedPublicItems, hasLoadedPublicItems) || other.hasLoadedPublicItems == hasLoadedPublicItems)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userWavetables),const DeepCollectionEquality().hash(_starredWavetables),const DeepCollectionEquality().hash(_publicWavetables),isLoading,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_userWavetables),const DeepCollectionEquality().hash(_starredWavetables),const DeepCollectionEquality().hash(_publicWavetables),isLoading,hasLoadedUserItems,hasLoadedPublicItems,errorMessage);
 
 @override
 String toString() {
-  return 'SavedWavetablesState(userWavetables: $userWavetables, starredWavetables: $starredWavetables, publicWavetables: $publicWavetables, isLoading: $isLoading, errorMessage: $errorMessage)';
+  return 'SavedWavetablesState(userWavetables: $userWavetables, starredWavetables: $starredWavetables, publicWavetables: $publicWavetables, isLoading: $isLoading, hasLoadedUserItems: $hasLoadedUserItems, hasLoadedPublicItems: $hasLoadedPublicItems, errorMessage: $errorMessage)';
 }
 
 
@@ -267,7 +271,7 @@ abstract mixin class _$SavedWavetablesStateCopyWith<$Res> implements $SavedWavet
   factory _$SavedWavetablesStateCopyWith(_SavedWavetablesState value, $Res Function(_SavedWavetablesState) _then) = __$SavedWavetablesStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<SavedWavetable> userWavetables, List<SavedWavetable> starredWavetables, List<SavedWavetable> publicWavetables, bool isLoading, String? errorMessage
+ List<SavedWavetable> userWavetables, List<SavedWavetable> starredWavetables, List<SavedWavetable> publicWavetables, bool isLoading, bool hasLoadedUserItems, bool hasLoadedPublicItems, String? errorMessage
 });
 
 
@@ -284,12 +288,14 @@ class __$SavedWavetablesStateCopyWithImpl<$Res>
 
 /// Create a copy of SavedWavetablesState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userWavetables = null,Object? starredWavetables = null,Object? publicWavetables = null,Object? isLoading = null,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userWavetables = null,Object? starredWavetables = null,Object? publicWavetables = null,Object? isLoading = null,Object? hasLoadedUserItems = null,Object? hasLoadedPublicItems = null,Object? errorMessage = freezed,}) {
   return _then(_SavedWavetablesState(
 userWavetables: null == userWavetables ? _self._userWavetables : userWavetables // ignore: cast_nullable_to_non_nullable
 as List<SavedWavetable>,starredWavetables: null == starredWavetables ? _self._starredWavetables : starredWavetables // ignore: cast_nullable_to_non_nullable
 as List<SavedWavetable>,publicWavetables: null == publicWavetables ? _self._publicWavetables : publicWavetables // ignore: cast_nullable_to_non_nullable
 as List<SavedWavetable>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedUserItems: null == hasLoadedUserItems ? _self.hasLoadedUserItems : hasLoadedUserItems // ignore: cast_nullable_to_non_nullable
+as bool,hasLoadedPublicItems: null == hasLoadedPublicItems ? _self.hasLoadedPublicItems : hasLoadedPublicItems // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
