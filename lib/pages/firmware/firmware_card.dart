@@ -38,6 +38,10 @@ class FirmwareCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
+                  if (firmware.isPinned) ...[
+                    const Icon(Icons.push_pin, size: 16),
+                    const SizedBox(width: 4),
+                  ],
                   Text(
                     firmware.name,
                     style: theme.textTheme.titleMedium,
@@ -47,10 +51,6 @@ class FirmwareCard extends ConsumerWidget {
                     label: Text(firmware.version),
                     visualDensity: VisualDensity.compact,
                   ),
-                  if (firmware.isPinned) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.push_pin, size: 16),
-                  ],
                   if (firmware.isBeta) ...[
                     const SizedBox(width: 4),
                     Chip(
