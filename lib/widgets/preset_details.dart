@@ -235,51 +235,54 @@ class _SaveToCloudButton extends ConsumerWidget {
 
           return AlertDialog(
             title: const Text('Save preset to cloud'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLength: 8,
+                    onChanged: (_) => setDialogState(() {}),
                   ),
-                  maxLength: 8,
-                  onChanged: (_) => setDialogState(() {}),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description (optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                    minLines: 3,
+                    maxLines: null,
                   ),
-                  minLines: 3,
-                  maxLines: null,
-                ),
-                const SizedBox(height: 12),
-                _SampleSelector(
-                  samples: samples,
-                  selectedSampleId: selectedSampleId,
-                  currentUserId: ref.read(authenticationProvider).user?.id,
-                  onChanged: (value) {
-                    setDialogState(
-                      () => selectedSampleId = value,
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  title: const Text('Share publicly'),
-                  subtitle: const Text(
-                    'Allow others to find and load this preset',
+                  const SizedBox(height: 12),
+                  _SampleSelector(
+                    samples: samples,
+                    selectedSampleId: selectedSampleId,
+                    currentUserId: ref.read(authenticationProvider).user?.id,
+                    onChanged: (value) {
+                      setDialogState(
+                        () => selectedSampleId = value,
+                      );
+                    },
                   ),
-                  value: isPublic,
-                  onChanged: (value) {
-                    setDialogState(() => isPublic = value);
-                  },
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: const Text('Share publicly'),
+                    subtitle: const Text(
+                      'Allow others to find and load this preset',
+                    ),
+                    value: isPublic,
+                    onChanged: (value) {
+                      setDialogState(() => isPublic = value);
+                    },
+                  ),
+                ],
+              ),
             ),
             actions: [
               PlinkyButton(
