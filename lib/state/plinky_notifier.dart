@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/services/webusb_service.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
 import 'package:plinkyhub/utils/compress.dart';
+import 'package:plinkyhub/utils/wavetable.dart';
 
 const _usbBufferSize = 64;
 const _magicHeader = [0xF3, 0x0F, 0xAB, 0xCA];
@@ -324,13 +326,22 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       await _webUsbService.resetInterface();
       _receivedData.clear();
 
+      // Truncate to exact wavetable size so padded UF2 payloads (e.g. last
+      // block rounded to 256 bytes) don't exceed the firmware's size check.
+      const expectedSize = wavetableShapeCount * wavetableSamplesPerShape * 2;
+      final data = wavetableData.length > expectedSize
+          ? wavetableData.sublist(0, expectedSize)
+          : wavetableData;
+
+      debugPrint('Sending wavetable: ${data.length} bytes');
       onProgress?.call(0);
       await _sendWithHeader(
         command: 5,
         index: 0,
-        data: wavetableData,
+        data: data,
       );
       onProgress?.call(1);
+      debugPrint('Wavetable send complete');
 
       state = state.copyWith(
         connectionState: PlinkyConnectionState.connected,
@@ -343,6 +354,149 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       );
       rethrow;
     }
+  }
+
+  /// Reads the current wavetable from Plinky over WebUSB (command 4).
+  ///
+  /// Returns the raw wavetable bytes as stored in the device's flash.
+  Future<Uint8List> readWavetable() async {
+    await _webUsbService.resetInterface();
+    _receivedData.clear();
+
+    const wavetableByteCount = 17 * 1031 * 2;
+
+    // Send cmd=4 (read wavetable) with the full wavetable size.
+    final requestBuffer = Uint8List.fromList([
+      ..._magicHeader,
+      4, // read wavetable
+      0, // idx
+      0, 0, // offset (16-bit LE)
+      wavetableByteCount & 0xFF,
+      (wavetableByteCount >> 8) & 0xFF,
+    ]);
+    _webUsbService.send(requestBuffer);
+
+    // The firmware responds with a 14-byte extended header (magic 0xCB).
+    ByteData headerData;
+    while (true) {
+      headerData = await _waitForData();
+      if (_isValidWavetableReadHeader(headerData)) {
+        break;
+      }
+    }
+
+    final bytesToProcess =
+        headerData.getUint8(10) +
+        headerData.getUint8(11) * 256 +
+        headerData.getUint8(12) * 65536 +
+        headerData.getUint8(13) * 16777216;
+    debugPrint('Wavetable read: expecting $bytesToProcess bytes');
+
+    final chunks = <Uint8List>[];
+    var processedBytes = 0;
+    while (processedBytes < bytesToProcess) {
+      final chunkData = await _waitForData();
+      final chunk = Uint8List(chunkData.lengthInBytes);
+      for (var index = 0; index < chunkData.lengthInBytes; index++) {
+        chunk[index] = chunkData.getUint8(index);
+      }
+      chunks.add(chunk);
+      processedBytes += chunk.length;
+    }
+
+    final totalLength = chunks.fold<int>(
+      0,
+      (sum, chunk) => sum + chunk.length,
+    );
+    final wavetableData = Uint8List(totalLength);
+    var offset = 0;
+    for (final chunk in chunks) {
+      wavetableData.setAll(offset, chunk);
+      offset += chunk.length;
+    }
+
+    debugPrint('Wavetable read complete: ${wavetableData.length} bytes');
+    return wavetableData;
+  }
+
+  /// Reads back the wavetable from the device and compares it with [sentData].
+  ///
+  /// Returns `true` if the data matches, `false` otherwise. Logs details
+  /// about any mismatch to aid debugging.
+  Future<bool> verifyWavetable(Uint8List sentData) async {
+    debugPrint('Verifying wavetable...');
+    const expectedSize = wavetableShapeCount * wavetableSamplesPerShape * 2;
+    final truncatedSentData = sentData.length > expectedSize
+        ? sentData.sublist(0, expectedSize)
+        : sentData;
+    final deviceData = await readWavetable();
+
+    if (deviceData.length != truncatedSentData.length) {
+      debugPrint(
+        'Wavetable MISMATCH: sent ${truncatedSentData.length} bytes, '
+        'read back ${deviceData.length} bytes',
+      );
+      return false;
+    }
+
+    var mismatches = 0;
+    int? firstMismatchIndex;
+    for (var i = 0; i < truncatedSentData.length; i++) {
+      if (deviceData[i] != truncatedSentData[i]) {
+        firstMismatchIndex ??= i;
+        mismatches++;
+      }
+    }
+
+    if (mismatches > 0) {
+      debugPrint(
+        'Wavetable MISMATCH: $mismatches bytes differ, '
+        'first at index $firstMismatchIndex '
+        '(sent ${truncatedSentData[firstMismatchIndex!]}, '
+        'got ${deviceData[firstMismatchIndex]})',
+      );
+      // Log a few bytes around the first mismatch for context.
+      final start = max(0, firstMismatchIndex - 4);
+      final end = min(truncatedSentData.length, firstMismatchIndex + 8);
+      debugPrint(
+        'Sent  [$start..$end]: '
+        '${truncatedSentData.sublist(start, end)}',
+      );
+      debugPrint(
+        'Read  [$start..$end]: '
+        '${deviceData.sublist(start, end)}',
+      );
+      return false;
+    }
+
+    debugPrint(
+      'Wavetable MATCH: all ${truncatedSentData.length} bytes verified',
+    );
+    return true;
+  }
+
+  bool _isValidWavetableReadHeader(ByteData data) {
+    if (data.lengthInBytes < 14) {
+      return false;
+    }
+    // Extended magic: 0xF3, 0x0F, 0xAB, 0xCB
+    if (data.getUint8(0) != 0xF3) {
+      return false;
+    }
+    if (data.getUint8(1) != 0x0F) {
+      return false;
+    }
+    if (data.getUint8(2) != 0xAB) {
+      return false;
+    }
+    if (data.getUint8(3) != 0xCB) {
+      return false;
+    }
+    // Firmware changes cmd from 4 to 5 in the response.
+    if (data.getUint8(4) != 5) {
+      return false;
+    }
+    return true;
   }
 
   /// Sends data with a standard 10-byte (16-bit) WebUSB header.

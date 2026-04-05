@@ -89,7 +89,25 @@ class _SaveWavetableToPlinkyDialogState
       );
 
       if (mounted) {
-        setState(() => _step = _DialogStep.done);
+        setState(() {
+          _statusMessage = 'Verifying wavetable...';
+          _progress = null;
+        });
+      }
+      final verified = await notifier.verifyWavetable(wavetableData);
+
+      if (mounted) {
+        if (verified) {
+          setState(() => _step = _DialogStep.done);
+        } else {
+          setState(() {
+            _step = _DialogStep.error;
+            _errorMessage =
+                'Wavetable verification failed — the data on the device '
+                'does not match what was sent. Check the browser console '
+                'for details.';
+          });
+        }
       }
     } on Exception catch (error) {
       if (mounted) {
