@@ -154,15 +154,18 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
     var completedSteps = 0;
 
     // Upload samples via WebUSB (cmd=3 for PCM, cmd=1 for SampleInfo).
+    var sampleNumber = 0;
     for (final entry in sampleSlotMapping.entries) {
       final metadata = sampleMetadataMap[entry.key];
       if (metadata == null) {
         continue;
       }
 
+      sampleNumber++;
       final slotIndex = entry.value;
       setState(() {
-        _statusMessage = 'Downloading sample ${slotIndex + 1}...';
+        _statusMessage =
+            'Downloading sample $sampleNumber/${sampleSlotMapping.length}...';
       });
 
       final pcmBytes = await _supabase.storage
@@ -189,7 +192,8 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       );
 
       setState(() {
-        _statusMessage = 'Sending sample ${slotIndex + 1}...';
+        _statusMessage =
+            'Sending sample $sampleNumber/${sampleSlotMapping.length}...';
       });
 
       await notifier.sendSample(
@@ -364,6 +368,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
     // Download sample PCM files and build SampleInfo structs.
     final sampleInfos = List<Uint8List?>.filled(sampleCount, null);
     final samplePcmData = <int, Uint8List>{};
+    var tunnelSampleNumber = 0;
     for (final entry in sampleSlotMapping.entries) {
       final sampleId = entry.key;
       final slotIndex = entry.value;
@@ -372,9 +377,10 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         continue;
       }
 
+      tunnelSampleNumber++;
       setState(() {
         _statusMessage =
-            'Downloading sample ${slotIndex + 1}/${sampleSlotMapping.length}...';
+            'Downloading sample $tunnelSampleNumber/${sampleSlotMapping.length}...';
       });
 
       final pcmFilePath = metadata['pcm_file_path'] as String;

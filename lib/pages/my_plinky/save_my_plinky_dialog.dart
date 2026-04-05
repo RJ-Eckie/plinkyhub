@@ -158,6 +158,7 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
 
     // Download sample PCM and build SampleInfo structs.
     final samplePcmData = <int, Uint8List>{};
+    var sampleDownloadNumber = 0;
     for (final entry in sampleSlotMapping.entries) {
       final sampleId = entry.key;
       final slotIndex = entry.value;
@@ -167,8 +168,9 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
         continue;
       }
 
+      sampleDownloadNumber++;
       updateProgress(
-        'Downloading sample ${completedSteps - 1}/${sampleSlotMapping.length}...',
+        'Downloading sample $sampleDownloadNumber/${sampleSlotMapping.length}...',
       );
 
       final pcmFilePath = metadata['pcm_file_path'] as String;
