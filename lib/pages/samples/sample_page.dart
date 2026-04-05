@@ -103,6 +103,7 @@ class _SamplePageState extends ConsumerState<SamplePage> {
               SampleCard(
                 sample: _sample!,
                 isOwned: isOwned,
+                initiallyExpanded: true,
                 onDeleted: () => context.go(AppRoute.samples.path),
               ),
             ],

@@ -24,19 +24,21 @@ class SampleCard extends ConsumerStatefulWidget {
     required this.sample,
     required this.isOwned,
     this.onDeleted,
+    this.initiallyExpanded = false,
     super.key,
   });
 
   final SavedSample sample;
   final bool isOwned;
   final VoidCallback? onDeleted;
+  final bool initiallyExpanded;
 
   @override
   ConsumerState<SampleCard> createState() => _SampleCardState();
 }
 
 class _SampleCardState extends ConsumerState<SampleCard> {
-  bool _expanded = false;
+  late bool _expanded = widget.initiallyExpanded;
   Uint8List? _wavBytes;
   int? _pcmFrameCount;
   bool _loadingWav = false;
@@ -52,6 +54,9 @@ class _SampleCardState extends ConsumerState<SampleCard> {
     _slicePoints = List.of(widget.sample.slicePoints);
     _pitched = widget.sample.pitched;
     _sliceNotes = List.of(widget.sample.sliceNotes);
+    if (_expanded) {
+      _loadWav();
+    }
   }
 
   @override
