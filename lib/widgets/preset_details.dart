@@ -259,7 +259,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                     minLines: 3,
                     maxLines: null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _SampleSelector(
                     samples: samples,
                     selectedSampleId: selectedSampleId,
