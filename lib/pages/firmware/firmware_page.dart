@@ -23,6 +23,10 @@ class FirmwarePage extends ConsumerWidget {
     final isAdmin =
         currentUserId != null && _firmwareAdminIds.contains(currentUserId);
 
+    if (firmwaresState.isLoading) {
+      return const Center(child: PlinkyLoadingAnimation());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -47,9 +51,7 @@ class FirmwarePage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          if (firmwaresState.isLoading)
-            const Center(child: PlinkyLoadingAnimation())
-          else if (firmwaresState.errorMessage != null)
+          if (firmwaresState.errorMessage != null)
             Text(
               firmwaresState.errorMessage!,
               style: TextStyle(color: Theme.of(context).colorScheme.error),

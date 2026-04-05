@@ -282,7 +282,7 @@ class _SampleCardState extends ConsumerState<SampleCard> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16),
-                      child: PlinkyLoadingAnimation(size: 80),
+                      child: PlinkyLoadingAnimation(),
                     ),
                   )
                 else

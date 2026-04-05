@@ -6,12 +6,9 @@ import 'package:flutter/material.dart';
 /// used in the navigation sidebar. Each arc pulses with a staggered
 /// delay to create a wave effect.
 class PlinkyLoadingAnimation extends StatefulWidget {
-  const PlinkyLoadingAnimation({
-    this.size = 160,
-    super.key,
-  });
+  const PlinkyLoadingAnimation({super.key});
 
-  final double size;
+  static const double size = 160;
 
   @override
   State<PlinkyLoadingAnimation> createState() => _PlinkyLoadingAnimationState();
@@ -38,15 +35,15 @@ class _PlinkyLoadingAnimationState extends State<PlinkyLoadingAnimation>
 
   @override
   Widget build(BuildContext context) {
-    final cellSize = widget.size / 8;
+    const cellSize = PlinkyLoadingAnimation.size / 8;
     final color = Theme.of(context).colorScheme.primary;
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return SizedBox(
-          width: widget.size,
-          height: widget.size,
+          width: PlinkyLoadingAnimation.size,
+          height: PlinkyLoadingAnimation.size,
           child: CustomPaint(
             painter: _GridArcPainter(
               progress: _controller.value,
