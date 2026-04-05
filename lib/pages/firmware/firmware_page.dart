@@ -5,6 +5,7 @@ import 'package:plinkyhub/pages/firmware/upload_firmware_dialog.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/firmwares_notifier.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
 const _firmwareAdminIds = {
   '1fc66f06-5180-48d6-814d-9cbcdd0980d8',
@@ -47,7 +48,7 @@ class FirmwarePage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (firmwaresState.isLoading)
-            const Center(child: CircularProgressIndicator())
+            const Center(child: PlinkyLoadingAnimation())
           else if (firmwaresState.errorMessage != null)
             Text(
               firmwaresState.errorMessage!,
