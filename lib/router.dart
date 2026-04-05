@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/pages/about_page.dart';
 import 'package:plinkyhub/pages/editor/editor_page.dart';
+import 'package:plinkyhub/pages/firmware/firmware_detail_page.dart';
 import 'package:plinkyhub/pages/firmware/firmware_page.dart';
 import 'package:plinkyhub/pages/my_plinky/my_plinky_page.dart';
 import 'package:plinkyhub/pages/packs/pack_page.dart';
@@ -175,6 +176,18 @@ GoRouter createRouter(ProviderContainer container) {
             ],
           ),
         ],
+      ),
+
+      // Firmware detail page — not tied to a username.
+      GoRoute(
+        path: '/firmware/:name',
+        builder: (context, state) => _ItemPageShell(
+          child: FirmwareDetailPage(
+            firmwareName: Uri.decodeComponent(
+              state.pathParameters['name']!,
+            ),
+          ),
+        ),
       ),
 
       // Item detail pages — displayed within the shell via

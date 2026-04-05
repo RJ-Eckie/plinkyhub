@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_firmware.dart';
 import 'package:plinkyhub/pages/firmware/edit_firmware_dialog.dart';
 import 'package:plinkyhub/pages/firmware/flash_firmware_dialog.dart';
 import 'package:plinkyhub/state/firmwares_notifier.dart';
+import 'package:plinkyhub/widgets/firmware_share_link_button.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
 class FirmwareCard extends ConsumerWidget {
   const FirmwareCard({
     required this.firmware,
     required this.isAdmin,
+    this.onDeleted,
     super.key,
   });
 
   final SavedFirmware firmware;
   final bool isAdmin;
+  final VoidCallback? onDeleted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,88 +27,97 @@ class FirmwareCard extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  firmware.name,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(width: 8),
-                Chip(
-                  label: Text(firmware.version),
-                  visualDensity: VisualDensity.compact,
-                ),
-                if (firmware.isPinned) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.push_pin, size: 16),
-                ],
-                if (firmware.isBeta) ...[
-                  const SizedBox(width: 4),
+      child: InkWell(
+        onTap: () => context.go(
+          '/firmware/${Uri.encodeComponent(firmware.name)}',
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    firmware.name,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(width: 8),
                   Chip(
-                    label: const Text('Beta'),
-                    backgroundColor: theme.colorScheme.tertiary.withValues(
-                      alpha: 0.2,
-                    ),
+                    label: Text(firmware.version),
                     visualDensity: VisualDensity.compact,
                   ),
+                  if (firmware.isPinned) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.push_pin, size: 16),
+                  ],
+                  if (firmware.isBeta) ...[
+                    const SizedBox(width: 4),
+                    Chip(
+                      label: const Text('Beta'),
+                      backgroundColor: theme.colorScheme.tertiary.withValues(
+                        alpha: 0.2,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                  const Spacer(),
+                  FirmwareShareLinkButton(
+                    firmwareName: firmware.name,
+                  ),
                 ],
-              ],
-            ),
-            if (firmware.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                firmware.description,
-                style: theme.textTheme.bodyMedium,
               ),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                PlinkyButton(
-                  onPressed: () => showDialog<void>(
-                    context: context,
-                    builder: (context) =>
-                        FlashFirmwareDialog(firmware: firmware),
-                  ),
-                  icon: Icons.flash_on,
-                  label: 'Flash to Plinky',
+              if (firmware.description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  firmware.description,
+                  style: theme.textTheme.bodyMedium,
                 ),
-                if (isAdmin) ...[
-                  const SizedBox(width: 8),
-                  PlinkyButton(
-                    onPressed: () => ref
-                        .read(firmwaresProvider.notifier)
-                        .togglePinned(firmware),
-                    icon: firmware.isPinned
-                        ? Icons.push_pin
-                        : Icons.push_pin_outlined,
-                    label: firmware.isPinned ? 'Unpin' : 'Pin',
-                  ),
-                  const SizedBox(width: 8),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
                   PlinkyButton(
                     onPressed: () => showDialog<void>(
                       context: context,
                       builder: (context) =>
-                          EditFirmwareDialog(firmware: firmware),
+                          FlashFirmwareDialog(firmware: firmware),
                     ),
-                    icon: Icons.edit,
-                    label: 'Edit',
+                    icon: Icons.flash_on,
+                    label: 'Flash to Plinky',
                   ),
-                  const SizedBox(width: 8),
-                  PlinkyButton(
-                    onPressed: () => _confirmDelete(context, ref),
-                    icon: Icons.delete_outline,
-                    label: 'Delete',
-                  ),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 8),
+                    PlinkyButton(
+                      onPressed: () => ref
+                          .read(firmwaresProvider.notifier)
+                          .togglePinned(firmware),
+                      icon: firmware.isPinned
+                          ? Icons.push_pin
+                          : Icons.push_pin_outlined,
+                      label: firmware.isPinned ? 'Unpin' : 'Pin',
+                    ),
+                    const SizedBox(width: 8),
+                    PlinkyButton(
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (context) =>
+                            EditFirmwareDialog(firmware: firmware),
+                      ),
+                      icon: Icons.edit,
+                      label: 'Edit',
+                    ),
+                    const SizedBox(width: 8),
+                    PlinkyButton(
+                      onPressed: () => _confirmDelete(context, ref),
+                      icon: Icons.delete_outline,
+                      label: 'Delete',
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -127,6 +140,7 @@ class FirmwareCard extends ConsumerWidget {
               ref
                   .read(firmwaresProvider.notifier)
                   .deleteFirmware(firmware.id, firmware.filePath);
+              onDeleted?.call();
             },
             child: const Text('Delete'),
           ),

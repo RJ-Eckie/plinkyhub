@@ -23,7 +23,7 @@ class FirmwaresNotifier extends Notifier<FirmwaresState> {
     try {
       final response = await _supabase
           .from('firmwares')
-          .select()
+          .select('*, profiles(username)')
           .order('is_pinned', ascending: false)
           .order('created_at', ascending: false);
       final firmwares = (response as List)

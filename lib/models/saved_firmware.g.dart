@@ -18,6 +18,7 @@ _SavedFirmware _$SavedFirmwareFromJson(Map<String, dynamic> json) =>
       description: json['description'] as String? ?? '',
       isBeta: json['is_beta'] as bool? ?? false,
       isPinned: json['is_pinned'] as bool? ?? false,
+      username: _readUsername(json, 'username') as String? ?? '',
     );
 
 Map<String, dynamic> _$SavedFirmwareToJson(_SavedFirmware instance) =>
@@ -32,4 +33,5 @@ Map<String, dynamic> _$SavedFirmwareToJson(_SavedFirmware instance) =>
       'description': instance.description,
       'is_beta': instance.isBeta,
       'is_pinned': instance.isPinned,
+      'username': instance.username,
     };

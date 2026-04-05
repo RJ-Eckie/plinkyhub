@@ -16,8 +16,17 @@ abstract class SavedFirmware with _$SavedFirmware {
     @Default('') String description,
     @Default(false) bool isBeta,
     @Default(false) bool isPinned,
+    @Default('') @JsonKey(readValue: _readUsername) String username,
   }) = _SavedFirmware;
 
   factory SavedFirmware.fromJson(Map<String, dynamic> json) =>
       _$SavedFirmwareFromJson(json);
+}
+
+Object? _readUsername(Map<dynamic, dynamic> json, String key) {
+  final profiles = json['profiles'];
+  if (profiles is Map<String, dynamic>) {
+    return profiles['username'];
+  }
+  return json[key];
 }
