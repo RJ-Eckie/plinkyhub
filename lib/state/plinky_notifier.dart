@@ -16,8 +16,9 @@ const _magicHeaderExtended = [0xF3, 0x0F, 0xAB, 0xCB];
 /// Keeps memory usage reasonable and allows progress updates.
 const _sendBatchSize = 256;
 
-/// Delay after writing SampleInfo before starting SPI writes.
-const _sampleInfoDelay = Duration(milliseconds: 200);
+/// Delay after SPI writes before sending SampleInfo, giving the firmware
+/// time to clear g_disable_fx and resume its main loop.
+const _postSpiDelay = Duration(milliseconds: 500);
 
 final plinkyProvider = NotifierProvider<PlinkyNotifier, PlinkyState>(
   PlinkyNotifier.new,
@@ -266,27 +267,32 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       await _webUsbService.resetInterface();
       _receivedData.clear();
 
-      // Step 1: Send SampleInfo (cmd=1, idx=64+slot, 16-bit header).
+      // Step 1: Send PCM data first (cmd=3, 32-bit header).
+      // This sets g_disable_fx which blocks the firmware's main loop
+      // (including PumpFlashWrites). The firmware handles 64KB
+      // chunking internally.
       onProgress?.call(0);
-      await _sendWithHeader(
-        command: 1,
-        index: 64 + slotIndex,
-        data: sampleInfo,
-      );
-
-      await Future<void>.delayed(_sampleInfoDelay);
-
-      // Step 2: Send PCM data with a single header (cmd=3, 32-bit).
-      // The firmware handles 64KB chunking internally — it receives
-      // 64KB into delaybuf, writes to SPI, then loops to receive
-      // the next 64KB. Sending multiple headers would toggle
-      // g_disable_fx between chunks, corrupting the delay buffer.
       await _sendStreamWithExtendedHeader(
         command: 3,
         index: slotIndex,
         offset: 0,
         data: pcmData,
         onProgress: onProgress,
+      );
+
+      // Wait for firmware to clear g_disable_fx and resume its
+      // main loop before sending SampleInfo.
+      await Future<void>.delayed(_postSpiDelay);
+
+      // Step 2: Send SampleInfo (cmd=1, idx=64+slot, 16-bit header).
+      // Sent after PCM data so the firmware's auto-save
+      // (PumpFlashWrites) isn't blocked by g_disable_fx during the
+      // SPI write. The SampleInfo is marked dirty and saved to
+      // internal flash within 5 seconds by the main loop.
+      await _sendWithHeader(
+        command: 1,
+        index: 64 + slotIndex,
+        data: sampleInfo,
       );
 
       state = state.copyWith(
