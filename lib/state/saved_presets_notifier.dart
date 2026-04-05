@@ -60,7 +60,10 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     try {
       final response = await _supabase
           .from('presets')
-          .select('*, profiles(username), preset_stars(count)')
+          .select(
+            '*, profiles(username), preset_stars(count), '
+            'samples(name, profiles(username))',
+          )
           .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
@@ -104,7 +107,10 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
 
       final response = await _supabase
           .from('presets')
-          .select('*, profiles(username), preset_stars(count)')
+          .select(
+            '*, profiles(username), preset_stars(count), '
+            'samples(name, profiles(username))',
+          )
           .inFilter('id', starredIds)
           .neq('user_id', userId);
 
@@ -127,7 +133,10 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     try {
       final response = await _supabase
           .from('presets')
-          .select('*, profiles(username), preset_stars(count)')
+          .select(
+            '*, profiles(username), preset_stars(count), '
+            'samples(name, profiles(username))',
+          )
           .eq('is_public', true);
 
       final presets = await _parsePresetRows(response as List);

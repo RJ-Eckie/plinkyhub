@@ -20,6 +20,8 @@ abstract class SavedPreset with _$SavedPreset implements Searchable {
     @Default(0) @JsonKey(readValue: _readStarCount) int starCount,
     @Default(false) bool isStarred,
     String? sampleId,
+    @JsonKey(readValue: _readSampleName) String? sampleName,
+    @JsonKey(readValue: _readSampleUsername) String? sampleUsername,
   }) = _SavedPreset;
 
   factory SavedPreset.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +32,25 @@ Object? _readUsername(Map<dynamic, dynamic> json, String key) {
   final profiles = json['profiles'];
   if (profiles is Map<String, dynamic>) {
     return profiles['username'];
+  }
+  return json[key];
+}
+
+Object? _readSampleName(Map<dynamic, dynamic> json, String key) {
+  final samples = json['samples'];
+  if (samples is Map<String, dynamic>) {
+    return samples['name'];
+  }
+  return json[key];
+}
+
+Object? _readSampleUsername(Map<dynamic, dynamic> json, String key) {
+  final samples = json['samples'];
+  if (samples is Map<String, dynamic>) {
+    final profiles = samples['profiles'];
+    if (profiles is Map<String, dynamic>) {
+      return profiles['username'];
+    }
   }
   return json[key];
 }

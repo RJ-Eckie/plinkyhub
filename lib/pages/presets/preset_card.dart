@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
-import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/presets/save_preset_to_plinky_dialog.dart';
 import 'package:plinkyhub/pages/presets/star_button.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
-import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
@@ -25,23 +23,11 @@ class PresetCard extends ConsumerWidget {
   final bool isOwned;
   final VoidCallback? onDeleted;
 
-  SavedSample? _findSample(WidgetRef ref) {
-    if (preset.sampleId == null) {
-      return null;
-    }
-    final samplesState = ref.watch(savedSamplesProvider);
-    return samplesState.userSamples
-            .where((s) => s.id == preset.sampleId)
-            .firstOrNull ??
-        samplesState.publicSamples
-            .where((s) => s.id == preset.sampleId)
-            .firstOrNull;
-  }
+  bool get _hasSample => preset.sampleName != null;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final sample = _findSample(ref);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -88,14 +74,14 @@ class PresetCard extends ConsumerWidget {
                 username: preset.username,
                 updatedAt: preset.updatedAt,
               ),
-              if (sample != null) ...[
+              if (_hasSample) ...[
                 const SizedBox(height: 4),
                 GestureDetector(
-                  onTap: sample.username.isNotEmpty
+                  onTap: preset.sampleUsername != null
                       ? () => context.go(
                           AppRoute.samples.itemPage(
-                            sample.username,
-                            sample.name,
+                            preset.sampleUsername!,
+                            preset.sampleName!,
                           ),
                         )
                       : null,
@@ -108,10 +94,10 @@ class PresetCard extends ConsumerWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        sample.name.isEmpty ? '(unnamed)' : sample.name,
+                        preset.sampleName!,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
-                          decoration: sample.username.isNotEmpty
+                          decoration: preset.sampleUsername != null
                               ? TextDecoration.underline
                               : null,
                         ),

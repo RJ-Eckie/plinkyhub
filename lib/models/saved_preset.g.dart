@@ -20,6 +20,8 @@ _SavedPreset _$SavedPresetFromJson(Map<String, dynamic> json) => _SavedPreset(
   starCount: (_readStarCount(json, 'star_count') as num?)?.toInt() ?? 0,
   isStarred: json['is_starred'] as bool? ?? false,
   sampleId: json['sample_id'] as String?,
+  sampleName: _readSampleName(json, 'sample_name') as String?,
+  sampleUsername: _readSampleUsername(json, 'sample_username') as String?,
 );
 
 Map<String, dynamic> _$SavedPresetToJson(_SavedPreset instance) =>
@@ -37,4 +39,6 @@ Map<String, dynamic> _$SavedPresetToJson(_SavedPreset instance) =>
       'star_count': instance.starCount,
       'is_starred': instance.isStarred,
       'sample_id': instance.sampleId,
+      'sample_name': instance.sampleName,
+      'sample_username': instance.sampleUsername,
     };
