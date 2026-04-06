@@ -64,7 +64,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
 
     // Look up each preset's sample_id from saved presets state.
     final presets = ref.read(
-      savedPresetsProvider.select((state) => state.userPresets),
+      savedPresetsProvider.select((state) => state.userItems),
     );
     final presetSampleMap = <String, String?>{};
     for (final preset in presets) {
@@ -112,7 +112,7 @@ class _CreatePackTabState extends ConsumerState<CreatePackTab> {
   Widget build(BuildContext context) {
     final savedPacksState = ref.watch(savedPacksProvider);
 
-    final editingPack = savedPacksState.editingPack;
+    final editingPack = savedPacksState.editingItem;
     if (editingPack != null && _editingPackId != editingPack.id) {
       _loadPack(editingPack);
       WidgetsBinding.instance.addPostFrameCallback((_) {

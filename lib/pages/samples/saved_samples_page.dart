@@ -55,9 +55,9 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
     _tabController.addListener(_handleTabChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(savedSamplesProvider.notifier).fetchPublicSamples();
+      ref.read(savedSamplesProvider.notifier).fetchPublicItems();
       if (widget.editSampleName != null || initialIndex == 0) {
-        ref.read(savedSamplesProvider.notifier).fetchUserSamples();
+        ref.read(savedSamplesProvider.notifier).fetchUserItems();
       }
     });
   }
@@ -98,7 +98,7 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
     final isSignedIn = authenticationState.user != null;
 
     final editSample = widget.editSampleName != null
-        ? savedSamplesState.userSamples
+        ? savedSamplesState.userItems
               .where((s) => s.name == widget.editSampleName)
               .firstOrNull
         : null;
@@ -130,13 +130,12 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
             children: [
               if (isSignedIn)
                 SearchableItemList(
-                  items: savedSamplesState.userSamples,
-                  starredItems: savedSamplesState.starredSamples,
+                  items: savedSamplesState.userItems,
+                  starredItems: savedSamplesState.starredItems,
                   isLoading: !savedSamplesState.hasLoadedUserItems,
                   isOwned: true,
-                  onRefresh: () => ref
-                      .read(savedSamplesProvider.notifier)
-                      .fetchUserSamples(),
+                  onRefresh: () =>
+                      ref.read(savedSamplesProvider.notifier).fetchUserItems(),
                   itemBuilder: (sample) => SampleCard(
                     sample: sample,
                     isOwned: sample.userId == authenticationState.user?.id,
@@ -148,12 +147,11 @@ class _SavedSamplesPageState extends ConsumerState<SavedSamplesPage>
                   message: 'Sign in to upload and manage your samples',
                 ),
               SearchableItemList(
-                items: savedSamplesState.publicSamples,
+                items: savedSamplesState.publicItems,
                 isLoading: !savedSamplesState.hasLoadedPublicItems,
                 isOwned: false,
-                onRefresh: () => ref
-                    .read(savedSamplesProvider.notifier)
-                    .fetchPublicSamples(),
+                onRefresh: () =>
+                    ref.read(savedSamplesProvider.notifier).fetchPublicItems(),
                 itemBuilder: (sample) => SampleCard(
                   sample: sample,
                   isOwned: false,

@@ -62,9 +62,9 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
     _tabController.addListener(_handleTabChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(savedWavetablesProvider.notifier).fetchPublicWavetables();
+      ref.read(savedWavetablesProvider.notifier).fetchPublicItems();
       if (widget.editWavetableName != null || initialIndex == 0) {
-        ref.read(savedWavetablesProvider.notifier).fetchUserWavetables();
+        ref.read(savedWavetablesProvider.notifier).fetchUserItems();
       }
     });
   }
@@ -105,7 +105,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
     final isSignedIn = authenticationState.user != null;
 
     final editWavetable = widget.editWavetableName != null
-        ? savedWavetablesState.userWavetables
+        ? savedWavetablesState.userItems
               .where((w) => w.name == widget.editWavetableName)
               .firstOrNull
         : null;
@@ -137,13 +137,13 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
             children: [
               if (isSignedIn)
                 SearchableItemList(
-                  items: savedWavetablesState.userWavetables,
-                  starredItems: savedWavetablesState.starredWavetables,
+                  items: savedWavetablesState.userItems,
+                  starredItems: savedWavetablesState.starredItems,
                   isLoading: !savedWavetablesState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () => ref
                       .read(savedWavetablesProvider.notifier)
-                      .fetchUserWavetables(),
+                      .fetchUserItems(),
                   itemBuilder: (wavetable) => WavetableCard(
                     wavetable: wavetable,
                     isOwned: wavetable.userId == authenticationState.user?.id,
@@ -155,12 +155,12 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                   message: 'Sign in to upload and manage your wavetables',
                 ),
               SearchableItemList(
-                items: savedWavetablesState.publicWavetables,
+                items: savedWavetablesState.publicItems,
                 isLoading: !savedWavetablesState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () => ref
                     .read(savedWavetablesProvider.notifier)
-                    .fetchPublicWavetables(),
+                    .fetchPublicItems(),
                 itemBuilder: (wavetable) => WavetableCard(
                   wavetable: wavetable,
                   isOwned: false,

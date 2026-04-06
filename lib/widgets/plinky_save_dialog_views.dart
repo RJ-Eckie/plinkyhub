@@ -56,10 +56,18 @@ class SaveProgressView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const PlinkyLoadingAnimation(),
+        const SizedBox(height: 12),
+        Text(
+          '(this may take a while)',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 16),
         Text(statusMessage),
         const SizedBox(height: 12),

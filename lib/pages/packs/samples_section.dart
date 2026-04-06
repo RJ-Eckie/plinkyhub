@@ -24,7 +24,7 @@ class SamplesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final savedSamples = ref.watch(
-      savedSamplesProvider.select((state) => state.userSamples),
+      savedSamplesProvider.select((state) => state.userItems),
     );
 
     // Map device sample slot (0-7) to preset slot numbers via P_SAMPLE.

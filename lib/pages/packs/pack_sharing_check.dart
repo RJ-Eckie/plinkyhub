@@ -60,7 +60,7 @@ PrivateItemSummary findPrivateItems({
 
   for (final slot in slots) {
     if (slot.presetId != null && seenPresetIds.add(slot.presetId!)) {
-      final preset = presetsState.userPresets
+      final preset = presetsState.userItems
           .where((p) => p.id == slot.presetId)
           .firstOrNull;
       if (preset != null &&
@@ -70,7 +70,7 @@ PrivateItemSummary findPrivateItems({
       }
     }
     if (slot.sampleId != null && seenSampleIds.add(slot.sampleId!)) {
-      final sample = samplesState.userSamples
+      final sample = samplesState.userItems
           .where((s) => s.id == slot.sampleId)
           .firstOrNull;
       if (sample != null &&
@@ -80,7 +80,7 @@ PrivateItemSummary findPrivateItems({
       }
     }
     if (slot.patternId != null && seenPatternIds.add(slot.patternId!)) {
-      final pattern = patternsState.userPatterns
+      final pattern = patternsState.userItems
           .where((p) => p.id == slot.patternId)
           .firstOrNull;
       if (pattern != null &&
@@ -93,7 +93,7 @@ PrivateItemSummary findPrivateItems({
 
   String? privateWavetableId;
   if (wavetableId != null) {
-    final wavetable = wavetablesState.userWavetables
+    final wavetable = wavetablesState.userItems
         .where((w) => w.id == wavetableId)
         .firstOrNull;
     if (wavetable != null &&

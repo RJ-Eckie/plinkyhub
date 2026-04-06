@@ -46,9 +46,9 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
     _tabController.addListener(_handleTabChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(savedPresetsProvider.notifier).fetchPublicPresets();
+      ref.read(savedPresetsProvider.notifier).fetchPublicItems();
       if (initialIndex == 0) {
-        ref.read(savedPresetsProvider.notifier).fetchUserPresets();
+        ref.read(savedPresetsProvider.notifier).fetchUserItems();
       }
     });
   }
@@ -113,13 +113,12 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
             children: [
               if (isSignedIn)
                 SearchableItemList(
-                  items: savedPresetsState.userPresets,
-                  starredItems: savedPresetsState.starredPresets,
+                  items: savedPresetsState.userItems,
+                  starredItems: savedPresetsState.starredItems,
                   isLoading: !savedPresetsState.hasLoadedUserItems,
                   isOwned: true,
-                  onRefresh: () => ref
-                      .read(savedPresetsProvider.notifier)
-                      .fetchUserPresets(),
+                  onRefresh: () =>
+                      ref.read(savedPresetsProvider.notifier).fetchUserItems(),
                   itemBuilder: (preset) => PresetCard(
                     preset: preset,
                     isOwned: preset.userId == authenticationState.user?.id,
@@ -131,12 +130,11 @@ class _SavedPresetsPageState extends ConsumerState<SavedPresetsPage>
                   message: 'Sign in to save and manage your presets',
                 ),
               SearchableItemList(
-                items: savedPresetsState.publicPresets,
+                items: savedPresetsState.publicItems,
                 isLoading: !savedPresetsState.hasLoadedPublicItems,
                 isOwned: false,
-                onRefresh: () => ref
-                    .read(savedPresetsProvider.notifier)
-                    .fetchPublicPresets(),
+                onRefresh: () =>
+                    ref.read(savedPresetsProvider.notifier).fetchPublicItems(),
                 itemBuilder: (preset) => PresetCard(
                   preset: preset,
                   isOwned: false,

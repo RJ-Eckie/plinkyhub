@@ -2,166 +2,68 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/models/wavetable_write.dart';
-import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/state/saved_wavetables_state.dart';
+import 'package:plinkyhub/state/saved_items_notifier.dart';
+import 'package:plinkyhub/state/saved_items_state.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedWavetablesProvider =
-    NotifierProvider<SavedWavetablesNotifier, SavedWavetablesState>(
+    NotifierProvider<SavedWavetablesNotifier, SavedItemsState<SavedWavetable>>(
       SavedWavetablesNotifier.new,
     );
 
-class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
-  SupabaseClient get _supabase => Supabase.instance.client;
+class SavedWavetablesNotifier extends SavedItemsNotifier<SavedWavetable> {
+  @override
+  String get tableName => 'wavetables';
 
   @override
-  SavedWavetablesState build() {
-    final authenticationState = ref.watch(authenticationProvider);
-    if (authenticationState.user != null) {
-      Future.microtask(fetchUserWavetables);
-    }
-    return const SavedWavetablesState();
-  }
+  String get starTableName => 'wavetable_stars';
 
-  Future<Set<String>> _fetchStarredWavetableIds() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return {};
-    }
-    final stars = await _supabase
-        .from('wavetable_stars')
-        .select('wavetable_id')
-        .eq('user_id', userId);
-    return {
-      for (final row in stars as List)
-        (row as Map<String, dynamic>)['wavetable_id'] as String,
-    };
-  }
+  @override
+  String get starIdColumn => 'wavetable_id';
 
-  List<SavedWavetable> _applyStarred(
-    List<dynamic> response,
-    Set<String> starredIds,
-  ) {
-    return response.map((row) {
-      final map = row as Map<String, dynamic>;
-      return SavedWavetable.fromJson(map).copyWith(
-        isStarred: starredIds.contains(map['id']),
-      );
-    }).toList();
-  }
+  @override
+  String get selectQuery => '*, profiles(username), wavetable_stars(count)';
 
-  Future<void> fetchUserWavetables() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
+  @override
+  String get itemLabel => 'wavetable';
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  @override
+  SavedWavetable fromJson(Map<String, dynamic> json) =>
+      SavedWavetable.fromJson(json);
+
+  @override
+  SavedWavetable withStarUpdate(
+    SavedWavetable item, {
+    required bool isStarred,
+    required int starCount,
+  }) => item.copyWith(isStarred: isStarred, starCount: starCount);
+
+  @override
+  Future<void> deleteItem(String id) async {
+    setLoading();
     try {
-      final response = await _supabase
-          .from('wavetables')
-          .select('*, profiles(username), wavetable_stars(count)')
-          .eq('user_id', userId)
-          .order('updated_at', ascending: false);
-
-      final starredIds = await _fetchStarredWavetableIds();
-      final wavetables = _applyStarred(response as List, starredIds);
-
-      state = state.copyWith(
-        userWavetables: wavetables,
-        isLoading: false,
-        hasLoadedUserItems: true,
-      );
-      await fetchStarredWavetables();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedUserItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> fetchStarredWavetables() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      final starredIds = await _fetchStarredWavetableIds();
-      if (starredIds.isEmpty) {
-        state = state.copyWith(starredWavetables: []);
-        return;
+      final wavetable = state.userItems.where((w) => w.id == id).firstOrNull;
+      if (wavetable != null) {
+        await supabase.storage.from('wavetables').remove([
+          wavetable.filePath,
+        ]);
       }
-
-      final response = await _supabase
-          .from('wavetables')
-          .select(
-            '*, profiles(username), wavetable_stars(count)',
-          )
-          .inFilter('id', starredIds.toList())
-          .neq('user_id', userId);
-
-      final wavetables = _applyStarred(response as List, starredIds);
-      state = state.copyWith(starredWavetables: wavetables);
+      await super.deleteItem(id);
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
+      setError(error);
     }
-  }
-
-  Future<void> fetchPublicWavetables() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('wavetables')
-          .select('*, profiles(username), wavetable_stars(count)')
-          .eq('is_public', true);
-
-      final starredIds = await _fetchStarredWavetableIds();
-      final wavetables = _applyStarred(response as List, starredIds);
-      state = state.copyWith(
-        publicWavetables: wavetables,
-        isLoading: false,
-        hasLoadedPublicItems: true,
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedPublicItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  bool _nameExists(String name, {String? excludeId}) {
-    return state.userWavetables.any(
-      (w) => w.name == name && w.id != excludeId,
-    );
   }
 
   Future<void> saveWavetable(
     SavedWavetable wavetable, {
     required Uint8List uf2Bytes,
   }) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
+    throwIfNameExists(wavetable.name);
 
-    if (_nameExists(wavetable.name)) {
-      throw Exception(
-        'You already have a wavetable named "${wavetable.name}"',
-      );
-    }
-
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
-      await _supabase.storage
+      await supabase.storage
           .from('wavetables')
           .uploadBinary(
             wavetable.filePath,
@@ -178,28 +80,19 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         youtubeUrl: wavetable.youtubeUrl,
         contentHash: computeContentHash(uf2Bytes),
       );
-      await _supabase.from('wavetables').insert(write.toJson());
+      await supabase.from('wavetables').insert(write.toJson());
 
-      await fetchUserWavetables();
-      await fetchPublicWavetables();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
       rethrow;
     }
   }
 
   Future<void> updateWavetable(SavedWavetable wavetable) async {
-    if (_nameExists(wavetable.name, excludeId: wavetable.id)) {
-      throw Exception(
-        'You already have a wavetable named "${wavetable.name}"',
-      );
-    }
+    throwIfNameExists(wavetable.name, excludeId: wavetable.id);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = WavetableWrite(
         userId: wavetable.userId,
@@ -209,18 +102,13 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         isPublic: wavetable.isPublic,
         youtubeUrl: wavetable.youtubeUrl,
       );
-      await _supabase
+      await supabase
           .from('wavetables')
           .update(write.toJson())
           .eq('id', wavetable.id);
-      await fetchUserWavetables();
-      await fetchPublicWavetables();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
@@ -228,15 +116,11 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
     SavedWavetable wavetable, {
     required Uint8List uf2Bytes,
   }) async {
-    if (_nameExists(wavetable.name, excludeId: wavetable.id)) {
-      throw Exception(
-        'You already have a wavetable named "${wavetable.name}"',
-      );
-    }
+    throwIfNameExists(wavetable.name, excludeId: wavetable.id);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
-      await _supabase.storage
+      await supabase.storage
           .from('wavetables')
           .uploadBinary(
             wavetable.filePath,
@@ -253,117 +137,19 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         youtubeUrl: wavetable.youtubeUrl,
         contentHash: computeContentHash(uf2Bytes),
       );
-      await _supabase
+      await supabase
           .from('wavetables')
           .update(write.toJson())
           .eq('id', wavetable.id);
 
-      await fetchUserWavetables();
-      await fetchPublicWavetables();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
       rethrow;
     }
   }
 
   Future<Uint8List> downloadUf2(String filePath) async {
-    return _supabase.storage.from('wavetables').download(filePath);
-  }
-
-  Future<void> deleteWavetable(String id) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final wavetable = state.userWavetables
-          .where((w) => w.id == id)
-          .firstOrNull;
-      if (wavetable != null) {
-        await _supabase.storage.from('wavetables').remove([
-          wavetable.filePath,
-        ]);
-      }
-      await _supabase.from('wavetables').delete().eq('id', id);
-      await fetchUserWavetables();
-      await fetchPublicWavetables();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> toggleStar(SavedWavetable wavetable) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      if (wavetable.isStarred) {
-        await _supabase
-            .from('wavetable_stars')
-            .delete()
-            .eq('wavetable_id', wavetable.id)
-            .eq('user_id', userId);
-      } else {
-        await _supabase.from('wavetable_stars').insert({
-          'wavetable_id': wavetable.id,
-          'user_id': userId,
-        });
-      }
-
-      final delta = wavetable.isStarred ? -1 : 1;
-      final newIsStarred = !wavetable.isStarred;
-      final updatedStarred = newIsStarred
-          ? [
-              ...state.starredWavetables,
-              if (wavetable.userId != userId)
-                wavetable.copyWith(
-                  isStarred: true,
-                  starCount: wavetable.starCount + delta,
-                ),
-            ]
-          : state.starredWavetables.where((w) => w.id != wavetable.id).toList();
-      state = state.copyWith(
-        userWavetables: _updateStarInList(
-          state.userWavetables,
-          wavetable.id,
-          newIsStarred,
-          delta,
-        ),
-        starredWavetables: updatedStarred,
-        publicWavetables: _updateStarInList(
-          state.publicWavetables,
-          wavetable.id,
-          newIsStarred,
-          delta,
-        ),
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  List<SavedWavetable> _updateStarInList(
-    List<SavedWavetable> wavetables,
-    String wavetableId,
-    bool isStarred,
-    int delta,
-  ) {
-    return wavetables.map((w) {
-      if (w.id == wavetableId) {
-        return w.copyWith(
-          isStarred: isStarred,
-          starCount: w.starCount + delta,
-        );
-      }
-      return w;
-    }).toList();
+    return supabase.storage.from('wavetables').download(filePath);
   }
 }

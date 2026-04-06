@@ -48,9 +48,9 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
     _tabController.addListener(_handleTabChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(savedPatternsProvider.notifier).fetchPublicPatterns();
+      ref.read(savedPatternsProvider.notifier).fetchPublicItems();
       if (initialIndex == 0) {
-        ref.read(savedPatternsProvider.notifier).fetchUserPatterns();
+        ref.read(savedPatternsProvider.notifier).fetchUserItems();
       }
     });
   }
@@ -116,13 +116,12 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
             children: [
               if (isSignedIn)
                 SearchableItemList(
-                  items: savedPatternsState.userPatterns,
-                  starredItems: savedPatternsState.starredPatterns,
+                  items: savedPatternsState.userItems,
+                  starredItems: savedPatternsState.starredItems,
                   isLoading: !savedPatternsState.hasLoadedUserItems,
                   isOwned: true,
-                  onRefresh: () => ref
-                      .read(savedPatternsProvider.notifier)
-                      .fetchUserPatterns(),
+                  onRefresh: () =>
+                      ref.read(savedPatternsProvider.notifier).fetchUserItems(),
                   itemBuilder: (pattern) => PatternCard(
                     pattern: pattern,
                     isOwned: pattern.userId == authenticationState.user?.id,
@@ -134,12 +133,11 @@ class _SavedPatternsPageState extends ConsumerState<SavedPatternsPage>
                   message: 'Sign in to upload and manage your patterns',
                 ),
               SearchableItemList(
-                items: savedPatternsState.publicPatterns,
+                items: savedPatternsState.publicItems,
                 isLoading: !savedPatternsState.hasLoadedPublicItems,
                 isOwned: false,
-                onRefresh: () => ref
-                    .read(savedPatternsProvider.notifier)
-                    .fetchPublicPatterns(),
+                onRefresh: () =>
+                    ref.read(savedPatternsProvider.notifier).fetchPublicItems(),
                 itemBuilder: (pattern) => PatternCard(
                   pattern: pattern,
                   isOwned: false,

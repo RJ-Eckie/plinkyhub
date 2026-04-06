@@ -29,8 +29,8 @@ class _PresetPickerDialogState extends ConsumerState<PresetPickerDialog> {
     if (preset.sampleId != null) {
       try {
         final samples =
-            ref.read(savedSamplesProvider).userSamples +
-            ref.read(savedSamplesProvider).publicSamples;
+            ref.read(savedSamplesProvider).userItems +
+            ref.read(savedSamplesProvider).publicItems;
         final sample = samples
             .where((sample) => sample.id == preset.sampleId)
             .firstOrNull;
@@ -64,7 +64,7 @@ class _PresetPickerDialogState extends ConsumerState<PresetPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final presetsState = ref.watch(savedPresetsProvider);
-    final presets = presetsState.userPresets;
+    final presets = presetsState.userItems;
     final currentUserId = ref.watch(authenticationProvider).user?.id;
 
     if (_loading) {

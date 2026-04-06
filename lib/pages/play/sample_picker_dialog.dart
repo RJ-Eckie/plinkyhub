@@ -76,7 +76,7 @@ class _SamplePickerDialogState extends ConsumerState<SamplePickerDialog> {
   @override
   Widget build(BuildContext context) {
     final samplesState = ref.watch(savedSamplesProvider);
-    final samples = samplesState.userSamples;
+    final samples = samplesState.userItems;
     final currentUserId = ref.watch(authenticationProvider).user?.id;
 
     if (_loading) {

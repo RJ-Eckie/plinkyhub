@@ -16,7 +16,7 @@ Future<List<SavedPack>> findPacksUsingPreset(
   await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
-      .userPacks
+      .userItems
       .where((pack) => pack.slots.any((slot) => slot.presetId == presetId))
       .toList();
 }
@@ -29,7 +29,7 @@ Future<List<SavedPack>> findPacksUsingSample(
   await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
-      .userPacks
+      .userItems
       .where((pack) => pack.slots.any((slot) => slot.sampleId == sampleId))
       .toList();
 }
@@ -42,7 +42,7 @@ Future<List<SavedPack>> findPacksUsingWavetable(
   await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
-      .userPacks
+      .userItems
       .where((pack) => pack.wavetableId == wavetableId)
       .toList();
 }
@@ -55,7 +55,7 @@ Future<List<SavedPack>> findPacksUsingPattern(
   await _ensurePacksLoaded(ref);
   return ref
       .read(savedPacksProvider)
-      .userPacks
+      .userItems
       .where((pack) => pack.slots.any((slot) => slot.patternId == patternId))
       .toList();
 }
@@ -68,22 +68,22 @@ Future<List<SavedPreset>> findPresetsUsingSample(
   await _ensurePresetsLoaded(ref);
   return ref
       .read(savedPresetsProvider)
-      .userPresets
+      .userItems
       .where((preset) => preset.sampleId == sampleId)
       .toList();
 }
 
 Future<void> _ensurePacksLoaded(WidgetRef ref) async {
   final state = ref.read(savedPacksProvider);
-  if (state.userPacks.isEmpty && !state.isLoading) {
-    await ref.read(savedPacksProvider.notifier).fetchUserPacks();
+  if (state.userItems.isEmpty && !state.isLoading) {
+    await ref.read(savedPacksProvider.notifier).fetchUserItems();
   }
 }
 
 Future<void> _ensurePresetsLoaded(WidgetRef ref) async {
   final state = ref.read(savedPresetsProvider);
-  if (state.userPresets.isEmpty && !state.isLoading) {
-    await ref.read(savedPresetsProvider.notifier).fetchUserPresets();
+  if (state.userItems.isEmpty && !state.isLoading) {
+    await ref.read(savedPresetsProvider.notifier).fetchUserItems();
   }
 }
 

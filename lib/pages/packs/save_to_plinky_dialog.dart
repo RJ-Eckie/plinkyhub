@@ -316,8 +316,51 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       }
     }
 
+    // Build sample slot mapping early so we can count total steps.
+    final sampleSlotMapping = <String, int>{};
+    for (final slot in slots) {
+      if (slot.sampleId != null && slot.slotNumber >= sampleSlotStart) {
+        sampleSlotMapping[slot.sampleId!] = slot.slotNumber - sampleSlotStart;
+      }
+    }
+    if (sampleSlotMapping.length > sampleCount) {
+      throw Exception(
+        'Pack has ${sampleSlotMapping.length} samples, '
+        'but Plinky only supports $sampleCount.',
+      );
+    }
+
+    final patternSlots = slots
+        .where(
+          (slot) =>
+              slot.patternId != null &&
+              slot.slotNumber >= patternSlotStart &&
+              slot.slotNumber < sampleSlotStart,
+        )
+        .toList();
+    final hasWavetable = widget.pack.wavetableId != null;
+
+    // Count steps: fetch presets + fetch sample metadata +
+    //   download each sample + fetch patterns (if any) +
+    //   write PRESETS.UF2 + write 8 SAMPLE*.UF2 + write WAVETAB (if any).
+    final totalSteps =
+        2 +
+        sampleSlotMapping.length +
+        (patternSlots.isNotEmpty ? 1 : 0) +
+        1 +
+        sampleCount +
+        (hasWavetable ? 1 : 0);
+    var completedSteps = 0;
+
+    void updateProgress(String message) {
+      setState(() {
+        _statusMessage = message;
+        _progress = completedSteps / totalSteps;
+      });
+    }
+
     // Fetch presets from the database.
-    setState(() => _statusMessage = 'Fetching presets...');
+    updateProgress('Fetching presets...');
     final presetDataMap = <String, Uint8List>{};
     if (presetIds.isNotEmpty) {
       final response = await _supabase
@@ -331,9 +374,10 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         presetDataMap[id] = Uint8List.fromList(base64Decode(presetData));
       }
     }
+    completedSteps++;
 
     // Fetch sample metadata from the database.
-    setState(() => _statusMessage = 'Fetching sample metadata...');
+    updateProgress('Fetching sample metadata...');
     final sampleMetadataMap = <String, Map<String, dynamic>>{};
     if (sampleIds.isNotEmpty) {
       final response = await _supabase
@@ -348,21 +392,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         sampleMetadataMap[map['id'] as String] = map;
       }
     }
-
-    // Build sample slot mapping from pack slots (56-63 → Plinky 0-7).
-    final sampleSlotMapping = <String, int>{};
-    for (final slot in slots) {
-      if (slot.sampleId != null && slot.slotNumber >= sampleSlotStart) {
-        final plinkySlot = slot.slotNumber - sampleSlotStart;
-        sampleSlotMapping[slot.sampleId!] = plinkySlot;
-      }
-    }
-    if (sampleSlotMapping.length > sampleCount) {
-      throw Exception(
-        'Pack has ${sampleSlotMapping.length} samples, '
-        'but Plinky only supports $sampleCount.',
-      );
-    }
+    completedSteps++;
 
     // Download sample PCM files and build SampleInfo structs.
     final sampleInfos = List<Uint8List?>.filled(sampleCount, null);
@@ -373,14 +403,14 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
       final slotIndex = entry.value;
       final metadata = sampleMetadataMap[sampleId];
       if (metadata == null) {
+        completedSteps++;
         continue;
       }
 
       tunnelSampleNumber++;
-      setState(() {
-        _statusMessage =
-            'Downloading sample $tunnelSampleNumber/${sampleSlotMapping.length}...';
-      });
+      updateProgress(
+        'Downloading sample $tunnelSampleNumber/${sampleSlotMapping.length}...',
+      );
 
       final pcmFilePath = metadata['pcm_file_path'] as String;
       final pcmBytes = await _supabase.storage
@@ -407,10 +437,10 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         sliceNotes: sliceNotes,
         pitched: pitched,
       );
+      completedSteps++;
     }
 
     // Build the 32 preset entries, remapping P_SAMPLE for each.
-    setState(() => _statusMessage = 'Generating PRESETS.UF2...');
     final presets = List<Uint8List?>.filled(presetCount, null);
     for (final slot in slots) {
       if (slot.slotNumber < presetSlotStart ||
@@ -448,16 +478,8 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
 
     // Fetch pattern quarter data from slots (32-55).
     List<Uint8List?>? patternQuarters;
-    final patternSlots = slots
-        .where(
-          (slot) =>
-              slot.patternId != null &&
-              slot.slotNumber >= patternSlotStart &&
-              slot.slotNumber < sampleSlotStart,
-        )
-        .toList();
     if (patternSlots.isNotEmpty) {
-      setState(() => _statusMessage = 'Fetching patterns...');
+      updateProgress('Fetching patterns...');
       patternQuarters = List<Uint8List?>.filled(
         patternCount * 4,
         null,
@@ -481,9 +503,11 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
           }
         }
       }
+      completedSteps++;
     }
 
     // Generate PRESETS.UF2 (includes presets, samples, and patterns).
+    updateProgress('Generating PRESETS.UF2...');
     final presetsUf2 = generatePresetsUf2(
       presets: presets,
       sampleInfos: sampleInfos,
@@ -491,14 +515,13 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
     );
 
     // Write PRESETS.UF2 to the selected directory.
-    setState(() => _statusMessage = 'Writing PRESETS.UF2...');
+    updateProgress('Writing PRESETS.UF2...');
     await writeFileToDirectory(directory, 'PRESETS.UF2', presetsUf2);
+    completedSteps++;
 
     // Generate and write SAMPLE*.UF2 files for all 8 slots.
     for (var slotIndex = 0; slotIndex < sampleCount; slotIndex++) {
-      setState(() {
-        _statusMessage = 'Writing SAMPLE$slotIndex.UF2...';
-      });
+      updateProgress('Writing SAMPLE$slotIndex.UF2...');
 
       final pcmBytes = samplePcmData[slotIndex] ?? Uint8List(0);
       final sampleUf2Bytes = sampleToUf2(
@@ -510,13 +533,12 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         'SAMPLE$slotIndex.UF2',
         sampleUf2Bytes,
       );
+      completedSteps++;
     }
 
     // Write WAVETAB.UF2 if the pack has one.
-    if (widget.pack.wavetableId != null) {
-      setState(() {
-        _statusMessage = 'Writing WAVETAB.UF2...';
-      });
+    if (hasWavetable) {
+      updateProgress('Writing WAVETAB.UF2...');
 
       final wavetableFilePath = await _fetchFilePath(
         'wavetables',
@@ -530,6 +552,7 @@ class _SaveToPlinkyDialogState extends ConsumerState<SaveToPlinkyDialog> {
         'WAVETAB.UF2',
         wavetableBytes,
       );
+      completedSteps++;
     }
   }
 

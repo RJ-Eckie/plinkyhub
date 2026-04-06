@@ -7,159 +7,41 @@ import 'package:plinkyhub/models/preset_write.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
-import 'package:plinkyhub/state/saved_presets_state.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:plinkyhub/state/saved_items_notifier.dart';
+import 'package:plinkyhub/state/saved_items_state.dart';
 
 final savedPresetsProvider =
-    NotifierProvider<SavedPresetsNotifier, SavedPresetsState>(
+    NotifierProvider<SavedPresetsNotifier, SavedItemsState<SavedPreset>>(
       SavedPresetsNotifier.new,
     );
 
-class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
-  SupabaseClient get _supabase => Supabase.instance.client;
+class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
+  @override
+  String get tableName => 'presets';
 
   @override
-  SavedPresetsState build() {
-    final authenticationState = ref.watch(authenticationProvider);
-    if (authenticationState.user != null) {
-      Future.microtask(fetchUserPresets);
-    }
-    return const SavedPresetsState();
-  }
+  String get starTableName => 'preset_stars';
 
-  Future<List<SavedPreset>> _parsePresetRows(List<dynamic> response) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    final starredPresetIds = <String>{};
+  @override
+  String get starIdColumn => 'preset_id';
 
-    if (userId != null) {
-      final stars = await _supabase
-          .from('preset_stars')
-          .select('preset_id')
-          .eq('user_id', userId);
-      starredPresetIds.addAll([
-        for (final row in stars as List)
-          (row as Map<String, dynamic>)['preset_id'] as String,
-      ]);
-    }
+  @override
+  String get selectQuery =>
+      '*, profiles(username), preset_stars(count), '
+      'samples(name, profiles(username))';
 
-    return response.map((row) {
-      final map = row as Map<String, dynamic>;
-      return SavedPreset.fromJson(map).copyWith(
-        isStarred: starredPresetIds.contains(map['id']),
-      );
-    }).toList();
-  }
+  @override
+  String get itemLabel => 'preset';
 
-  Future<void> fetchUserPresets() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
+  @override
+  SavedPreset fromJson(Map<String, dynamic> json) => SavedPreset.fromJson(json);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('presets')
-          .select(
-            '*, profiles(username), preset_stars(count), '
-            'samples(name, profiles(username))',
-          )
-          .eq('user_id', userId)
-          .order('updated_at', ascending: false);
-
-      final presets = await _parsePresetRows(response as List);
-      state = state.copyWith(
-        userPresets: presets,
-        isLoading: false,
-        hasLoadedUserItems: true,
-      );
-      await fetchStarredPresets();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedUserItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> fetchStarredPresets() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      final stars = await _supabase
-          .from('preset_stars')
-          .select('preset_id')
-          .eq('user_id', userId);
-      final starredIds = [
-        for (final row in stars as List)
-          (row as Map<String, dynamic>)['preset_id'] as String,
-      ];
-
-      if (starredIds.isEmpty) {
-        state = state.copyWith(starredPresets: []);
-        return;
-      }
-
-      final response = await _supabase
-          .from('presets')
-          .select(
-            '*, profiles(username), preset_stars(count), '
-            'samples(name, profiles(username))',
-          )
-          .inFilter('id', starredIds)
-          .neq('user_id', userId);
-
-      final presets = (response as List)
-          .map(
-            (row) => SavedPreset.fromJson(
-              row as Map<String, dynamic>,
-            ).copyWith(isStarred: true),
-          )
-          .toList();
-      state = state.copyWith(starredPresets: presets);
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  Future<void> fetchPublicPresets() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('presets')
-          .select(
-            '*, profiles(username), preset_stars(count), '
-            'samples(name, profiles(username))',
-          )
-          .eq('is_public', true);
-
-      final presets = await _parsePresetRows(response as List);
-      state = state.copyWith(
-        publicPresets: presets,
-        isLoading: false,
-        hasLoadedPublicItems: true,
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedPublicItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  bool _nameExists(String name, {String? excludeId}) {
-    return state.userPresets.any(
-      (p) => p.name == name && p.id != excludeId,
-    );
-  }
+  @override
+  SavedPreset withStarUpdate(
+    SavedPreset item, {
+    required bool isStarred,
+    required int starCount,
+  }) => item.copyWith(isStarred: isStarred, starCount: starCount);
 
   Future<void> savePreset(
     Preset preset, {
@@ -172,13 +54,9 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
       return;
     }
 
-    if (_nameExists(preset.name)) {
-      throw Exception(
-        'You already have a preset named "${preset.name}"',
-      );
-    }
+    throwIfNameExists(preset.name);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = PresetWrite(
         userId: userId,
@@ -189,15 +67,10 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
         isPublic: isPublic,
         sampleId: sampleId,
       );
-      await _supabase.from('presets').insert(write.toJson());
-      await fetchUserPresets();
-      await fetchPublicPresets();
+      await supabase.from('presets').insert(write.toJson());
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
@@ -208,18 +81,14 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     bool? isPublic,
     String? sampleId,
   }) async {
-    final existing = state.userPresets.where((p) => p.id == id).firstOrNull;
+    final existing = state.userItems.where((p) => p.id == id).firstOrNull;
     if (existing == null) {
       return;
     }
 
-    if (_nameExists(preset.name, excludeId: id)) {
-      throw Exception(
-        'You already have a preset named "${preset.name}"',
-      );
-    }
+    throwIfNameExists(preset.name, excludeId: id);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = PresetWrite(
         userId: existing.userId,
@@ -231,15 +100,10 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
         sampleId: sampleId,
       );
       final json = write.toJson();
-      await _supabase.from('presets').update(json).eq('id', id);
-      await fetchUserPresets();
-      await fetchPublicPresets();
+      await supabase.from('presets').update(json).eq('id', id);
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
@@ -250,7 +114,7 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
     String? sampleId,
     bool clearSample = false,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final updates = <String, dynamic>{};
       if (description != null) {
@@ -265,102 +129,11 @@ class SavedPresetsNotifier extends Notifier<SavedPresetsState> {
         updates['sample_id'] = null;
       }
 
-      await _supabase.from('presets').update(updates).eq('id', id);
-      await fetchUserPresets();
-      await fetchPublicPresets();
+      await supabase.from('presets').update(updates).eq('id', id);
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
-  }
-
-  Future<void> deletePreset(String id) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      await _supabase.from('presets').delete().eq('id', id);
-      await fetchUserPresets();
-      await fetchPublicPresets();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> toggleStar(SavedPreset preset) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      if (preset.isStarred) {
-        await _supabase
-            .from('preset_stars')
-            .delete()
-            .eq('preset_id', preset.id)
-            .eq('user_id', userId);
-      } else {
-        await _supabase.from('preset_stars').insert({
-          'preset_id': preset.id,
-          'user_id': userId,
-        });
-      }
-
-      // Optimistically update all lists.
-      final delta = preset.isStarred ? -1 : 1;
-      final newIsStarred = !preset.isStarred;
-      final updatedStarred = newIsStarred
-          ? [
-              ...state.starredPresets,
-              if (preset.userId != userId)
-                preset.copyWith(
-                  isStarred: true,
-                  starCount: preset.starCount + delta,
-                ),
-            ]
-          : state.starredPresets.where((p) => p.id != preset.id).toList();
-      state = state.copyWith(
-        userPresets: _updateStarInList(
-          state.userPresets,
-          preset.id,
-          newIsStarred,
-          delta,
-        ),
-        starredPresets: updatedStarred,
-        publicPresets: _updateStarInList(
-          state.publicPresets,
-          preset.id,
-          newIsStarred,
-          delta,
-        ),
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  List<SavedPreset> _updateStarInList(
-    List<SavedPreset> presets,
-    String presetId,
-    bool isStarred,
-    int delta,
-  ) {
-    return presets.map((preset) {
-      if (preset.id == presetId) {
-        return preset.copyWith(
-          isStarred: isStarred,
-          starCount: preset.starCount + delta,
-        );
-      }
-      return preset;
-    }).toList();
   }
 
   void loadPresetIntoEditor(SavedPreset savedPreset) {

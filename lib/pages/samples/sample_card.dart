@@ -12,6 +12,7 @@ import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_samples_notifier.dart';
 import 'package:plinkyhub/utils/note_names.dart';
 import 'package:plinkyhub/utils/wav.dart';
+import 'package:plinkyhub/widgets/confirm_delete_dialog.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
@@ -369,33 +370,14 @@ class _SampleCardState extends ConsumerState<SampleCard> {
       return;
     }
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete sample?'),
-        content: Text(
-          'Are you sure you want to delete '
-          '"${widget.sample.name.isEmpty ? '(unnamed)' : widget.sample.name}"?',
-        ),
-        actions: [
-          PlinkyButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            icon: Icons.close,
-            label: 'Cancel',
-          ),
-          PlinkyButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              ref
-                  .read(savedSamplesProvider.notifier)
-                  .deleteSample(widget.sample.id);
-              widget.onDeleted?.call();
-            },
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemType: 'sample',
+      itemName: widget.sample.name,
     );
+    if (confirmed) {
+      ref.read(savedSamplesProvider.notifier).deleteItem(widget.sample.id);
+      widget.onDeleted?.call();
+    }
   }
 }

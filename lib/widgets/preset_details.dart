@@ -209,7 +209,7 @@ class _SaveToCloudButton extends ConsumerWidget {
     final nameController = TextEditingController(text: preset.name);
     final descriptionController = TextEditingController();
     final sourcePresetId = plinkyState.sourcePresetId;
-    final userPresets = ref.read(savedPresetsProvider).userPresets;
+    final userPresets = ref.read(savedPresetsProvider).userItems;
 
     // When overwriting an existing preset, inherit its public setting;
     // otherwise default to public.
@@ -223,7 +223,7 @@ class _SaveToCloudButton extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
-          final samples = ref.read(savedSamplesProvider).userSamples;
+          final samples = ref.read(savedSamplesProvider).userItems;
           final name = nameController.text.trim();
           final existingByName = userPresets
               .where(

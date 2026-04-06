@@ -3,144 +3,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/sample_write.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/state/saved_samples_state.dart';
+import 'package:plinkyhub/state/saved_items_notifier.dart';
+import 'package:plinkyhub/state/saved_items_state.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedSamplesProvider =
-    NotifierProvider<SavedSamplesNotifier, SavedSamplesState>(
+    NotifierProvider<SavedSamplesNotifier, SavedItemsState<SavedSample>>(
       SavedSamplesNotifier.new,
     );
 
-class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
-  SupabaseClient get _supabase => Supabase.instance.client;
+class SavedSamplesNotifier extends SavedItemsNotifier<SavedSample> {
+  @override
+  String get tableName => 'samples';
 
   @override
-  SavedSamplesState build() {
-    final authenticationState = ref.watch(authenticationProvider);
-    if (authenticationState.user != null) {
-      Future.microtask(fetchUserSamples);
-    }
-    return const SavedSamplesState();
-  }
+  String get starTableName => 'sample_stars';
 
-  Future<Set<String>> _fetchStarredSampleIds() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return {};
-    }
-    final stars = await _supabase
-        .from('sample_stars')
-        .select('sample_id')
-        .eq('user_id', userId);
-    return {
-      for (final row in stars as List)
-        (row as Map<String, dynamic>)['sample_id'] as String,
-    };
-  }
+  @override
+  String get starIdColumn => 'sample_id';
 
-  List<SavedSample> _applyStarred(
-    List<dynamic> response,
-    Set<String> starredIds,
-  ) {
-    return response.map((row) {
-      final map = row as Map<String, dynamic>;
-      return SavedSample.fromJson(map).copyWith(
-        isStarred: starredIds.contains(map['id']),
-      );
-    }).toList();
-  }
+  @override
+  String get selectQuery => '*, profiles(username), sample_stars(count)';
 
-  Future<void> fetchUserSamples() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
+  @override
+  String get itemLabel => 'sample';
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('samples')
-          .select('*, profiles(username), sample_stars(count)')
-          .eq('user_id', userId)
-          .order('updated_at', ascending: false);
+  @override
+  SavedSample fromJson(Map<String, dynamic> json) => SavedSample.fromJson(json);
 
-      final starredIds = await _fetchStarredSampleIds();
-      final samples = _applyStarred(response as List, starredIds);
-
-      state = state.copyWith(
-        userSamples: samples,
-        isLoading: false,
-        hasLoadedUserItems: true,
-      );
-      await fetchStarredSamples();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedUserItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> fetchStarredSamples() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      final starredIds = await _fetchStarredSampleIds();
-      if (starredIds.isEmpty) {
-        state = state.copyWith(starredSamples: []);
-        return;
-      }
-
-      final response = await _supabase
-          .from('samples')
-          .select('*, profiles(username), sample_stars(count)')
-          .inFilter('id', starredIds.toList())
-          .neq('user_id', userId);
-
-      final samples = _applyStarred(response as List, starredIds);
-      state = state.copyWith(starredSamples: samples);
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  Future<void> fetchPublicSamples() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('samples')
-          .select('*, profiles(username), sample_stars(count)')
-          .eq('is_public', true);
-
-      final starredIds = await _fetchStarredSampleIds();
-      final samples = _applyStarred(response as List, starredIds);
-      state = state.copyWith(
-        publicSamples: samples,
-        isLoading: false,
-        hasLoadedPublicItems: true,
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedPublicItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  bool _nameExists(String name, {String? excludeId}) {
-    return state.userSamples.any(
-      (s) => s.name == name && s.id != excludeId,
-    );
-  }
+  @override
+  SavedSample withStarUpdate(
+    SavedSample item, {
+    required bool isStarred,
+    required int starCount,
+  }) => item.copyWith(isStarred: isStarred, starCount: starCount);
 
   Future<void> saveSample(
     SavedSample sample, {
@@ -152,22 +49,18 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
       return;
     }
 
-    if (_nameExists(sample.name)) {
-      throw Exception(
-        'You already have a sample named "${sample.name}"',
-      );
-    }
+    throwIfNameExists(sample.name);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
-      await _supabase.storage
+      await supabase.storage
           .from('samples')
           .uploadBinary(
             sample.filePath,
             wavBytes,
             fileOptions: const FileOptions(upsert: true),
           );
-      await _supabase.storage
+      await supabase.storage
           .from('samples')
           .uploadBinary(
             sample.pcmFilePath,
@@ -189,28 +82,19 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
         sliceNotes: sample.sliceNotes,
         contentHash: computeContentHash(pcmBytes),
       );
-      await _supabase.from('samples').insert(write.toJson());
+      await supabase.from('samples').insert(write.toJson());
 
-      await fetchUserSamples();
-      await fetchPublicSamples();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
       rethrow;
     }
   }
 
   Future<void> updateSample(SavedSample sample) async {
-    if (_nameExists(sample.name, excludeId: sample.id)) {
-      throw Exception(
-        'You already have a sample named "${sample.name}"',
-      );
-    }
+    throwIfNameExists(sample.name, excludeId: sample.id);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = SampleWrite(
         userId: sample.userId,
@@ -225,114 +109,31 @@ class SavedSamplesNotifier extends Notifier<SavedSamplesState> {
         pitched: sample.pitched,
         sliceNotes: sample.sliceNotes,
       );
-      await _supabase
-          .from('samples')
-          .update(write.toJson())
-          .eq('id', sample.id);
-      await fetchUserSamples();
-      await fetchPublicSamples();
+      await supabase.from('samples').update(write.toJson()).eq('id', sample.id);
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
   Future<Uint8List> downloadWav(String filePath) async {
-    return _supabase.storage.from('samples').download(filePath);
+    return supabase.storage.from('samples').download(filePath);
   }
 
-  Future<void> deleteSample(String id) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  @override
+  Future<void> deleteItem(String id) async {
+    setLoading();
     try {
-      final sample = state.userSamples.where((s) => s.id == id).firstOrNull;
+      final sample = state.userItems.where((s) => s.id == id).firstOrNull;
       if (sample != null) {
-        await _supabase.storage.from('samples').remove([
+        await supabase.storage.from('samples').remove([
           sample.filePath,
           if (sample.pcmFilePath.isNotEmpty) sample.pcmFilePath,
         ]);
       }
-      await _supabase.from('samples').delete().eq('id', id);
-      await fetchUserSamples();
-      await fetchPublicSamples();
+      await super.deleteItem(id);
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
-  }
-
-  Future<void> toggleStar(SavedSample sample) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      if (sample.isStarred) {
-        await _supabase
-            .from('sample_stars')
-            .delete()
-            .eq('sample_id', sample.id)
-            .eq('user_id', userId);
-      } else {
-        await _supabase.from('sample_stars').insert({
-          'sample_id': sample.id,
-          'user_id': userId,
-        });
-      }
-
-      final delta = sample.isStarred ? -1 : 1;
-      final newIsStarred = !sample.isStarred;
-      final updatedStarred = newIsStarred
-          ? [
-              ...state.starredSamples,
-              if (sample.userId != userId)
-                sample.copyWith(
-                  isStarred: true,
-                  starCount: sample.starCount + delta,
-                ),
-            ]
-          : state.starredSamples.where((s) => s.id != sample.id).toList();
-      state = state.copyWith(
-        userSamples: _updateStarInList(
-          state.userSamples,
-          sample.id,
-          newIsStarred,
-          delta,
-        ),
-        starredSamples: updatedStarred,
-        publicSamples: _updateStarInList(
-          state.publicSamples,
-          sample.id,
-          newIsStarred,
-          delta,
-        ),
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  List<SavedSample> _updateStarInList(
-    List<SavedSample> samples,
-    String sampleId,
-    bool isStarred,
-    int delta,
-  ) {
-    return samples.map((s) {
-      if (s.id == sampleId) {
-        return s.copyWith(
-          isStarred: isStarred,
-          starCount: s.starCount + delta,
-        );
-      }
-      return s;
-    }).toList();
   }
 }

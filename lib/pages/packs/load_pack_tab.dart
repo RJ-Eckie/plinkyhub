@@ -510,8 +510,8 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
     // Check locally loaded packs first.
     final packsState = ref.read(savedPacksProvider);
     final allLocalPacks = [
-      ...packsState.userPacks,
-      ...packsState.publicPacks,
+      ...packsState.userItems,
+      ...packsState.publicItems,
     ];
     for (final pack in allLocalPacks) {
       if (pack.contentHash == packHash) {
@@ -900,7 +900,7 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         params: request.toJson(),
       );
 
-      await ref.read(savedPacksProvider.notifier).fetchUserPacks();
+      await ref.read(savedPacksProvider.notifier).fetchUserItems();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

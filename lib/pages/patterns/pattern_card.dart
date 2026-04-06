@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/pages/patterns/save_pattern_to_plinky_dialog.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
+import 'package:plinkyhub/widgets/confirm_delete_dialog.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
@@ -135,33 +136,14 @@ class PatternCard extends ConsumerWidget {
       return;
     }
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete pattern?'),
-        content: Text(
-          'Are you sure you want to delete '
-          '"${pattern.name.isEmpty ? '(unnamed)' : pattern.name}"?',
-        ),
-        actions: [
-          PlinkyButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            icon: Icons.close,
-            label: 'Cancel',
-          ),
-          PlinkyButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              ref
-                  .read(savedPatternsProvider.notifier)
-                  .deletePattern(pattern.id);
-              onDeleted?.call();
-            },
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemType: 'pattern',
+      itemName: pattern.name,
     );
+    if (confirmed) {
+      ref.read(savedPatternsProvider.notifier).deleteItem(pattern.id);
+      onDeleted?.call();
+    }
   }
 }

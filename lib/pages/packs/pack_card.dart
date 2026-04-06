@@ -7,6 +7,7 @@ import 'package:plinkyhub/pages/packs/save_to_plinky_dialog.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_packs_notifier.dart';
+import 'package:plinkyhub/widgets/confirm_delete_dialog.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
@@ -202,32 +203,15 @@ class PackCard extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete pack?'),
-        content: Text(
-          'Are you sure you want to delete '
-          '"${pack.name.isEmpty ? '(unnamed)' : pack.name}"?',
-        ),
-        actions: [
-          PlinkyButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            icon: Icons.close,
-            label: 'Cancel',
-          ),
-          PlinkyButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              ref.read(savedPacksProvider.notifier).deletePack(pack.id);
-              onDeleted?.call();
-            },
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemType: 'pack',
+      itemName: pack.name,
     );
+    if (confirmed) {
+      ref.read(savedPacksProvider.notifier).deleteItem(pack.id);
+      onDeleted?.call();
+    }
   }
 }

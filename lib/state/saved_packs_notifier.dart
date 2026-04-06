@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/pack_slot_write.dart';
 import 'package:plinkyhub/models/pack_write.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/state/saved_packs_state.dart';
+import 'package:plinkyhub/state/saved_items_notifier.dart';
+import 'package:plinkyhub/state/saved_items_state.dart';
 import 'package:plinkyhub/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// A slot entry for creating or updating a pack.
 typedef PackSlotEntry = ({
@@ -17,141 +16,43 @@ typedef PackSlotEntry = ({
 });
 
 final savedPacksProvider =
-    NotifierProvider<SavedPacksNotifier, SavedPacksState>(
+    NotifierProvider<SavedPacksNotifier, SavedItemsState<SavedPack>>(
       SavedPacksNotifier.new,
     );
 
-class SavedPacksNotifier extends Notifier<SavedPacksState> {
-  SupabaseClient get _supabase => Supabase.instance.client;
+class SavedPacksNotifier extends SavedItemsNotifier<SavedPack> {
+  @override
+  String get tableName => 'packs';
 
   @override
-  SavedPacksState build() {
-    final authenticationState = ref.watch(authenticationProvider);
-    if (authenticationState.user != null) {
-      Future.microtask(fetchUserPacks);
-      return const SavedPacksState();
-    }
-    return const SavedPacksState();
+  String get starTableName => 'pack_stars';
+
+  @override
+  String get starIdColumn => 'pack_id';
+
+  @override
+  String get selectQuery =>
+      '*, pack_slots(*), profiles(username), pack_stars(count)';
+
+  @override
+  String get itemLabel => 'pack';
+
+  @override
+  SavedPack fromJson(Map<String, dynamic> json) => SavedPack.fromJson(json);
+
+  @override
+  SavedPack withStarUpdate(
+    SavedPack item, {
+    required bool isStarred,
+    required int starCount,
+  }) => item.copyWith(isStarred: isStarred, starCount: starCount);
+
+  void startEditing(SavedPack pack) {
+    state = state.copyWith(editingItem: () => pack);
   }
 
-  Future<Set<String>> _fetchStarredPackIds() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return {};
-    }
-    final stars = await _supabase
-        .from('pack_stars')
-        .select('pack_id')
-        .eq('user_id', userId);
-    return {
-      for (final row in stars as List)
-        (row as Map<String, dynamic>)['pack_id'] as String,
-    };
-  }
-
-  List<SavedPack> _applyStarred(
-    List<dynamic> response,
-    Set<String> starredIds,
-  ) {
-    return response.map((row) {
-      final map = row as Map<String, dynamic>;
-      return SavedPack.fromJson(map).copyWith(
-        isStarred: starredIds.contains(map['id']),
-      );
-    }).toList();
-  }
-
-  Future<void> fetchUserPacks() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('packs')
-          .select('*, pack_slots(*), profiles(username), pack_stars(count)')
-          .eq('user_id', userId)
-          .order('updated_at', ascending: false);
-
-      final starredIds = await _fetchStarredPackIds();
-      final packs = _applyStarred(response as List, starredIds);
-
-      state = state.copyWith(
-        userPacks: packs,
-        isLoading: false,
-        hasLoadedUserItems: true,
-      );
-      await fetchStarredPacks();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedUserItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> fetchStarredPacks() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      final starredIds = await _fetchStarredPackIds();
-      if (starredIds.isEmpty) {
-        state = state.copyWith(starredPacks: []);
-        return;
-      }
-
-      final response = await _supabase
-          .from('packs')
-          .select(
-            '*, pack_slots(*), profiles(username), pack_stars(count)',
-          )
-          .inFilter('id', starredIds.toList())
-          .neq('user_id', userId);
-
-      final packs = _applyStarred(response as List, starredIds);
-      state = state.copyWith(starredPacks: packs);
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  Future<void> fetchPublicPacks() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('packs')
-          .select('*, pack_slots(*), profiles(username), pack_stars(count)')
-          .eq('is_public', true);
-
-      final starredIds = await _fetchStarredPackIds();
-      final packs = _applyStarred(response as List, starredIds);
-      state = state.copyWith(
-        publicPacks: packs,
-        isLoading: false,
-        hasLoadedPublicItems: true,
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedPublicItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  bool _nameExists(String name, {String? excludeId}) {
-    return state.userPacks.any(
-      (p) => p.name == name && p.id != excludeId,
-    );
+  void stopEditing() {
+    state = state.copyWith(editingItem: () => null);
   }
 
   Future<void> savePack(
@@ -168,13 +69,9 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       return;
     }
 
-    if (_nameExists(name)) {
-      throw Exception(
-        'You already have a pack named "$name"',
-      );
-    }
+    throwIfNameExists(name);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = PackWrite(
         userId: userId,
@@ -185,7 +82,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         youtubeUrl: youtubeUrl,
         contentHash: contentHash,
       );
-      final packResponse = await _supabase
+      final packResponse = await supabase
           .from('packs')
           .insert(write.toJson())
           .select('id')
@@ -194,14 +91,9 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
       final packId = packResponse['id'] as String;
       await _insertSlots(packId, slots);
 
-      await fetchUserPacks();
-      await fetchPublicPacks();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
@@ -211,13 +103,11 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     String? description,
     bool? isPublic,
   }) async {
-    if (name != null && _nameExists(name, excludeId: id)) {
-      throw Exception(
-        'You already have a pack named "$name"',
-      );
+    if (name != null) {
+      throwIfNameExists(name, excludeId: id);
     }
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final updates = <String, dynamic>{};
       if (name != null) {
@@ -230,15 +120,10 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         updates['is_public'] = isPublic;
       }
 
-      await _supabase.from('packs').update(updates).eq('id', id);
-      await fetchUserPacks();
-      await fetchPublicPacks();
+      await supabase.from('packs').update(updates).eq('id', id);
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
@@ -265,7 +150,7 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         .toList();
 
     if (slotRows.isNotEmpty) {
-      await _supabase.from('pack_slots').insert(slotRows);
+      await supabase.from('pack_slots').insert(slotRows);
     }
   }
 
@@ -278,18 +163,14 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
     String wavetableId = defaultWavetableId,
     String youtubeUrl = '',
   }) async {
-    if (_nameExists(name, excludeId: id)) {
-      throw Exception(
-        'You already have a pack named "$name"',
-      );
-    }
+    throwIfNameExists(name, excludeId: id);
 
     final userId = ref.read(authenticationProvider).user?.id;
     if (userId == null) {
       return;
     }
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = PackWrite(
         userId: userId,
@@ -299,111 +180,13 @@ class SavedPacksNotifier extends Notifier<SavedPacksState> {
         wavetableId: wavetableId,
         youtubeUrl: youtubeUrl,
       );
-      await _supabase.from('packs').update(write.toJson()).eq('id', id);
-      await _supabase.from('pack_slots').delete().eq('pack_id', id);
+      await supabase.from('packs').update(write.toJson()).eq('id', id);
+      await supabase.from('pack_slots').delete().eq('pack_id', id);
       await _insertSlots(id, slots);
 
-      await fetchUserPacks();
-      await fetchPublicPacks();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
-  }
-
-  void startEditing(SavedPack pack) {
-    state = state.copyWith(editingPack: pack);
-  }
-
-  void stopEditing() {
-    state = state.copyWith(editingPack: null);
-  }
-
-  Future<void> deletePack(String id) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      await _supabase.from('packs').delete().eq('id', id);
-      await fetchUserPacks();
-      await fetchPublicPacks();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> toggleStar(SavedPack pack) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      if (pack.isStarred) {
-        await _supabase
-            .from('pack_stars')
-            .delete()
-            .eq('pack_id', pack.id)
-            .eq('user_id', userId);
-      } else {
-        await _supabase.from('pack_stars').insert({
-          'pack_id': pack.id,
-          'user_id': userId,
-        });
-      }
-
-      final delta = pack.isStarred ? -1 : 1;
-      final newIsStarred = !pack.isStarred;
-      final updatedStarred = newIsStarred
-          ? [
-              ...state.starredPacks,
-              if (pack.userId != userId)
-                pack.copyWith(
-                  isStarred: true,
-                  starCount: pack.starCount + delta,
-                ),
-            ]
-          : state.starredPacks.where((p) => p.id != pack.id).toList();
-      state = state.copyWith(
-        userPacks: _updateStarInList(
-          state.userPacks,
-          pack.id,
-          newIsStarred,
-          delta,
-        ),
-        starredPacks: updatedStarred,
-        publicPacks: _updateStarInList(
-          state.publicPacks,
-          pack.id,
-          newIsStarred,
-          delta,
-        ),
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  List<SavedPack> _updateStarInList(
-    List<SavedPack> packs,
-    String packId,
-    bool isStarred,
-    int delta,
-  ) {
-    return packs.map((p) {
-      if (p.id == packId) {
-        return p.copyWith(
-          isStarred: isStarred,
-          starCount: p.starCount + delta,
-        );
-      }
-      return p;
-    }).toList();
   }
 }

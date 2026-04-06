@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/saved_preset.dart';
 import 'package:plinkyhub/pages/presets/save_preset_to_plinky_dialog.dart';
-import 'package:plinkyhub/pages/presets/star_button.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
+import 'package:plinkyhub/widgets/confirm_delete_dialog.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
+import 'package:plinkyhub/widgets/star_button.dart';
 import 'package:plinkyhub/widgets/username_date_line.dart';
 
 class PresetCard extends ConsumerWidget {
@@ -115,7 +116,13 @@ class PresetCard extends ConsumerWidget {
                     label: 'Upload to Plinky',
                   ),
                   const SizedBox(width: 8),
-                  PresetStarButton(preset: preset),
+                  StarButton(
+                    isStarred: preset.isStarred,
+                    starCount: preset.starCount,
+                    onToggle: () => ref
+                        .read(savedPresetsProvider.notifier)
+                        .toggleStar(preset),
+                  ),
                   if (preset.username.isNotEmpty)
                     ShareLinkButton(
                       username: preset.username,
@@ -186,31 +193,14 @@ class PresetCard extends ConsumerWidget {
       return;
     }
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete preset?'),
-        content: Text(
-          'Are you sure you want to delete '
-          '"${preset.name.isEmpty ? '(unnamed)' : preset.name}"?',
-        ),
-        actions: [
-          PlinkyButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            icon: Icons.close,
-            label: 'Cancel',
-          ),
-          PlinkyButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              ref.read(savedPresetsProvider.notifier).deletePreset(preset.id);
-              onDeleted?.call();
-            },
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemType: 'preset',
+      itemName: preset.name,
     );
+    if (confirmed) {
+      ref.read(savedPresetsProvider.notifier).deleteItem(preset.id);
+      onDeleted?.call();
+    }
   }
 }

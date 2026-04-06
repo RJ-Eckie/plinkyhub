@@ -2,164 +2,66 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/pattern_write.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
-import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/state/saved_patterns_state.dart';
+import 'package:plinkyhub/state/saved_items_notifier.dart';
+import 'package:plinkyhub/state/saved_items_state.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedPatternsProvider =
-    NotifierProvider<SavedPatternsNotifier, SavedPatternsState>(
+    NotifierProvider<SavedPatternsNotifier, SavedItemsState<SavedPattern>>(
       SavedPatternsNotifier.new,
     );
 
-class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
-  SupabaseClient get _supabase => Supabase.instance.client;
+class SavedPatternsNotifier extends SavedItemsNotifier<SavedPattern> {
+  @override
+  String get tableName => 'patterns';
 
   @override
-  SavedPatternsState build() {
-    final authenticationState = ref.watch(authenticationProvider);
-    if (authenticationState.user != null) {
-      Future.microtask(fetchUserPatterns);
-    }
-    return const SavedPatternsState();
-  }
+  String get starTableName => 'pattern_stars';
 
-  Future<Set<String>> _fetchStarredPatternIds() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return {};
-    }
-    final stars = await _supabase
-        .from('pattern_stars')
-        .select('pattern_id')
-        .eq('user_id', userId);
-    return {
-      for (final row in stars as List)
-        (row as Map<String, dynamic>)['pattern_id'] as String,
-    };
-  }
+  @override
+  String get starIdColumn => 'pattern_id';
 
-  List<SavedPattern> _applyStarred(
-    List<dynamic> response,
-    Set<String> starredIds,
-  ) {
-    return response.map((row) {
-      final map = row as Map<String, dynamic>;
-      return SavedPattern.fromJson(map).copyWith(
-        isStarred: starredIds.contains(map['id']),
-      );
-    }).toList();
-  }
+  @override
+  String get selectQuery => '*, profiles(username), pattern_stars(count)';
 
-  Future<void> fetchUserPatterns() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
+  @override
+  String get itemLabel => 'pattern';
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  @override
+  SavedPattern fromJson(Map<String, dynamic> json) =>
+      SavedPattern.fromJson(json);
+
+  @override
+  SavedPattern withStarUpdate(
+    SavedPattern item, {
+    required bool isStarred,
+    required int starCount,
+  }) => item.copyWith(isStarred: isStarred, starCount: starCount);
+
+  @override
+  Future<void> deleteItem(String id) async {
+    setLoading();
     try {
-      final response = await _supabase
-          .from('patterns')
-          .select('*, profiles(username), pattern_stars(count)')
-          .eq('user_id', userId)
-          .order('updated_at', ascending: false);
-
-      final starredIds = await _fetchStarredPatternIds();
-      final patterns = _applyStarred(response as List, starredIds);
-
-      state = state.copyWith(
-        userPatterns: patterns,
-        isLoading: false,
-        hasLoadedUserItems: true,
-      );
-      await fetchStarredPatterns();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedUserItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> fetchStarredPatterns() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      final starredIds = await _fetchStarredPatternIds();
-      if (starredIds.isEmpty) {
-        state = state.copyWith(starredPatterns: []);
-        return;
+      final pattern = state.userItems.where((p) => p.id == id).firstOrNull;
+      if (pattern != null) {
+        await supabase.storage.from('patterns').remove([pattern.filePath]);
       }
-
-      final response = await _supabase
-          .from('patterns')
-          .select('*, profiles(username), pattern_stars(count)')
-          .inFilter('id', starredIds.toList())
-          .neq('user_id', userId);
-
-      final patterns = _applyStarred(response as List, starredIds);
-      state = state.copyWith(starredPatterns: patterns);
+      await super.deleteItem(id);
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
+      setError(error);
     }
-  }
-
-  Future<void> fetchPublicPatterns() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final response = await _supabase
-          .from('patterns')
-          .select('*, profiles(username), pattern_stars(count)')
-          .eq('is_public', true);
-
-      final starredIds = await _fetchStarredPatternIds();
-      final patterns = _applyStarred(response as List, starredIds);
-      state = state.copyWith(
-        publicPatterns: patterns,
-        isLoading: false,
-        hasLoadedPublicItems: true,
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        hasLoadedPublicItems: true,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  bool _nameExists(String name, {String? excludeId}) {
-    return state.userPatterns.any(
-      (p) => p.name == name && p.id != excludeId,
-    );
   }
 
   Future<void> savePattern(
     SavedPattern pattern, {
     required Uint8List fileBytes,
   }) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
+    throwIfNameExists(pattern.name);
 
-    if (_nameExists(pattern.name)) {
-      throw Exception(
-        'You already have a pattern named "${pattern.name}"',
-      );
-    }
-
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
-      await _supabase.storage
+      await supabase.storage
           .from('patterns')
           .uploadBinary(
             pattern.filePath,
@@ -175,28 +77,19 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
         isPublic: pattern.isPublic,
         contentHash: computeContentHash(fileBytes),
       );
-      await _supabase.from('patterns').insert(write.toJson());
+      await supabase.from('patterns').insert(write.toJson());
 
-      await fetchUserPatterns();
-      await fetchPublicPatterns();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
       rethrow;
     }
   }
 
   Future<void> updatePattern(SavedPattern pattern) async {
-    if (_nameExists(pattern.name, excludeId: pattern.id)) {
-      throw Exception(
-        'You already have a pattern named "${pattern.name}"',
-      );
-    }
+    throwIfNameExists(pattern.name, excludeId: pattern.id);
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    setLoading();
     try {
       final write = PatternWrite(
         userId: pattern.userId,
@@ -205,113 +98,17 @@ class SavedPatternsNotifier extends Notifier<SavedPatternsState> {
         description: pattern.description,
         isPublic: pattern.isPublic,
       );
-      await _supabase
+      await supabase
           .from('patterns')
           .update(write.toJson())
           .eq('id', pattern.id);
-      await fetchUserPatterns();
-      await fetchPublicPatterns();
+      await refreshAll();
     } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      setError(error);
     }
   }
 
   Future<Uint8List> downloadFile(String filePath) async {
-    return _supabase.storage.from('patterns').download(filePath);
-  }
-
-  Future<void> deletePattern(String id) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final pattern = state.userPatterns.where((p) => p.id == id).firstOrNull;
-      if (pattern != null) {
-        await _supabase.storage.from('patterns').remove([
-          pattern.filePath,
-        ]);
-      }
-      await _supabase.from('patterns').delete().eq('id', id);
-      await fetchUserPatterns();
-      await fetchPublicPatterns();
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
-    }
-  }
-
-  Future<void> toggleStar(SavedPattern pattern) async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
-      return;
-    }
-
-    try {
-      if (pattern.isStarred) {
-        await _supabase
-            .from('pattern_stars')
-            .delete()
-            .eq('pattern_id', pattern.id)
-            .eq('user_id', userId);
-      } else {
-        await _supabase.from('pattern_stars').insert({
-          'pattern_id': pattern.id,
-          'user_id': userId,
-        });
-      }
-
-      final delta = pattern.isStarred ? -1 : 1;
-      final newIsStarred = !pattern.isStarred;
-      final updatedStarred = newIsStarred
-          ? [
-              ...state.starredPatterns,
-              if (pattern.userId != userId)
-                pattern.copyWith(
-                  isStarred: true,
-                  starCount: pattern.starCount + delta,
-                ),
-            ]
-          : state.starredPatterns.where((p) => p.id != pattern.id).toList();
-      state = state.copyWith(
-        userPatterns: _updateStarInList(
-          state.userPatterns,
-          pattern.id,
-          newIsStarred,
-          delta,
-        ),
-        starredPatterns: updatedStarred,
-        publicPatterns: _updateStarInList(
-          state.publicPatterns,
-          pattern.id,
-          newIsStarred,
-          delta,
-        ),
-      );
-    } on Exception catch (error) {
-      debugPrint('$error');
-      state = state.copyWith(errorMessage: error.toString());
-    }
-  }
-
-  List<SavedPattern> _updateStarInList(
-    List<SavedPattern> patterns,
-    String patternId,
-    bool isStarred,
-    int delta,
-  ) {
-    return patterns.map((p) {
-      if (p.id == patternId) {
-        return p.copyWith(
-          isStarred: isStarred,
-          starCount: p.starCount + delta,
-        );
-      }
-      return p;
-    }).toList();
+    return supabase.storage.from('patterns').download(filePath);
   }
 }

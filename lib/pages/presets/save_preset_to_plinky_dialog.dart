@@ -64,10 +64,10 @@ class _SavePresetToPlinkyDialogState
       return null;
     }
     final samplesState = ref.read(savedSamplesProvider);
-    return samplesState.userSamples
+    return samplesState.userItems
             .where((s) => s.id == widget.preset.sampleId)
             .firstOrNull ??
-        samplesState.publicSamples
+        samplesState.publicItems
             .where((s) => s.id == widget.preset.sampleId)
             .firstOrNull;
   }

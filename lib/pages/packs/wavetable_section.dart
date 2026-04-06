@@ -24,11 +24,11 @@ class WavetableSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final wavetablesState = ref.watch(savedWavetablesProvider);
     final wavetableName = wavetableId != null
-        ? wavetablesState.userWavetables
+        ? wavetablesState.userItems
                   .where((wavetable) => wavetable.id == wavetableId)
                   .firstOrNull
                   ?.name ??
-              wavetablesState.publicWavetables
+              wavetablesState.publicItems
                   .where((wavetable) => wavetable.id == wavetableId)
                   .firstOrNull
                   ?.name
@@ -58,12 +58,12 @@ class WavetableSection extends ConsumerWidget {
               LinkedItemIcon(
                 onTap: () {
                   final wavetable =
-                      wavetablesState.userWavetables
+                      wavetablesState.userItems
                           .where(
                             (wavetable) => wavetable.id == wavetableId,
                           )
                           .firstOrNull ??
-                      wavetablesState.publicWavetables
+                      wavetablesState.publicItems
                           .where(
                             (wavetable) => wavetable.id == wavetableId,
                           )
@@ -106,8 +106,8 @@ class WavetableSection extends ConsumerWidget {
               onPressed: () async {
                 final authState = ref.read(authenticationProvider);
                 final allWavetables = {
-                  ...wavetablesState.userWavetables,
-                  ...wavetablesState.publicWavetables,
+                  ...wavetablesState.userItems,
+                  ...wavetablesState.publicItems,
                 }.toList();
                 final selected = await showDialog<SavedWavetable>(
                   context: context,

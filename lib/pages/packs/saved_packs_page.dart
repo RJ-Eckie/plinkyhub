@@ -50,9 +50,9 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
     _tabController.addListener(_handleTabChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(savedPacksProvider.notifier).fetchPublicPacks();
+      ref.read(savedPacksProvider.notifier).fetchPublicItems();
       if (initialIndex == 0) {
-        ref.read(savedPacksProvider.notifier).fetchUserPacks();
+        ref.read(savedPacksProvider.notifier).fetchUserItems();
       }
     });
   }
@@ -119,12 +119,12 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
             children: [
               if (isSignedIn)
                 SearchableItemList(
-                  items: savedPacksState.userPacks,
-                  starredItems: savedPacksState.starredPacks,
+                  items: savedPacksState.userItems,
+                  starredItems: savedPacksState.starredItems,
                   isLoading: !savedPacksState.hasLoadedUserItems,
                   isOwned: true,
                   onRefresh: () =>
-                      ref.read(savedPacksProvider.notifier).fetchUserPacks(),
+                      ref.read(savedPacksProvider.notifier).fetchUserItems(),
                   itemBuilder: (pack) => PackCard(
                     pack: pack,
                     isOwned: pack.userId == authenticationState.user?.id,
@@ -141,11 +141,11 @@ class _SavedPacksPageState extends ConsumerState<SavedPacksPage>
                   message: 'Sign in to save and manage your packs',
                 ),
               SearchableItemList(
-                items: savedPacksState.publicPacks,
+                items: savedPacksState.publicItems,
                 isLoading: !savedPacksState.hasLoadedPublicItems,
                 isOwned: false,
                 onRefresh: () =>
-                    ref.read(savedPacksProvider.notifier).fetchPublicPacks(),
+                    ref.read(savedPacksProvider.notifier).fetchPublicItems(),
                 itemBuilder: (pack) => PackCard(
                   pack: pack,
                   isOwned: false,

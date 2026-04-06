@@ -5,6 +5,7 @@ import 'package:plinkyhub/models/saved_wavetable.dart';
 import 'package:plinkyhub/pages/wavetables/save_wavetable_to_plinky_dialog.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/widgets/confirm_delete_dialog.dart';
 import 'package:plinkyhub/widgets/pack_usage_check.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
@@ -158,33 +159,14 @@ class WavetableCard extends ConsumerWidget {
       return;
     }
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete wavetable?'),
-        content: Text(
-          'Are you sure you want to delete '
-          '"${wavetable.name.isEmpty ? '(unnamed)' : wavetable.name}"?',
-        ),
-        actions: [
-          PlinkyButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            icon: Icons.close,
-            label: 'Cancel',
-          ),
-          PlinkyButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              ref
-                  .read(savedWavetablesProvider.notifier)
-                  .deleteWavetable(wavetable.id);
-              onDeleted?.call();
-            },
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemType: 'wavetable',
+      itemName: wavetable.name,
     );
+    if (confirmed) {
+      ref.read(savedWavetablesProvider.notifier).deleteItem(wavetable.id);
+      onDeleted?.call();
+    }
   }
 }
