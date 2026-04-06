@@ -8,7 +8,6 @@ import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_save_dialog_views.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 enum _DialogStep {
   slotSelection,
@@ -83,80 +82,77 @@ class _SavePatternToPlinkyDialogState
 
   @override
   Widget build(BuildContext context) {
-    return PointerInterceptor(
-      child: AlertDialog(
-        title: switch (_step) {
-          _DialogStep.slotSelection ||
-          _DialogStep.instructions => const Text('Save to Plinky'),
-          _DialogStep.progress => const Text('Uploading to Plinky...'),
-          _DialogStep.done => Row(
-            children: [
-              const Text('Done'),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ],
-          ),
-          _DialogStep.error => const Text('Error'),
-        },
-        content: SizedBox(
-          width: 400,
-          child: switch (_step) {
-            _DialogStep.slotSelection => SlotSelectionGrid(
-              itemType: 'pattern',
-              slotCount: patternCount,
-              columns: 3,
-              selectedSlot: _selectedSlot,
-              onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
-              displayOffset: 33,
+    return AlertDialog(
+      title: switch (_step) {
+        _DialogStep.slotSelection ||
+        _DialogStep.instructions => const Text('Save to Plinky'),
+        _DialogStep.progress => const Text('Uploading to Plinky...'),
+        _DialogStep.done => Row(
+          children: [
+            const Text('Done'),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
             ),
-            _DialogStep.instructions => const TunnelOfLightsInstructions(
-              itemType: 'pattern',
-            ),
-            _DialogStep.progress => SaveProgressView(
-              statusMessage: _statusMessage,
-            ),
-            _DialogStep.done => const SaveDoneView(
-              itemType: 'pattern',
-            ),
-            _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
-          },
+          ],
         ),
-        actions: switch (_step) {
-          _DialogStep.slotSelection => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Cancel',
-            ),
-            PlinkyButton(
-              onPressed: () => setState(() => _step = _DialogStep.instructions),
-              icon: Icons.arrow_forward,
-              label: 'Next',
-            ),
-          ],
-          _DialogStep.instructions => [
-            PlinkyButton(
-              onPressed: () =>
-                  setState(() => _step = _DialogStep.slotSelection),
-              label: 'Back',
-            ),
-            PlinkyButton(
-              onPressed: _startSave,
-              icon: Icons.folder_open,
-              label: 'Select Plinky drive',
-            ),
-          ],
-          _DialogStep.progress => [],
-          _DialogStep.done || _DialogStep.error => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Close',
-            ),
-          ],
+        _DialogStep.error => const Text('Error'),
+      },
+      content: SizedBox(
+        width: 400,
+        child: switch (_step) {
+          _DialogStep.slotSelection => SlotSelectionGrid(
+            itemType: 'pattern',
+            slotCount: patternCount,
+            columns: 3,
+            selectedSlot: _selectedSlot,
+            onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
+            displayOffset: 33,
+          ),
+          _DialogStep.instructions => const TunnelOfLightsInstructions(
+            itemType: 'pattern',
+          ),
+          _DialogStep.progress => SaveProgressView(
+            statusMessage: _statusMessage,
+          ),
+          _DialogStep.done => const SaveDoneView(
+            itemType: 'pattern',
+          ),
+          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
       ),
+      actions: switch (_step) {
+        _DialogStep.slotSelection => [
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Cancel',
+          ),
+          PlinkyButton(
+            onPressed: () => setState(() => _step = _DialogStep.instructions),
+            icon: Icons.arrow_forward,
+            label: 'Next',
+          ),
+        ],
+        _DialogStep.instructions => [
+          PlinkyButton(
+            onPressed: () => setState(() => _step = _DialogStep.slotSelection),
+            label: 'Back',
+          ),
+          PlinkyButton(
+            onPressed: _startSave,
+            icon: Icons.folder_open,
+            label: 'Select Plinky drive',
+          ),
+        ],
+        _DialogStep.progress => [],
+        _DialogStep.done || _DialogStep.error => [
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Close',
+          ),
+        ],
+      },
     );
   }
 }

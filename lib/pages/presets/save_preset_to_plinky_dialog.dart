@@ -14,7 +14,6 @@ import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_save_dialog_views.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum _DialogStep {
@@ -292,130 +291,126 @@ class _SavePresetToPlinkyDialogState
 
   @override
   Widget build(BuildContext context) {
-    return PointerInterceptor(
-      child: AlertDialog(
-        title: switch (_step) {
-          _DialogStep.methodSelection ||
-          _DialogStep.slotSelection ||
-          _DialogStep.sampleSlotSelection ||
-          _DialogStep.instructions => const Text('Save preset to Plinky'),
-          _DialogStep.progress => const Text('Uploading to Plinky...'),
-          _DialogStep.done => Row(
-            children: [
-              const Text('Done'),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ],
-          ),
-          _DialogStep.error => const Text('Error'),
-        },
-        content: SizedBox(
-          width: 400,
-          child: switch (_step) {
-            _DialogStep.methodSelection => const TransferMethodSelection(
-              itemType: 'preset',
+    return AlertDialog(
+      title: switch (_step) {
+        _DialogStep.methodSelection ||
+        _DialogStep.slotSelection ||
+        _DialogStep.sampleSlotSelection ||
+        _DialogStep.instructions => const Text('Save preset to Plinky'),
+        _DialogStep.progress => const Text('Uploading to Plinky...'),
+        _DialogStep.done => Row(
+          children: [
+            const Text('Done'),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
             ),
-            _DialogStep.slotSelection => SlotSelectionGrid(
-              itemType: 'preset',
-              slotCount: presetCount,
-              selectedSlot: _selectedSlot,
-              onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
-            ),
-            _DialogStep.sampleSlotSelection => _SampleSlotSelectionView(
-              selectedSlot: _selectedSampleSlot,
-              onSlotChanged: (slot) =>
-                  setState(() => _selectedSampleSlot = slot),
-              sampleSlotUsage: _sampleSlotUsage(),
-            ),
-            _DialogStep.instructions => const TunnelOfLightsInstructions(
-              itemType: 'preset',
-            ),
-            _DialogStep.progress => SaveProgressView(
-              statusMessage: _statusMessage,
-              progress: _progress,
-            ),
-            _DialogStep.done => SaveDoneView(
-              itemType: 'preset',
-              usedWebUsb: _method == _SaveMethod.webUsb,
-            ),
-            _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
-          },
+          ],
         ),
-        actions: switch (_step) {
-          _DialogStep.methodSelection => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Cancel',
-            ),
-            if (WebUsbService.isSupported)
-              PlinkyButton(
-                onPressed: () {
-                  _method = _SaveMethod.webUsb;
-                  setState(() => _step = _DialogStep.slotSelection);
-                },
-                icon: Icons.usb,
-                label: 'Send via USB',
-              ),
-            PlinkyButton(
-              onPressed: () {
-                _method = _SaveMethod.tunnelOfLights;
-                setState(() => _step = _DialogStep.slotSelection);
-              },
-              icon: Icons.folder_open,
-              label: 'Tunnel of Lights',
-            ),
-          ],
-          _DialogStep.slotSelection => [
-            PlinkyButton(
-              onPressed: () =>
-                  setState(() => _step = _DialogStep.methodSelection),
-              label: 'Back',
-            ),
-            PlinkyButton(
-              onPressed: _advanceFromPresetSlot,
-              label: _hasSample
-                  ? 'Next'
-                  : (_method == _SaveMethod.webUsb ? 'Send' : 'Next'),
-            ),
-          ],
-          _DialogStep.sampleSlotSelection => [
-            PlinkyButton(
-              onPressed: () =>
-                  setState(() => _step = _DialogStep.slotSelection),
-              label: 'Back',
-            ),
-            PlinkyButton(
-              onPressed: _advanceFromSampleSlot,
-              label: _method == _SaveMethod.webUsb ? 'Send' : 'Next',
-            ),
-          ],
-          _DialogStep.instructions => [
-            PlinkyButton(
-              onPressed: () => setState(() {
-                _step = _hasSample
-                    ? _DialogStep.sampleSlotSelection
-                    : _DialogStep.slotSelection;
-              }),
-              label: 'Back',
-            ),
-            PlinkyButton(
-              onPressed: _startTunnelOfLightsSave,
-              icon: Icons.folder_open,
-              label: 'Select Plinky drive',
-            ),
-          ],
-          _DialogStep.progress => [],
-          _DialogStep.done || _DialogStep.error => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Close',
-            ),
-          ],
+        _DialogStep.error => const Text('Error'),
+      },
+      content: SizedBox(
+        width: 400,
+        child: switch (_step) {
+          _DialogStep.methodSelection => const TransferMethodSelection(
+            itemType: 'preset',
+          ),
+          _DialogStep.slotSelection => SlotSelectionGrid(
+            itemType: 'preset',
+            slotCount: presetCount,
+            selectedSlot: _selectedSlot,
+            onSlotChanged: (slot) => setState(() => _selectedSlot = slot),
+          ),
+          _DialogStep.sampleSlotSelection => _SampleSlotSelectionView(
+            selectedSlot: _selectedSampleSlot,
+            onSlotChanged: (slot) => setState(() => _selectedSampleSlot = slot),
+            sampleSlotUsage: _sampleSlotUsage(),
+          ),
+          _DialogStep.instructions => const TunnelOfLightsInstructions(
+            itemType: 'preset',
+          ),
+          _DialogStep.progress => SaveProgressView(
+            statusMessage: _statusMessage,
+            progress: _progress,
+          ),
+          _DialogStep.done => SaveDoneView(
+            itemType: 'preset',
+            usedWebUsb: _method == _SaveMethod.webUsb,
+          ),
+          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
       ),
+      actions: switch (_step) {
+        _DialogStep.methodSelection => [
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Cancel',
+          ),
+          if (WebUsbService.isSupported)
+            PlinkyButton(
+              onPressed: () {
+                _method = _SaveMethod.webUsb;
+                setState(() => _step = _DialogStep.slotSelection);
+              },
+              icon: Icons.usb,
+              label: 'Send via USB',
+            ),
+          PlinkyButton(
+            onPressed: () {
+              _method = _SaveMethod.tunnelOfLights;
+              setState(() => _step = _DialogStep.slotSelection);
+            },
+            icon: Icons.folder_open,
+            label: 'Tunnel of Lights',
+          ),
+        ],
+        _DialogStep.slotSelection => [
+          PlinkyButton(
+            onPressed: () =>
+                setState(() => _step = _DialogStep.methodSelection),
+            label: 'Back',
+          ),
+          PlinkyButton(
+            onPressed: _advanceFromPresetSlot,
+            label: _hasSample
+                ? 'Next'
+                : (_method == _SaveMethod.webUsb ? 'Send' : 'Next'),
+          ),
+        ],
+        _DialogStep.sampleSlotSelection => [
+          PlinkyButton(
+            onPressed: () => setState(() => _step = _DialogStep.slotSelection),
+            label: 'Back',
+          ),
+          PlinkyButton(
+            onPressed: _advanceFromSampleSlot,
+            label: _method == _SaveMethod.webUsb ? 'Send' : 'Next',
+          ),
+        ],
+        _DialogStep.instructions => [
+          PlinkyButton(
+            onPressed: () => setState(() {
+              _step = _hasSample
+                  ? _DialogStep.sampleSlotSelection
+                  : _DialogStep.slotSelection;
+            }),
+            label: 'Back',
+          ),
+          PlinkyButton(
+            onPressed: _startTunnelOfLightsSave,
+            icon: Icons.folder_open,
+            label: 'Select Plinky drive',
+          ),
+        ],
+        _DialogStep.progress => [],
+        _DialogStep.done || _DialogStep.error => [
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Close',
+          ),
+        ],
+      },
     );
   }
 }

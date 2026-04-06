@@ -10,7 +10,6 @@ import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/plinky_save_dialog_views.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum _DialogStep { confirm, progress, done, error }
@@ -315,60 +314,58 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return PointerInterceptor(
-      child: AlertDialog(
-        title: switch (_step) {
-          _DialogStep.confirm => const Text('Save to Plinky'),
-          _DialogStep.progress => const Text('Uploading to Plinky...'),
-          _DialogStep.done => Row(
-            children: [
-              const Text('Done'),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ],
-          ),
-          _DialogStep.error => const Text('Error'),
-        },
-        content: SizedBox(
-          width: 400,
-          child: switch (_step) {
-            _DialogStep.confirm => const Text(
-              'This will write your linked presets, samples, patterns, '
-              'and wavetable to the connected Plinky. '
-              'Unlinked slots will be preserved as-is.',
+    return AlertDialog(
+      title: switch (_step) {
+        _DialogStep.confirm => const Text('Save to Plinky'),
+        _DialogStep.progress => const Text('Uploading to Plinky...'),
+        _DialogStep.done => Row(
+          children: [
+            const Text('Done'),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
             ),
-            _DialogStep.progress => SaveProgressView(
-              statusMessage: _statusMessage,
-              progress: _progress,
-            ),
-            _DialogStep.done => const SaveDoneView(itemType: 'changes'),
-            _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
-          },
+          ],
         ),
-        actions: switch (_step) {
-          _DialogStep.confirm => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Cancel',
-            ),
-            PlinkyButton(
-              onPressed: _startSave,
-              icon: Icons.save,
-              label: 'Save',
-            ),
-          ],
-          _DialogStep.progress => [],
-          _DialogStep.done || _DialogStep.error => [
-            PlinkyButton(
-              onPressed: () => Navigator.of(context).pop(),
-              label: 'Close',
-            ),
-          ],
+        _DialogStep.error => const Text('Error'),
+      },
+      content: SizedBox(
+        width: 400,
+        child: switch (_step) {
+          _DialogStep.confirm => const Text(
+            'This will write your linked presets, samples, patterns, '
+            'and wavetable to the connected Plinky. '
+            'Unlinked slots will be preserved as-is.',
+          ),
+          _DialogStep.progress => SaveProgressView(
+            statusMessage: _statusMessage,
+            progress: _progress,
+          ),
+          _DialogStep.done => const SaveDoneView(itemType: 'changes'),
+          _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
         },
       ),
+      actions: switch (_step) {
+        _DialogStep.confirm => [
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Cancel',
+          ),
+          PlinkyButton(
+            onPressed: _startSave,
+            icon: Icons.save,
+            label: 'Save',
+          ),
+        ],
+        _DialogStep.progress => [],
+        _DialogStep.done || _DialogStep.error => [
+          PlinkyButton(
+            onPressed: () => Navigator.of(context).pop(),
+            label: 'Close',
+          ),
+        ],
+      },
     );
   }
 }
