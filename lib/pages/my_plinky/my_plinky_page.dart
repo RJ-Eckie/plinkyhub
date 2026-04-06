@@ -37,6 +37,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   String _statusMessage = '';
   double? _progress;
   String? _errorMessage;
+  bool _includeSamples = true;
 
   // Directory handle from the initial connect (null until user selects drive).
   // ignore: use_late_for_private_fields_and_variables
@@ -77,10 +78,9 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     }
     _directory = directory;
 
-    // Total steps: 1 (presets) + sampleCount (samples) + 1 (wavetable)
-    // + 1 (parse presets) + 1 (parse samples) + 1 (check wavetable)
-    // + 1 (match content) = sampleCount + 6.
-    const totalSteps = sampleCount + 6;
+    final includeSamples = _includeSamples;
+    final sampleSteps = includeSamples ? sampleCount : 0;
+    final totalSteps = sampleSteps + 6;
     var completedSteps = 0;
 
     void updateProgress(String message) {
@@ -112,11 +112,13 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       }
 
       final sampleUf2s = <Uint8List?>[];
-      for (var i = 0; i < sampleCount; i++) {
-        updateProgress('Reading SAMPLE$i.UF2...');
-        sampleUf2s.add(
-          await readFileFromDirectory(directory, 'SAMPLE$i.UF2'),
-        );
+      if (includeSamples) {
+        for (var i = 0; i < sampleCount; i++) {
+          updateProgress('Reading SAMPLE$i.UF2...');
+          sampleUf2s.add(
+            await readFileFromDirectory(directory, 'SAMPLE$i.UF2'),
+          );
+        }
       }
 
       updateProgress('Reading WAVETAB.UF2...');
@@ -131,15 +133,21 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       final presetsResult = parsePresetsPhase(presetsUf2Bytes);
 
       // Phase 2: Parse samples.
-      final samplesResult = await parseSamplesPhase(
-        SamplesPhaseInput(
-          sampleUf2s: sampleUf2s,
-          sampleInfos: presetsResult.sampleInfos,
-        ),
-        onSampleParsing: (index) {
-          setState(() => _statusMessage = 'Parsing sample $index...');
-        },
-      );
+      final samplesResult = includeSamples
+          ? await parseSamplesPhase(
+              SamplesPhaseInput(
+                sampleUf2s: sampleUf2s,
+                sampleInfos: presetsResult.sampleInfos,
+              ),
+              onSampleParsing: (index) {
+                setState(() => _statusMessage = 'Parsing sample $index...');
+              },
+            )
+          : ParsedSamplesPhase(
+              samplePcmData: {},
+              emptySampleSlots: {},
+              sampleHashes: {},
+            );
 
       // Phase 3: Check wavetable.
       updateProgress('Checking wavetable...');
@@ -449,6 +457,16 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
               const Text(
                 '3. The Plinky will appear as a USB '
                 'drive on your computer',
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Load samples'),
+                subtitle: const Text(
+                  'Reading samples takes longer but lets you '
+                  'view and manage them',
+                ),
+                value: _includeSamples,
+                onChanged: (value) => setState(() => _includeSamples = value),
               ),
               const SizedBox(height: 16),
               PlinkyButton(
