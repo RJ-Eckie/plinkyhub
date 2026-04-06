@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:typed_data';
 
 /// Base addresses for each Plinky sample slot (0-7).
@@ -73,18 +72,14 @@ Uint8List dataToUf2(Uint8List data, int baseAddress) {
 
 /// Converts raw sample [data] into a UF2 file targeting the given [slotIndex]
 /// (0-7) in Plinky's sample memory.
-///
-/// The data is zero-padded to fill the entire slot ([sampleSlotSize] bytes) so
-/// that any previous sample data in the slot is cleared when flashing.
-///
-/// Returns the UF2 file as bytes ready to be saved or flashed to a Plinky.
 Uint8List sampleToUf2(Uint8List data, {int slotIndex = 0}) {
   assert(slotIndex >= 0 && slotIndex < 8, 'slotIndex must be 0-7');
   assert(data.length <= maxSampleSize, 'Sample exceeds 8 MB limit');
 
-  final paddedData = Uint8List(sampleSlotSize);
-  paddedData.setRange(0, min(data.length, sampleSlotSize), data);
-  return dataToUf2(paddedData, sampleSlotAddresses[slotIndex]);
+  final trimmedData = data.length > sampleSlotSize
+      ? data.sublist(0, sampleSlotSize)
+      : data;
+  return dataToUf2(trimmedData, sampleSlotAddresses[slotIndex]);
 }
 
 /// Parses a UF2 file and extracts the raw data payload.
