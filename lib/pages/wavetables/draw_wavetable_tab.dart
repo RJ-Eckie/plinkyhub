@@ -24,6 +24,7 @@ class DrawWavetableTab extends ConsumerStatefulWidget {
 class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _youtubeUrlController = TextEditingController();
   bool _isPublic = true;
   bool _isGenerating = false;
   bool _isUploading = false;
@@ -55,6 +56,7 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _youtubeUrlController.dispose();
     super.dispose();
   }
 
@@ -77,6 +79,7 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
     setState(() {
       _nameController.clear();
       _descriptionController.clear();
+      _youtubeUrlController.clear();
       _isPublic = true;
       _isGenerating = false;
       _isUploading = false;
@@ -174,6 +177,7 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
         updatedAt: DateTime.now(),
         description: _descriptionController.text.trim(),
         isPublic: _isPublic,
+        youtubeUrl: _youtubeUrlController.text.trim(),
       );
 
       await ref
@@ -233,6 +237,15 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
           ),
           minLines: 3,
           maxLines: null,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _youtubeUrlController,
+          decoration: const InputDecoration(
+            labelText: 'YouTube URL (optional)',
+            hintText: 'https://www.youtube.com/watch?v=...',
+            border: OutlineInputBorder(),
+          ),
         ),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -424,6 +437,15 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
                     ),
                     minLines: 3,
                     maxLines: null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _youtubeUrlController,
+                    decoration: const InputDecoration(
+                      labelText: 'YouTube URL (optional)',
+                      hintText: 'https://www.youtube.com/watch?v=...',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   SwitchListTile(
