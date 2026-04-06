@@ -11,6 +11,7 @@ import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/share_link_button.dart';
 import 'package:plinkyhub/widgets/star_button.dart';
 import 'package:plinkyhub/widgets/username_date_line.dart';
+import 'package:plinkyhub/widgets/youtube_embed.dart';
 
 class PresetCard extends ConsumerWidget {
   const PresetCard({
@@ -68,6 +69,10 @@ class PresetCard extends ConsumerWidget {
                   preset.description,
                   style: theme.textTheme.bodyMedium,
                 ),
+              ],
+              if (preset.youtubeUrl.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                YoutubeEmbed(url: preset.youtubeUrl),
               ],
               const SizedBox(height: 4),
               UsernameDateLine(

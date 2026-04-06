@@ -19,6 +19,7 @@ abstract class SavedPreset with _$SavedPreset implements Searchable {
     @Default('') @JsonKey(readValue: _readUsername) String username,
     @Default(0) @JsonKey(readValue: _readStarCount) int starCount,
     @Default(false) bool isStarred,
+    @Default('') String youtubeUrl,
     String? sampleId,
     @JsonKey(readValue: _readSampleName) String? sampleName,
     @JsonKey(readValue: _readSampleUsername) String? sampleUsername,

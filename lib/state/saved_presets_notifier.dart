@@ -47,6 +47,7 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
     Preset preset, {
     String description = '',
     bool isPublic = false,
+    String youtubeUrl = '',
     String? sampleId,
   }) async {
     final userId = ref.read(authenticationProvider).user?.id;
@@ -65,6 +66,7 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
         presetData: base64Encode(Uint8List.view(preset.buffer)),
         description: description,
         isPublic: isPublic,
+        youtubeUrl: youtubeUrl,
         sampleId: sampleId,
       );
       await supabase.from('presets').insert(write.toJson());
@@ -79,6 +81,7 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
     Preset preset, {
     String? description,
     bool? isPublic,
+    String? youtubeUrl,
     String? sampleId,
   }) async {
     final existing = state.userItems.where((p) => p.id == id).firstOrNull;
@@ -97,6 +100,7 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
         presetData: base64Encode(Uint8List.view(preset.buffer)),
         description: description ?? existing.description,
         isPublic: isPublic ?? existing.isPublic,
+        youtubeUrl: youtubeUrl ?? existing.youtubeUrl,
         sampleId: sampleId,
       );
       final json = write.toJson();
@@ -111,6 +115,7 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
     String id, {
     String? description,
     bool? isPublic,
+    String? youtubeUrl,
     String? sampleId,
     bool clearSample = false,
   }) async {
@@ -122,6 +127,9 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
       }
       if (isPublic != null) {
         updates['is_public'] = isPublic;
+      }
+      if (youtubeUrl != null) {
+        updates['youtube_url'] = youtubeUrl;
       }
       if (sampleId != null) {
         updates['sample_id'] = sampleId;

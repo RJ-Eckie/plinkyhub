@@ -12,6 +12,7 @@ abstract class PresetWrite with _$PresetWrite {
     required String presetData,
     @Default('') String description,
     @Default(false) bool isPublic,
+    @Default('') String youtubeUrl,
     String? sampleId,
   }) = _PresetWrite;
 

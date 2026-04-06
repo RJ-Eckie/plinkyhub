@@ -208,6 +208,7 @@ class _SaveToCloudButton extends ConsumerWidget {
   ) {
     final nameController = TextEditingController(text: preset.name);
     final descriptionController = TextEditingController();
+    final youtubeUrlController = TextEditingController();
     final sourcePresetId = plinkyState.sourcePresetId;
     final userPresets = ref.read(savedPresetsProvider).userItems;
 
@@ -218,6 +219,10 @@ class _SaveToCloudButton extends ConsumerWidget {
         : null;
     var isPublic = sourcePreset?.isPublic ?? true;
     var selectedSampleId = sourcePreset?.sampleId;
+    if (sourcePreset != null) {
+      descriptionController.text = sourcePreset.description;
+      youtubeUrlController.text = sourcePreset.youtubeUrl;
+    }
 
     showDialog<void>(
       context: context,
@@ -258,6 +263,16 @@ class _SaveToCloudButton extends ConsumerWidget {
                     ),
                     minLines: 3,
                     maxLines: null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: youtubeUrlController,
+                    decoration: const InputDecoration(
+                      labelText: 'YouTube URL (optional)',
+                      hintText: 'https://www.youtube.com/watch?v=...',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.play_circle_outline),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _SampleSelector(
@@ -304,6 +319,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                               ? null
                               : descriptionController.text,
                           isPublic: isPublic,
+                          youtubeUrl: youtubeUrlController.text.trim(),
                           sampleId: selectedSampleId,
                         );
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -329,6 +345,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                               ? null
                               : descriptionController.text,
                           isPublic: isPublic,
+                          youtubeUrl: youtubeUrlController.text.trim(),
                           sampleId: selectedSampleId,
                         );
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -351,6 +368,7 @@ class _SaveToCloudButton extends ConsumerWidget {
                           preset,
                           description: descriptionController.text,
                           isPublic: isPublic,
+                          youtubeUrl: youtubeUrlController.text.trim(),
                           sampleId: selectedSampleId,
                         );
                     ScaffoldMessenger.of(context).showSnackBar(

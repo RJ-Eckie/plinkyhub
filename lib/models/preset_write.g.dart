@@ -13,6 +13,7 @@ _PresetWrite _$PresetWriteFromJson(Map<String, dynamic> json) => _PresetWrite(
   presetData: json['preset_data'] as String,
   description: json['description'] as String? ?? '',
   isPublic: json['is_public'] as bool? ?? false,
+  youtubeUrl: json['youtube_url'] as String? ?? '',
   sampleId: json['sample_id'] as String?,
 );
 
@@ -24,5 +25,6 @@ Map<String, dynamic> _$PresetWriteToJson(_PresetWrite instance) =>
       'preset_data': instance.presetData,
       'description': instance.description,
       'is_public': instance.isPublic,
+      'youtube_url': instance.youtubeUrl,
       'sample_id': instance.sampleId,
     };
