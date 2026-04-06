@@ -37,6 +37,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
   double? _progress;
   String? _errorMessage;
   bool _includeSamples = true;
+  bool _samplesLoaded = false;
 
   // Directory handle from the initial connect (null until user selects drive).
   // ignore: use_late_for_private_fields_and_variables
@@ -287,6 +288,7 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
       );
       _matchedPack = await _findMatchingPack(packHash);
 
+      _samplesLoaded = includeSamples;
       setState(() {
         _state = _PageState.loaded;
         _statusMessage = '';
@@ -587,12 +589,14 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
             },
             onEditPressed: _editPresetSlot,
           ),
-          const SizedBox(height: 16),
-          SamplesSection(
-            slots: _slots,
-            deviceSampleSlots: _deviceSampleSlots,
-            devicePresets: _devicePresets,
-          ),
+          if (_samplesLoaded) ...[
+            const SizedBox(height: 16),
+            SamplesSection(
+              slots: _slots,
+              deviceSampleSlots: _deviceSampleSlots,
+              devicePresets: _devicePresets,
+            ),
+          ],
           const SizedBox(height: 16),
           PatternSection(
             patternIds: _patternIds,
