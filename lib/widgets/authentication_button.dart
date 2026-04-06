@@ -7,6 +7,7 @@ import 'package:plinkyhub/widgets/plinky_button.dart';
 import 'package:plinkyhub/widgets/settings_dialog.dart';
 
 const reservedUsernames = {
+  'my-plinky',
   'editor',
   'presets',
   'packs',
@@ -15,6 +16,7 @@ const reservedUsernames = {
   'patterns',
   'users',
   'profile',
+  'firmware',
   'about',
 };
 
@@ -194,6 +196,16 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
                   color: Theme.of(context).colorScheme.error,
                 ),
               ),
+              if (_isConfirmationError(authenticationState.errorMessage!)) ...[
+                const SizedBox(height: 8),
+                PlinkyButton(
+                  onPressed: authenticationState.isLoading
+                      ? null
+                      : () => _resendConfirmation(ref),
+                  icon: Icons.email,
+                  label: 'Resend confirmation email',
+                ),
+              ],
             ],
           ],
         ),
@@ -243,6 +255,26 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
     } else {
       notifier.signIn(email, password);
     }
+  }
+
+  bool _isConfirmationError(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('confirm') ||
+        lower.contains('confirmation') ||
+        lower.contains('expired');
+  }
+
+  void _resendConfirmation(WidgetRef ref) {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ref
+          .read(authenticationProvider.notifier)
+          .setError(
+            'Please enter your email address to resend the confirmation.',
+          );
+      return;
+    }
+    ref.read(authenticationProvider.notifier).resendConfirmationEmail(email);
   }
 
   String? _validate(String email, String password, String username) {

@@ -5,6 +5,8 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:plinkyhub/router.dart';
+import 'package:plinkyhub/state/authentication_notifier.dart';
+import 'package:plinkyhub/widgets/authentication_button.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
 import 'package:plinkyhub/widgets/terms_of_service_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -136,6 +138,12 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!hasAcceptedTermsOfService()) {
         showTermsOfServiceDialog(context);
+      }
+      // If the router redirect set an auth error (e.g. expired confirmation
+      // link), open the sign-in dialog so the user can act on it.
+      final authState = ref.read(authenticationProvider);
+      if (authState.errorMessage != null && authState.user == null) {
+        showSignInDialog(context);
       }
     });
   }

@@ -120,6 +120,23 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
     }
   }
 
+  Future<void> resendConfirmationEmail(String email) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      await _supabase.auth.resend(type: OtpType.signup, email: email);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Confirmation email sent! Please check your inbox.',
+      );
+    } on AuthException catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _friendlyAuthError(error.message),
+      );
+    }
+  }
+
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }

@@ -20,6 +20,7 @@ import 'package:plinkyhub/pages/users/users_page.dart';
 import 'package:plinkyhub/pages/wavetables/saved_wavetables_page.dart';
 import 'package:plinkyhub/pages/wavetables/wavetable_page.dart';
 import 'package:plinkyhub/routes.dart';
+import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/widgets/navigation_sidebar.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -28,6 +29,24 @@ GoRouter createRouter(ProviderContainer container) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoute.initial.path,
+    redirect: (context, state) {
+      final errorCode = state.uri.queryParameters['error_code'];
+      if (errorCode != null) {
+        final description = state.uri.queryParameters['error_description'];
+        final notifier = container.read(authenticationProvider.notifier);
+        if (errorCode == 'otp_expired') {
+          notifier.setError(
+            'Your confirmation link has expired. '
+            'Please sign in with your email and password to '
+            'receive a new confirmation email.',
+          );
+        } else if (description != null) {
+          notifier.setError(Uri.decodeComponent(description));
+        }
+        return AppRoute.initial.path;
+      }
+      return null;
+    },
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
