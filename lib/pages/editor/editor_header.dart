@@ -92,11 +92,13 @@ class EditorHeader extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: 8),
-          const Row(
+          Row(
             children: [
-              ConnectButton(),
-              SizedBox(width: 8),
-              CreatePresetButton(),
+              const ConnectButton(),
+              if (state.preset == null) ...[
+                const SizedBox(width: 8),
+                const CreatePresetButton(),
+              ],
             ],
           ),
         ],
