@@ -1,6 +1,6 @@
 import 'dart:js_interop';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 /// Options for [showDirectoryPicker].
@@ -73,8 +73,9 @@ Future<FileSystemDirectoryHandle?> showDirectoryPicker({
         ? DirectoryPickerOptions(mode: 'readwrite')
         : null;
     return await web.window._showDirectoryPicker(options).toDart;
-  } on Object {
+  } on Object catch (error) {
     // User cancelled (AbortError) or browser does not support the API.
+    debugPrint('showDirectoryPicker failed: $error');
     return null;
   }
 }
