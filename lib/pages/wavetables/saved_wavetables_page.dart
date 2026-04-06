@@ -7,6 +7,7 @@ import 'package:plinkyhub/pages/wavetables/wavetable_card.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:plinkyhub/widgets/searchable_item_list.dart';
 import 'package:plinkyhub/widgets/sign_in_prompt.dart';
 
@@ -18,9 +19,16 @@ enum WavetableTab {
 }
 
 class SavedWavetablesPage extends ConsumerStatefulWidget {
-  const SavedWavetablesPage({this.initialTab, super.key});
+  const SavedWavetablesPage({
+    this.initialTab,
+    this.editWavetableName,
+    super.key,
+  });
 
   final String? initialTab;
+
+  /// When non-null, opens the create tab in edit mode for this wavetable.
+  final String? editWavetableName;
 
   @override
   ConsumerState<SavedWavetablesPage> createState() =>
@@ -34,14 +42,17 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
   @override
   void initState() {
     super.initState();
-    final initialIndex = widget.initialTab != null
-        ? WavetableTab.values
-              .firstWhere(
-                (t) => t.name == widget.initialTab,
-                orElse: () => WavetableTab.my,
-              )
-              .index
-        : 0;
+    var initialIndex = 0;
+    if (widget.editWavetableName != null) {
+      initialIndex = WavetableTab.create.index;
+    } else if (widget.initialTab != null) {
+      initialIndex = WavetableTab.values
+          .firstWhere(
+            (t) => t.name == widget.initialTab,
+            orElse: () => WavetableTab.my,
+          )
+          .index;
+    }
 
     _tabController = TabController(
       length: WavetableTab.values.length,
@@ -52,7 +63,7 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(savedWavetablesProvider.notifier).fetchPublicWavetables();
-      if (initialIndex == 0) {
+      if (widget.editWavetableName != null || initialIndex == 0) {
         ref.read(savedWavetablesProvider.notifier).fetchUserWavetables();
       }
     });
@@ -92,6 +103,12 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
     final authenticationState = ref.watch(authenticationProvider);
     final savedWavetablesState = ref.watch(savedWavetablesProvider);
     final isSignedIn = authenticationState.user != null;
+
+    final editWavetable = widget.editWavetableName != null
+        ? savedWavetablesState.userWavetables
+              .where((w) => w.name == widget.editWavetableName)
+              .firstOrNull
+        : null;
 
     return Column(
       children: [
@@ -151,9 +168,17 @@ class _SavedWavetablesPageState extends ConsumerState<SavedWavetablesPage>
                 itemLabel: 'wavetable',
               ),
               if (isSignedIn)
-                DrawWavetableTab(
-                  onCreated: () => _tabController.animateTo(0),
-                )
+                if (widget.editWavetableName != null &&
+                    editWavetable == null &&
+                    savedWavetablesState.isLoading)
+                  const Center(child: PlinkyLoadingAnimation())
+                else
+                  DrawWavetableTab(
+                    wavetableToEdit: editWavetable,
+                    onCreated: () => _tabController.animateTo(0),
+                    onClear: () =>
+                        context.go(AppRoute.wavetables.tab('create')),
+                  )
               else
                 const SignInPrompt(
                   message: 'Sign in to create wavetables',

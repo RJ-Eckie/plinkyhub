@@ -40,6 +40,11 @@ enum AppRoute {
       '/$username/${AppRoute.samples.itemSegment}/'
       '${Uri.encodeComponent(name)}/edit';
 
+  /// Path to a user's wavetable edit page.
+  static String wavetableEditPage(String username, String name) =>
+      '/$username/${AppRoute.wavetables.itemSegment}/'
+      '${Uri.encodeComponent(name)}/edit';
+
   /// Path to a user's profile page.
   static String userPage(String username) => '/$username';
 }

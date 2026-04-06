@@ -86,6 +86,16 @@ class WavetableCard extends ConsumerWidget {
                   const Spacer(),
                   if (isOwned) ...[
                     IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      tooltip: 'Edit wavetable',
+                      onPressed: () => context.go(
+                        AppRoute.wavetableEditPage(
+                          wavetable.username,
+                          wavetable.name,
+                        ),
+                      ),
+                    ),
+                    IconButton(
                       icon: Icon(
                         wavetable.isPublic ? Icons.public : Icons.public_off,
                         size: 20,

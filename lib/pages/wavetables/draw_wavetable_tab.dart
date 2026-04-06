@@ -7,15 +7,28 @@ import 'package:plinkyhub/pages/wavetables/waveform_effects_panel.dart';
 import 'package:plinkyhub/pages/wavetables/waveform_thumbnail.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/saved_wavetables_notifier.dart';
+import 'package:plinkyhub/utils/uf2.dart';
 import 'package:plinkyhub/utils/waveform_effects.dart';
 import 'package:plinkyhub/utils/wavetable.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
-/// Tab for creating wavetables by drawing waveforms directly in the browser.
+/// Tab for creating or editing wavetables by drawing waveforms directly in the
+/// browser.
 class DrawWavetableTab extends ConsumerStatefulWidget {
-  const DrawWavetableTab({this.onCreated, super.key});
+  const DrawWavetableTab({
+    this.onCreated,
+    this.wavetableToEdit,
+    this.onClear,
+    super.key,
+  });
 
   final VoidCallback? onCreated;
+
+  /// When non-null, the editor opens in edit mode with this wavetable's data.
+  final SavedWavetable? wavetableToEdit;
+
+  /// Called when the user clears the edit (navigates away from edit mode).
+  final VoidCallback? onClear;
 
   @override
   ConsumerState<DrawWavetableTab> createState() => _DrawWavetableTabState();
@@ -27,6 +40,7 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   bool _isPublic = true;
   bool _isGenerating = false;
   bool _isUploading = false;
+  bool _isLoadingExisting = false;
   String? _errorMessage;
 
   int _selectedSlot = 0;
@@ -37,6 +51,10 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
 
   /// Cached post-effect samples for the selected slot.
   List<double>? _postEffectSamples;
+
+  bool get _isEditing => widget.wavetableToEdit != null;
+
+  void _onNameChanged() => setState(() {});
 
   @override
   void initState() {
@@ -49,16 +67,53 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
       wavetableUserShapeCount,
       (_) => WaveformEffects(),
     );
+    if (widget.wavetableToEdit != null) {
+      _nameController.addListener(_onNameChanged);
+      _nameController.text = widget.wavetableToEdit!.name;
+      _descriptionController.text = widget.wavetableToEdit!.description;
+      _isPublic = widget.wavetableToEdit!.isPublic;
+      _loadExistingWavetable();
+    }
+  }
+
+  Future<void> _loadExistingWavetable() async {
+    if (widget.wavetableToEdit == null) {
+      return;
+    }
+    setState(() => _isLoadingExisting = true);
+    try {
+      final uf2Bytes = await ref
+          .read(savedWavetablesProvider.notifier)
+          .downloadUf2(widget.wavetableToEdit!.filePath);
+      final rawData = uf2ToData(uf2Bytes);
+      final samples = extractSamplesFromWavetableData(rawData);
+      if (mounted) {
+        setState(() {
+          for (var i = 0; i < samples.length; i++) {
+            _slots[i] = samples[i];
+          }
+          _isLoadingExisting = false;
+        });
+      }
+    } on Exception catch (error) {
+      if (mounted) {
+        setState(() {
+          _isLoadingExisting = false;
+          _errorMessage = 'Failed to load wavetable: $error';
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  bool get _isBusy => _isGenerating || _isUploading;
+  bool get _isBusy => _isGenerating || _isUploading || _isLoadingExisting;
 
   WaveformEffects get _currentEffects => _effects[_selectedSlot];
 
@@ -159,33 +214,58 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
         _isUploading = true;
       });
 
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final name = _nameController.text.trim().isNotEmpty
           ? _nameController.text.trim()
           : 'wavetable';
-      final storageName = '${name}_$timestamp.uf2';
 
-      final wavetable = SavedWavetable(
-        id: '',
-        userId: userId,
-        name: name,
-        filePath: '$userId/$storageName',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        description: _descriptionController.text.trim(),
-        isPublic: _isPublic,
-      );
+      final shouldOverwrite =
+          _isEditing && name == widget.wavetableToEdit!.name;
 
-      await ref
-          .read(savedWavetablesProvider.notifier)
-          .saveWavetable(wavetable, uf2Bytes: uf2Bytes);
+      if (shouldOverwrite) {
+        final existing = widget.wavetableToEdit!;
+        await ref
+            .read(savedWavetablesProvider.notifier)
+            .updateWavetableContent(
+              existing.copyWith(
+                name: name,
+                description: _descriptionController.text.trim(),
+                isPublic: _isPublic,
+              ),
+              uf2Bytes: uf2Bytes,
+            );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Wavetable created')),
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Wavetable updated')),
+          );
+          widget.onClear?.call();
+        }
+      } else {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final storageName = '${name}_$timestamp.uf2';
+
+        final wavetable = SavedWavetable(
+          id: '',
+          userId: userId,
+          name: name,
+          filePath: '$userId/$storageName',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          description: _descriptionController.text.trim(),
+          isPublic: _isPublic,
         );
-        _resetForm();
-        widget.onCreated?.call();
+
+        await ref
+            .read(savedWavetablesProvider.notifier)
+            .saveWavetable(wavetable, uf2Bytes: uf2Bytes);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Wavetable created')),
+          );
+          _resetForm();
+          widget.onCreated?.call();
+        }
       }
     } on FormatException catch (formatError) {
       setState(() {
@@ -211,6 +291,22 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
   @override
   Widget build(BuildContext context) {
     _updatePostEffectSamples();
+
+    final nameMatchesOriginal =
+        _isEditing &&
+        _nameController.text.trim() == widget.wavetableToEdit!.name;
+    final String buttonLabel;
+    final IconData buttonIcon;
+    if (_isEditing && nameMatchesOriginal) {
+      buttonLabel = 'Overwrite';
+      buttonIcon = Icons.save;
+    } else if (_isEditing) {
+      buttonLabel = 'Save as new';
+      buttonIcon = Icons.save_as;
+    } else {
+      buttonLabel = 'Create & Upload';
+      buttonIcon = Icons.upload;
+    }
 
     final infoSection = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -253,8 +349,8 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
         else
           PlinkyButton(
             onPressed: _isBusy ? null : _createAndUpload,
-            icon: _isUploading ? Icons.hourglass_empty : Icons.upload,
-            label: _isUploading ? 'Uploading...' : 'Create & Upload',
+            icon: _isUploading ? Icons.hourglass_empty : buttonIcon,
+            label: _isUploading ? 'Uploading...' : buttonLabel,
           ),
         const SizedBox(height: 24),
         WaveformEffectsPanel(
@@ -324,6 +420,19 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
         ),
       ],
     );
+
+    if (_isLoadingExisting) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading wavetable...'),
+          ],
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

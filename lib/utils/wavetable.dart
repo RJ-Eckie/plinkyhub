@@ -132,6 +132,49 @@ Uint8List _generateUf2FromLookups(List<Float64List> lookups) {
   return _packWavetableUf2(rawBytes);
 }
 
+/// Extracts the 15 user waveform slots from raw wavetable data.
+///
+/// [rawData] should be the output of `uf2ToData` applied to a wavetable UF2.
+/// Returns a list of 15 sample arrays (512 samples each, in the range −1.0
+/// to 1.0), corresponding to shapes 1–15 (the user-drawn waveforms).
+///
+/// Because the UF2 stores anti-aliased octave variants, the extracted samples
+/// are taken from the highest-resolution octave and may differ slightly from
+/// the original drawn waveforms.
+List<List<double>> extractSamplesFromWavetableData(Uint8List rawData) {
+  final view = ByteData.sublistView(rawData);
+  const samplesPerShapeBytes = wavetableSamplesPerShape * 2;
+
+  final result = <List<double>>[];
+  for (var shape = 1; shape <= wavetableUserShapeCount; shape++) {
+    final shapeByteOffset = shape * samplesPerShapeBytes;
+    final samples = List<double>.filled(wavetableSamplesPerCycle, 0);
+
+    // Read the highest-resolution octave (octave 0): 512 samples.
+    var peak = 0.0;
+    for (var i = 0; i < wavetableSamplesPerCycle; i++) {
+      final value = view.getInt16(shapeByteOffset + i * 2, Endian.little);
+      final sample = value / _outputScale;
+      samples[i] = sample;
+      final absolute = sample.abs();
+      if (absolute > peak) {
+        peak = absolute;
+      }
+    }
+
+    // Normalise to peak = 1.0 to match the editor's expected range.
+    if (peak > 0) {
+      final gain = 1.0 / peak;
+      for (var i = 0; i < wavetableSamplesPerCycle; i++) {
+        samples[i] = (samples[i] * gain).clamp(-1.0, 1.0);
+      }
+    }
+
+    result.add(samples);
+  }
+  return result;
+}
+
 /// Generates a sawtooth lookup table (shape 0).
 Float64List _generateSawLookup() {
   final lookup = Float64List(wavetableLookupSize);

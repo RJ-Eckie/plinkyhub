@@ -222,6 +222,51 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
     }
   }
 
+  Future<void> updateWavetableContent(
+    SavedWavetable wavetable, {
+    required Uint8List uf2Bytes,
+  }) async {
+    if (_nameExists(wavetable.name, excludeId: wavetable.id)) {
+      throw Exception(
+        'You already have a wavetable named "${wavetable.name}"',
+      );
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      await _supabase.storage
+          .from('wavetables')
+          .uploadBinary(
+            wavetable.filePath,
+            uf2Bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      final write = WavetableWrite(
+        userId: wavetable.userId,
+        name: wavetable.name,
+        filePath: wavetable.filePath,
+        description: wavetable.description,
+        isPublic: wavetable.isPublic,
+        contentHash: computeContentHash(uf2Bytes),
+      );
+      await _supabase
+          .from('wavetables')
+          .update(write.toJson())
+          .eq('id', wavetable.id);
+
+      await fetchUserWavetables();
+      await fetchPublicWavetables();
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.toString(),
+      );
+      rethrow;
+    }
+  }
+
   Future<Uint8List> downloadUf2(String filePath) async {
     return _supabase.storage.from('wavetables').download(filePath);
   }
