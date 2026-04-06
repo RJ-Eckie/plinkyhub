@@ -47,7 +47,7 @@ abstract class SavedItemsNotifier<T extends Searchable>
     if (authenticationState.user != null) {
       Future.microtask(fetchUserItems);
     }
-    return const SavedItemsState();
+    return SavedItemsState<T>();
   }
 
   // ---- Star helpers ----
