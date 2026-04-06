@@ -36,7 +36,10 @@ String? extractYoutubeVideoId(String url) {
 }
 
 /// Displays an embedded YouTube player for the given URL.
-class YoutubeEmbed extends StatelessWidget {
+///
+/// Shows a thumbnail with a play button initially. The iframe is only loaded
+/// when the user taps play, avoiding scroll-capture issues caused by iframes.
+class YoutubeEmbed extends StatefulWidget {
   const YoutubeEmbed({
     required this.url,
     super.key,
@@ -45,12 +48,92 @@ class YoutubeEmbed extends StatelessWidget {
   final String url;
 
   @override
+  State<YoutubeEmbed> createState() => _YoutubeEmbedState();
+}
+
+class _YoutubeEmbedState extends State<YoutubeEmbed> {
+  bool _activated = false;
+
+  @override
   Widget build(BuildContext context) {
-    final videoId = extractYoutubeVideoId(url);
+    final videoId = extractYoutubeVideoId(widget.url);
     if (videoId == null) {
       return const SizedBox.shrink();
     }
 
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: _activated
+            ? _YoutubeIframe(videoId: videoId)
+            : _YoutubeThumbnail(
+                videoId: videoId,
+                onPlay: () => setState(() => _activated = true),
+              ),
+      ),
+    );
+  }
+}
+
+class _YoutubeThumbnail extends StatelessWidget {
+  const _YoutubeThumbnail({
+    required this.videoId,
+    required this.onPlay,
+  });
+
+  final String videoId;
+  final VoidCallback onPlay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          'https://img.youtube.com/vi/$videoId/hqdefault.jpg',
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const ColoredBox(
+            color: Colors.black,
+            child: Center(
+              child: Icon(Icons.play_circle_outline, color: Colors.white),
+            ),
+          ),
+        ),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPlay,
+            child: const Center(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _YoutubeIframe extends StatelessWidget {
+  const _YoutubeIframe({required this.videoId});
+
+  final String videoId;
+
+  @override
+  Widget build(BuildContext context) {
     final viewType = 'youtube-player-$videoId';
 
     ui_web.platformViewRegistry.registerViewFactory(
@@ -58,7 +141,7 @@ class YoutubeEmbed extends StatelessWidget {
       (int viewId) {
         final iframe =
             web.document.createElement('iframe') as web.HTMLIFrameElement;
-        iframe.src = 'https://www.youtube.com/embed/$videoId';
+        iframe.src = 'https://www.youtube.com/embed/$videoId?autoplay=1';
         iframe.style.border = 'none';
         iframe.style.width = '100%';
         iframe.style.height = '100%';
@@ -72,12 +155,6 @@ class YoutubeEmbed extends StatelessWidget {
       },
     );
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: HtmlElementView(viewType: viewType),
-      ),
-    );
+    return HtmlElementView(viewType: viewType);
   }
 }
