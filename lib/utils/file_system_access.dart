@@ -54,12 +54,10 @@ extension type FileSystemWritableFileStream._(JSObject _) implements JSObject {
   Future<void> close() => _close().toDart;
 }
 
-extension on web.Window {
-  @JS('showDirectoryPicker')
-  external JSPromise<FileSystemDirectoryHandle> _showDirectoryPicker([
-    DirectoryPickerOptions? options,
-  ]);
-}
+@JS('showDirectoryPicker')
+external JSPromise<FileSystemDirectoryHandle> _showDirectoryPicker([
+  DirectoryPickerOptions? options,
+]);
 
 /// Shows a directory picker dialog and returns a handle to the selected
 /// directory. The user must interact with the page before calling this.
@@ -72,7 +70,7 @@ Future<FileSystemDirectoryHandle?> showDirectoryPicker({
     final options = readwrite
         ? DirectoryPickerOptions(mode: 'readwrite')
         : null;
-    return await web.window._showDirectoryPicker(options).toDart;
+    return await _showDirectoryPicker(options).toDart;
   } on Object catch (error) {
     // User cancelled (AbortError) or browser does not support the API.
     debugPrint('showDirectoryPicker failed: $error');
