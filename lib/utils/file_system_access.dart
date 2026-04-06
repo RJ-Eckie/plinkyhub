@@ -59,6 +59,19 @@ external JSPromise<FileSystemDirectoryHandle> _showDirectoryPicker([
   DirectoryPickerOptions? options,
 ]);
 
+@JS('showDirectoryPicker')
+external JSFunction? get _showDirectoryPickerOrNull;
+
+/// Whether the browser supports the File System Access API
+/// (`showDirectoryPicker`). Returns `false` on Firefox and Safari.
+bool get isFileSystemAccessSupported {
+  try {
+    return _showDirectoryPickerOrNull != null;
+  } on Object {
+    return false;
+  }
+}
+
 /// Shows a directory picker dialog and returns a handle to the selected
 /// directory. The user must interact with the page before calling this.
 ///

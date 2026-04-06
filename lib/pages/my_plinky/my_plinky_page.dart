@@ -17,6 +17,7 @@ import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
+import 'package:plinkyhub/widgets/chromium_required_banner.dart';
 import 'package:plinkyhub/widgets/linked_item_icon.dart';
 import 'package:plinkyhub/widgets/loading_indicator.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -440,8 +441,14 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
                 onChanged: (value) => setState(() => _includeSamples = value),
               ),
               const SizedBox(height: 16),
+              const ChromiumRequiredBanner(
+                requireFileSystemAccess: true,
+              ),
+              const SizedBox(height: 16),
               PlinkyButton(
-                onPressed: _connectToPlinky,
+                onPressed: isFileSystemAccessSupported
+                    ? _connectToPlinky
+                    : null,
                 icon: Icons.usb,
                 label: 'Select Plinky drive',
               ),

@@ -250,7 +250,9 @@ class _LoadSampleTabState extends ConsumerState<LoadSampleTab> {
                     ),
                     const SizedBox(height: 16),
                     PlinkyButton(
-                      onPressed: _readFromPlinky,
+                      onPressed: isFileSystemAccessSupported
+                          ? _readFromPlinky
+                          : null,
                       icon: Icons.usb,
                       label: 'Select Plinky drive',
                     ),

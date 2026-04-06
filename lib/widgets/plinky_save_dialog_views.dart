@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plinkyhub/services/webusb_service.dart';
+import 'package:plinkyhub/utils/file_system_access.dart';
+import 'package:plinkyhub/widgets/chromium_required_banner.dart';
 import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
 class TunnelOfLightsInstructions extends StatelessWidget {
@@ -39,6 +41,10 @@ class TunnelOfLightsInstructions extends StatelessWidget {
           'Then click the button below to select the '
           'Plinky drive.',
         ),
+        if (!isFileSystemAccessSupported) ...[
+          const SizedBox(height: 12),
+          const ChromiumRequiredBanner(requireFileSystemAccess: true),
+        ],
       ],
     );
   }
@@ -154,6 +160,13 @@ class TransferMethodSelection extends StatelessWidget {
               'Write UF2 files to the Plinky drive. Requires putting '
               'Plinky into Tunnel of Lights mode first.',
         ),
+        if (!WebUsbService.isSupported || !isFileSystemAccessSupported) ...[
+          const SizedBox(height: 16),
+          const ChromiumRequiredBanner(
+            requireWebUsb: true,
+            requireFileSystemAccess: true,
+          ),
+        ],
       ],
     );
   }

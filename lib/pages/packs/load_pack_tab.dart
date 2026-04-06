@@ -20,6 +20,7 @@ import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/wav.dart';
+import 'package:plinkyhub/widgets/chromium_required_banner.dart';
 import 'package:plinkyhub/widgets/linked_item_icon.dart';
 import 'package:plinkyhub/widgets/loading_indicator.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -1038,9 +1039,13 @@ class _LoadSelectStep extends StatelessWidget {
           '3. The Plinky will appear as a USB '
           'drive on your computer',
         ),
+        if (!isFileSystemAccessSupported) ...[
+          const SizedBox(height: 12),
+          const ChromiumRequiredBanner(requireFileSystemAccess: true),
+        ],
         const SizedBox(height: 16),
         PlinkyButton(
-          onPressed: onSelectDrive,
+          onPressed: isFileSystemAccessSupported ? onSelectDrive : null,
           icon: Icons.folder_open,
           label: 'Select Plinky drive',
         ),
