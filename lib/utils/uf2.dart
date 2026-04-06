@@ -87,20 +87,27 @@ Uint8List sampleToUf2(Uint8List data, {int slotIndex = 0}) {
 /// Returns the concatenated data from all UF2 blocks, ordered by target
 /// address. Throws [FormatException] if the file is not a valid UF2.
 Uint8List uf2ToData(Uint8List uf2Bytes) {
-  if (uf2Bytes.length % uf2BlockSize != 0) {
-    throw const FormatException('Invalid UF2: size not a multiple of 512');
+  if (uf2Bytes.length < uf2BlockSize) {
+    throw const FormatException('Invalid UF2: file too small');
   }
 
-  final blockCount = uf2Bytes.length ~/ uf2BlockSize;
-  if (blockCount == 0) {
-    throw const FormatException('Invalid UF2: empty file');
-  }
-
+  final fileBlockCount = uf2Bytes.length ~/ uf2BlockSize;
   final view = ByteData.sublistView(uf2Bytes);
 
+  // Validate the first block and read the declared block count from its
+  // header (offset 24). The file may be larger due to firmware padding.
+  final firstM1 = view.getUint32(0, Endian.little);
+  final firstM2 = view.getUint32(4, Endian.little);
+  if (firstM1 != magic1 || firstM2 != magic2) {
+    throw const FormatException('Invalid UF2: bad magic in first block');
+  }
+  final declaredBlockCount = view.getUint32(24, Endian.little);
+  final blockCount =
+      declaredBlockCount > 0 && declaredBlockCount <= fileBlockCount
+      ? declaredBlockCount
+      : fileBlockCount;
+
   // First pass: find the lowest target address and total data size.
-  // Only the two header magic numbers are required — some firmware
-  // implementations omit the trailing magic at offset 508.
   var minAddress = 0xFFFFFFFF;
   var maxEnd = 0;
   for (var i = 0; i < blockCount; i++) {
