@@ -98,7 +98,10 @@ Uint8List uf2ToData(Uint8List uf2Bytes) {
 
   final view = ByteData.sublistView(uf2Bytes);
 
-  // First pass: find the lowest target address and total data size.
+  // First pass: find valid blocks and their address range.
+  // Some device UF2 files contain trailing padding or non-UF2 blocks,
+  // so we skip blocks with invalid magic instead of throwing.
+  final validBlocks = <int>[];
   var minAddress = 0xFFFFFFFF;
   var maxEnd = 0;
   for (var i = 0; i < blockCount; i++) {
@@ -107,8 +110,9 @@ Uint8List uf2ToData(Uint8List uf2Bytes) {
     final m2 = view.getUint32(offset + 4, Endian.little);
     final mEnd = view.getUint32(offset + uf2BlockSize - 4, Endian.little);
     if (m1 != magic1 || m2 != magic2 || mEnd != magicEnd) {
-      throw FormatException('Invalid UF2: bad magic in block $i');
+      continue;
     }
+    validBlocks.add(i);
     final targetAddress = view.getUint32(offset + 12, Endian.little);
     final dataSize = view.getUint32(offset + 16, Endian.little);
     if (targetAddress < minAddress) {
@@ -120,10 +124,14 @@ Uint8List uf2ToData(Uint8List uf2Bytes) {
     }
   }
 
-  // Allocate output buffer and copy each block's payload.
+  if (validBlocks.isEmpty) {
+    throw const FormatException('Invalid UF2: no valid blocks found');
+  }
+
+  // Allocate output buffer and copy each valid block's payload.
   final totalSize = maxEnd - minAddress;
   final output = Uint8List(totalSize);
-  for (var i = 0; i < blockCount; i++) {
+  for (final i in validBlocks) {
     final offset = i * uf2BlockSize;
     final targetAddress = view.getUint32(offset + 12, Endian.little);
     final dataSize = view.getUint32(offset + 16, Endian.little);
