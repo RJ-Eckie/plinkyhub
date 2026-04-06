@@ -78,11 +78,13 @@ class _PatternTile extends ConsumerWidget {
 
     String displayName;
     if (isLinked) {
-      final patterns = ref.watch(
-        savedPatternsProvider.select((state) => state.userItems),
-      );
+      final patternsState = ref.watch(savedPatternsProvider);
+      final allPatterns = [
+        ...patternsState.userItems,
+        ...patternsState.publicItems,
+      ];
       displayName =
-          patterns
+          allPatterns
               .where((pattern) => pattern.id == patternId)
               .firstOrNull
               ?.name ??
@@ -137,11 +139,11 @@ class _PatternTile extends ConsumerWidget {
   }
 
   void _showLinkedPattern(BuildContext context, WidgetRef ref) {
-    final pattern = ref
-        .read(savedPatternsProvider)
-        .userItems
-        .where((pattern) => pattern.id == patternId)
-        .firstOrNull;
+    final patternsState = ref.read(savedPatternsProvider);
+    final pattern = [
+      ...patternsState.userItems,
+      ...patternsState.publicItems,
+    ].where((pattern) => pattern.id == patternId).firstOrNull;
     if (pattern == null) {
       return;
     }

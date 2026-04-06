@@ -36,12 +36,10 @@ class PackSlotTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final presets = ref.watch(
-      savedPresetsProvider.select((state) => state.userItems),
-    );
-    final samples = ref.watch(
-      savedSamplesProvider.select((state) => state.userItems),
-    );
+    final presetsState = ref.watch(savedPresetsProvider);
+    final presets = [...presetsState.userItems, ...presetsState.publicItems];
+    final samplesState = ref.watch(savedSamplesProvider);
+    final samples = [...samplesState.userItems, ...samplesState.publicItems];
 
     final hasDevicePreset = devicePreset != null;
     final isLinked = presetId != null;
@@ -178,11 +176,11 @@ class PackSlotTile extends ConsumerWidget {
   }
 
   void _showLinkedPreset(BuildContext context, WidgetRef ref) {
-    final preset = ref
-        .read(savedPresetsProvider)
-        .userItems
-        .where((preset) => preset.id == presetId)
-        .firstOrNull;
+    final presetsState = ref.read(savedPresetsProvider);
+    final preset = [
+      ...presetsState.userItems,
+      ...presetsState.publicItems,
+    ].where((preset) => preset.id == presetId).firstOrNull;
     if (preset == null) {
       return;
     }
