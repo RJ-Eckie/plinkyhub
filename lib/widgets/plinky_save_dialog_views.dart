@@ -67,19 +67,19 @@ class SaveProgressView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const PlinkyLoadingAnimation(),
-        const SizedBox(height: 12),
-        Text(
-          '(this may take a while)',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
         const SizedBox(height: 16),
         Text(statusMessage),
         const SizedBox(height: 12),
         LinearProgressIndicator(
           value: progress,
           borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '(this may take a while)',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

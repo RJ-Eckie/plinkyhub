@@ -150,15 +150,13 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Show a snackbar when the user signs in (covers both manual sign-in
-    // and automatic session from email confirmation).
+    // Show a snackbar when the user's profile is fully loaded (username
+    // available), covering both manual sign-in and automatic session restore.
     ref.listen(authenticationProvider, (previous, next) {
-      if (previous?.user == null && next.user != null) {
+      if (previous?.username == null && next.username != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Welcome, ${next.username ?? next.user!.email ?? ''}!',
-            ),
+            content: Text('Welcome, ${next.username}!'),
           ),
         );
       }
