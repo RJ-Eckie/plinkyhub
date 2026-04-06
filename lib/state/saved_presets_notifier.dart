@@ -9,6 +9,7 @@ import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/saved_items_notifier.dart';
 import 'package:plinkyhub/state/saved_items_state.dart';
+import 'package:plinkyhub/utils/content_hash.dart';
 
 final savedPresetsProvider =
     NotifierProvider<SavedPresetsNotifier, SavedItemsState<SavedPreset>>(
@@ -59,15 +60,17 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
 
     setLoading();
     try {
+      final presetBytes = Uint8List.view(preset.buffer);
       final write = PresetWrite(
         userId: userId,
         name: preset.name,
         category: preset.category.name,
-        presetData: base64Encode(Uint8List.view(preset.buffer)),
+        presetData: base64Encode(presetBytes),
         description: description,
         isPublic: isPublic,
         youtubeUrl: youtubeUrl,
         sampleId: sampleId,
+        contentHash: computeContentHash(presetBytes),
       );
       await supabase.from('presets').insert(write.toJson());
       await refreshAll();
@@ -93,15 +96,17 @@ class SavedPresetsNotifier extends SavedItemsNotifier<SavedPreset> {
 
     setLoading();
     try {
+      final presetBytes = Uint8List.view(preset.buffer);
       final write = PresetWrite(
         userId: existing.userId,
         name: preset.name,
         category: preset.category.name,
-        presetData: base64Encode(Uint8List.view(preset.buffer)),
+        presetData: base64Encode(presetBytes),
         description: description ?? existing.description,
         isPublic: isPublic ?? existing.isPublic,
         youtubeUrl: youtubeUrl ?? existing.youtubeUrl,
         sampleId: sampleId,
+        contentHash: computeContentHash(presetBytes),
       );
       final json = write.toJson();
       await supabase.from('presets').update(json).eq('id', id);

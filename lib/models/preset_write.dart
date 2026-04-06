@@ -14,6 +14,7 @@ abstract class PresetWrite with _$PresetWrite {
     @Default(false) bool isPublic,
     @Default('') String youtubeUrl,
     String? sampleId,
+    String? contentHash,
   }) = _PresetWrite;
 
   factory PresetWrite.fromJson(Map<String, dynamic> json) =>
