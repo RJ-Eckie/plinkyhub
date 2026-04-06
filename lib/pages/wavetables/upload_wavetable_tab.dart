@@ -20,6 +20,7 @@ class UploadWavetableTab extends ConsumerStatefulWidget {
 class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _youtubeUrlController = TextEditingController();
   bool _isPublic = true;
   bool _isUploading = false;
   String? _errorMessage;
@@ -31,6 +32,7 @@ class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _youtubeUrlController.dispose();
     super.dispose();
   }
 
@@ -38,6 +40,7 @@ class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
     setState(() {
       _nameController.clear();
       _descriptionController.clear();
+      _youtubeUrlController.clear();
       _isPublic = true;
       _isUploading = false;
       _errorMessage = null;
@@ -96,6 +99,7 @@ class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
         updatedAt: DateTime.now(),
         description: _descriptionController.text.trim(),
         isPublic: _isPublic,
+        youtubeUrl: _youtubeUrlController.text.trim(),
       );
 
       await ref
@@ -203,6 +207,15 @@ class _UploadWavetableTabState extends ConsumerState<UploadWavetableTab> {
                 ),
                 minLines: 3,
                 maxLines: null,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _youtubeUrlController,
+                decoration: const InputDecoration(
+                  labelText: 'YouTube URL (optional)',
+                  hintText: 'https://www.youtube.com/watch?v=...',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 16),
               SwitchListTile(

@@ -175,6 +175,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         filePath: wavetable.filePath,
         description: wavetable.description,
         isPublic: wavetable.isPublic,
+        youtubeUrl: wavetable.youtubeUrl,
         contentHash: computeContentHash(uf2Bytes),
       );
       await _supabase.from('wavetables').insert(write.toJson());
@@ -206,6 +207,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         filePath: wavetable.filePath,
         description: wavetable.description,
         isPublic: wavetable.isPublic,
+        youtubeUrl: wavetable.youtubeUrl,
       );
       await _supabase
           .from('wavetables')
@@ -248,6 +250,7 @@ class SavedWavetablesNotifier extends Notifier<SavedWavetablesState> {
         filePath: wavetable.filePath,
         description: wavetable.description,
         isPublic: wavetable.isPublic,
+        youtubeUrl: wavetable.youtubeUrl,
         contentHash: computeContentHash(uf2Bytes),
       );
       await _supabase

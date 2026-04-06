@@ -11,6 +11,7 @@ abstract class WavetableWrite with _$WavetableWrite {
     required String filePath,
     @Default('') String description,
     @Default(false) bool isPublic,
+    @Default('') String youtubeUrl,
     String? contentHash,
   }) = _WavetableWrite;
 
