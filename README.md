@@ -7,6 +7,8 @@
 A site for sharing, creating and organizing your [Plinky](https://plinkysynth.com/) presets,
 samples, wavetables and packs.
 
+Use it at [plinkyhub.com](https://plinkyhub.com).
+
 ## Features
 
 ### Presets
