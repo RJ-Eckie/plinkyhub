@@ -12,7 +12,6 @@ import 'package:plinkyhub/pages/packs/samples_section.dart';
 import 'package:plinkyhub/pages/packs/wavetable_section.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
-import 'package:plinkyhub/state/plinky_state.dart';
 import 'package:plinkyhub/utils/constants.dart';
 import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
@@ -295,50 +294,20 @@ class _MyPlinkyPageState extends ConsumerState<MyPlinkyPage> {
     }
   }
 
-  Future<void> _editPresetSlot(int slotIndex) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Restart Plinky'),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
-          child: const Text(
-            'To edit a preset, your Plinky needs to be in normal mode '
-            '(not Tunnel of Lights).\n\n'
-            'Please restart your Plinky by turning it off and then '
-            'turning it back on without holding the encoder.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Done, connect'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) {
+  void _editPresetSlot(int slotIndex) {
+    final preset = _devicePresets[slotIndex];
+    if (preset == null) {
       return;
     }
 
     final notifier = ref.read(plinkyProvider.notifier);
     notifier.presetNumber = slotIndex;
+    final slot = _slots[slotIndex];
+    notifier.loadPresetFromBytes(
+      preset.buffer.asUint8List(),
+      sourceId: slot.presetId,
+    );
     context.go(AppRoute.editor.path);
-
-    await notifier.connect();
-    if (ref.read(plinkyProvider).connectionState ==
-        PlinkyConnectionState.connected) {
-      await notifier.loadPreset();
-      final slot = _slots[slotIndex];
-      if (slot.presetId != null) {
-        notifier.sourcePresetId = slot.presetId;
-      }
-    }
   }
 
   Future<SavedPack?> _findMatchingPack(String packHash) async {
