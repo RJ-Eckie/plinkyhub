@@ -10,5 +10,6 @@ abstract class AuthenticationState with _$AuthenticationState {
     User? user,
     String? username,
     String? errorMessage,
+    String? prefillEmail,
   }) = _AuthenticationState;
 }

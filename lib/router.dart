@@ -34,6 +34,10 @@ GoRouter createRouter(ProviderContainer container) {
       if (errorCode != null) {
         final description = state.uri.queryParameters['error_description'];
         final notifier = container.read(authenticationProvider.notifier);
+        final email = state.uri.queryParameters['email'];
+        if (email != null) {
+          notifier.setPrefillEmail(Uri.decodeComponent(email));
+        }
         if (errorCode == 'otp_expired') {
           notifier.setError(
             'Your confirmation link has expired. '

@@ -145,6 +145,14 @@ class AuthenticationNotifier extends Notifier<AuthenticationState> {
     state = state.copyWith(errorMessage: message);
   }
 
+  void setPrefillEmail(String email) {
+    state = state.copyWith(prefillEmail: email);
+  }
+
+  void clearPrefillEmail() {
+    state = state.copyWith(prefillEmail: null);
+  }
+
   static String _friendlyAuthError(String message) {
     final lower = message.toLowerCase();
     if (lower.contains('invalid login credentials')) {

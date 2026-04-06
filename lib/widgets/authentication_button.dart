@@ -133,6 +133,16 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
   bool _isSignUp = false;
 
   @override
+  void initState() {
+    super.initState();
+    final prefillEmail = ref.read(authenticationProvider).prefillEmail;
+    if (prefillEmail != null) {
+      _emailController.text = prefillEmail;
+      ref.read(authenticationProvider.notifier).clearPrefillEmail();
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -198,12 +208,15 @@ class _SignInDialogState extends ConsumerState<SignInDialog> {
               ),
               if (_isConfirmationError(authenticationState.errorMessage!)) ...[
                 const SizedBox(height: 8),
-                PlinkyButton(
-                  onPressed: authenticationState.isLoading
-                      ? null
-                      : () => _resendConfirmation(ref),
-                  icon: Icons.email,
-                  label: 'Resend confirmation email',
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: PlinkyButton(
+                    onPressed: authenticationState.isLoading
+                        ? null
+                        : () => _resendConfirmation(ref),
+                    icon: Icons.email,
+                    label: 'Resend confirmation email',
+                  ),
                 ),
               ],
             ],
