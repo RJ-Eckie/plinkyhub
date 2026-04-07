@@ -26,5 +26,9 @@ abstract class PlinkyState with _$PlinkyState {
     /// ID of the saved cloud preset that was loaded into the editor,
     /// used to enable overwriting instead of always saving new.
     String? sourcePresetId,
+
+    /// ID of the saved cloud sample linked to the preset being edited,
+    /// carried from My Plinky so the save dialog can pre-populate it.
+    String? sourceSampleId,
   }) = _PlinkyState;
 }

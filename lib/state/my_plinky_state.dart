@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_pack.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
@@ -21,6 +23,7 @@ class MyPlinkyState {
     this.parsedFlashImage,
     this.devicePresets = const {},
     this.deviceSampleSlots = const {},
+    this.deviceSamplePcmData = const {},
     this.slots = const [],
     this.wavetableId,
     this.patternIds = const {},
@@ -45,6 +48,9 @@ class MyPlinkyState {
 
   final Map<int, Preset> devicePresets;
   final Set<int> deviceSampleSlots;
+
+  /// Raw PCM data per device sample slot (slot index -> PCM bytes).
+  final Map<int, Uint8List> deviceSamplePcmData;
   final List<LinkedSlot> slots;
   final String? wavetableId;
   final Map<int, String?> patternIds;
@@ -79,6 +85,7 @@ class MyPlinkyState {
     ParsedFlashImage? Function()? parsedFlashImage,
     Map<int, Preset>? devicePresets,
     Set<int>? deviceSampleSlots,
+    Map<int, Uint8List>? deviceSamplePcmData,
     List<LinkedSlot>? slots,
     String? Function()? wavetableId,
     Map<int, String?>? patternIds,
@@ -103,6 +110,7 @@ class MyPlinkyState {
           : this.parsedFlashImage,
       devicePresets: devicePresets ?? this.devicePresets,
       deviceSampleSlots: deviceSampleSlots ?? this.deviceSampleSlots,
+      deviceSamplePcmData: deviceSamplePcmData ?? this.deviceSamplePcmData,
       slots: slots ?? this.slots,
       wavetableId: wavetableId != null ? wavetableId() : this.wavetableId,
       patternIds: patternIds ?? this.patternIds,

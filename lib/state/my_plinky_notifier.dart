@@ -291,6 +291,7 @@ class MyPlinkyNotifier extends Notifier<MyPlinkyState> {
         parsedFlashImage: () => parsedFlashImage,
         devicePresets: devicePresets,
         deviceSampleSlots: deviceSampleSlots,
+        deviceSamplePcmData: samplesResult.samplePcmData,
         slots: slots,
         wavetableId: () => wavetableId,
         patternIds: patternIds,

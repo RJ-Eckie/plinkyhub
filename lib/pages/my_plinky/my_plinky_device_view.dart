@@ -132,6 +132,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
               plinkyNotifier.loadPresetFromBytes(
                 preset.buffer.asUint8List(),
                 sourceId: slot.presetId,
+                sourceSampleId: slot.sampleId,
               );
               notifier.setEditingSlotIndex(slotIndex);
               context.go(AppRoute.editor.path);

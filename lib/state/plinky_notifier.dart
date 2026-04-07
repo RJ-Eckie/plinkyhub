@@ -599,13 +599,25 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     }
   }
 
-  void loadPresetFromBytes(Uint8List data, {String? sourceId}) {
+  void loadPresetFromBytes(
+    Uint8List data, {
+    String? sourceId,
+    String? sourceSampleId,
+  }) {
     final preset = Preset(data.buffer);
-    state = state.copyWith(preset: preset, sourcePresetId: sourceId);
+    state = state.copyWith(
+      preset: preset,
+      sourcePresetId: sourceId,
+      sourceSampleId: sourceSampleId,
+    );
   }
 
   void clearPreset() {
-    state = state.copyWith(preset: null, sourcePresetId: null);
+    state = state.copyWith(
+      preset: null,
+      sourcePresetId: null,
+      sourceSampleId: null,
+    );
   }
 
   void randomizePreset(List<RandomizeGroup> groups) {

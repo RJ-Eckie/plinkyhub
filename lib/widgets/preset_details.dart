@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
+import 'package:plinkyhub/pages/my_plinky/save_device_sample_dialog.dart';
 import 'package:plinkyhub/pages/packs/sample_picker_dialog.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
@@ -170,19 +171,43 @@ class PresetDetailsHeader extends ConsumerWidget {
                 ),
               ],
             ),
-            if (preset.usesSample)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.audio_file, size: 20),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Sample #${preset.sampleSlot}',
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                ],
-              ),
+            if (preset.usesSample) _SampleIndicator(preset: preset),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SampleIndicator extends ConsumerWidget {
+  const _SampleIndicator({required this.preset});
+
+  final Preset preset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sourceSampleId = ref.watch(
+      plinkyProvider.select((state) => state.sourceSampleId),
+    );
+    final samplesState = ref.watch(savedSamplesProvider);
+    final sampleName = sourceSampleId != null
+        ? [...samplesState.userItems, ...samplesState.publicItems]
+                  .where((sample) => sample.id == sourceSampleId)
+                  .firstOrNull
+                  ?.name ??
+              '(unknown)'
+        : null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.audio_file, size: 20),
+        const SizedBox(width: 4),
+        Text(
+          sampleName != null
+              ? 'Sample: $sampleName'
+              : 'Sample #${preset.sampleSlot}',
+          style: const TextStyle(fontSize: 15),
         ),
       ],
     );
@@ -225,7 +250,7 @@ class _SaveToCloudButton extends ConsumerWidget {
         ? userPresets.where((p) => p.id == sourcePresetId).firstOrNull
         : null;
     var isPublic = sourcePreset?.isPublic ?? true;
-    var selectedSampleId = sourcePreset?.sampleId;
+    var selectedSampleId = sourcePreset?.sampleId ?? plinkyState.sourceSampleId;
     if (sourcePreset != null) {
       descriptionController.text = sourcePreset.description;
       youtubeUrlController.text = sourcePreset.youtubeUrl;
@@ -292,6 +317,15 @@ class _SaveToCloudButton extends ConsumerWidget {
                       );
                     },
                   ),
+                  if (preset.usesSample && selectedSampleId == null)
+                    _SampleMissingWarning(
+                      preset: preset,
+                      onSampleSaved: (sampleId) {
+                        setDialogState(
+                          () => selectedSampleId = sampleId,
+                        );
+                      },
+                    ),
                   const SizedBox(height: 12),
                   SwitchListTile(
                     title: const Text('Share publicly'),
@@ -422,6 +456,79 @@ class _SaveToMyPlinkyButton extends ConsumerWidget {
       },
       icon: Icons.save,
       label: 'Save to My Plinky',
+    );
+  }
+}
+
+class _SampleMissingWarning extends ConsumerWidget {
+  const _SampleMissingWarning({
+    required this.preset,
+    required this.onSampleSaved,
+  });
+
+  final Preset preset;
+  final ValueChanged<String> onSampleSaved;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myPlinkyState = ref.watch(myPlinkyProvider);
+    final sampleSlot = preset.sampleSlot;
+    final hasPcmData =
+        sampleSlot >= 0 &&
+        myPlinkyState.deviceSamplePcmData.containsKey(sampleSlot);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.warning_amber,
+                size: 20,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'This preset uses a sample that has not '
+                  'been saved to the cloud. Save the sample '
+                  'first so others can use this preset.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hasPcmData)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: PlinkyButton(
+                onPressed: () async {
+                  final pcmBytes =
+                      myPlinkyState.deviceSamplePcmData[sampleSlot]!;
+                  final sampleInfo =
+                      myPlinkyState.parsedFlashImage?.sampleInfos[sampleSlot];
+                  final sampleId = await showDialog<String>(
+                    context: context,
+                    builder: (context) => SaveDeviceSampleDialog(
+                      pcmBytes: pcmBytes,
+                      sampleInfo: sampleInfo,
+                    ),
+                  );
+                  if (sampleId != null) {
+                    onSampleSaved(sampleId);
+                  }
+                },
+                icon: Icons.cloud_upload,
+                label: 'Save sample to cloud',
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
