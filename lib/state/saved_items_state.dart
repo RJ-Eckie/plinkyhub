@@ -42,8 +42,7 @@ class SavedItemsState<T> {
       isLoading: isLoading ?? this.isLoading,
       hasLoadedUserItems: hasLoadedUserItems ?? this.hasLoadedUserItems,
       hasLoadedPublicItems: hasLoadedPublicItems ?? this.hasLoadedPublicItems,
-      errorMessage:
-          errorMessage != null ? errorMessage() : this.errorMessage,
+      errorMessage: errorMessage != null ? errorMessage() : this.errorMessage,
       editingItem: editingItem != null ? editingItem() : this.editingItem,
     );
   }
