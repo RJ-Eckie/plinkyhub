@@ -1,10 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/models/category.dart';
 import 'package:plinkyhub/models/preset.dart';
 import 'package:plinkyhub/models/saved_sample.dart';
 import 'package:plinkyhub/pages/packs/sample_picker_dialog.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
+import 'package:plinkyhub/state/my_plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
 import 'package:plinkyhub/state/saved_presets_notifier.dart';
@@ -71,6 +76,8 @@ class PresetDetailsHeader extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             _SaveToCloudButton(preset: preset),
+            const SizedBox(width: 8),
+            _SaveToMyPlinkyButton(preset: preset),
             const SizedBox(width: 8),
             PlinkyButton(
               onPressed: () => showDialog<void>(
@@ -384,6 +391,37 @@ class _SaveToCloudButton extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _SaveToMyPlinkyButton extends ConsumerWidget {
+  const _SaveToMyPlinkyButton({required this.preset});
+
+  final Preset preset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final editingSlotIndex = ref.watch(
+      myPlinkyProvider.select((state) => state.editingSlotIndex),
+    );
+    if (editingSlotIndex == null) {
+      return const SizedBox.shrink();
+    }
+
+    return PlinkyButton(
+      onPressed: () {
+        final copiedBytes = Uint8List.fromList(
+          preset.buffer.asUint8List(),
+        );
+        final presetCopy = Preset(copiedBytes.buffer);
+        ref
+            .read(myPlinkyProvider.notifier)
+            .updatePresetFromEditor(editingSlotIndex, presetCopy);
+        context.go(AppRoute.myPlinky.path);
+      },
+      icon: Icons.save,
+      label: 'Save to My Plinky',
     );
   }
 }

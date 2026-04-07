@@ -14,12 +14,14 @@ class WavetableSection extends ConsumerWidget {
     required this.onChanged,
     this.deviceHasWavetable = false,
     this.showUnknownWhenEmpty = false,
+    this.isDirty = false,
     super.key,
   });
 
   final String? wavetableId;
   final bool deviceHasWavetable;
   final bool showUnknownWhenEmpty;
+  final bool isDirty;
   final ValueChanged<String?> onChanged;
 
   @override
@@ -100,6 +102,15 @@ class WavetableSection extends ConsumerWidget {
               statusText,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (isDirty)
+              Tooltip(
+                message: 'Unsaved changes',
+                child: Icon(
+                  Icons.edit,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             if (showUnknownWhenEmpty && !isLinked)
               const Tooltip(
                 message:

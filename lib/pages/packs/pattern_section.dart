@@ -13,12 +13,14 @@ class PatternSection extends StatelessWidget {
     required this.patternIds,
     required this.onPatternChanged,
     this.devicePatternIndices = const {},
+    this.dirtyPatterns = const {},
     super.key,
   });
 
   final Map<int, String?> patternIds;
   final void Function(int patternIndex, String? patternId) onPatternChanged;
   final Set<int> devicePatternIndices;
+  final Set<int> dirtyPatterns;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class PatternSection extends StatelessWidget {
               patternIndex: patternIndex,
               hasDevicePattern: devicePatternIndices.contains(patternIndex),
               patternId: patternIds[patternIndex],
+              isDirty: dirtyPatterns.contains(patternIndex),
               onChanged: (patternId) =>
                   onPatternChanged(patternIndex, patternId),
             );
@@ -64,12 +67,14 @@ class _PatternTile extends ConsumerWidget {
     required this.hasDevicePattern,
     required this.patternId,
     required this.onChanged,
+    this.isDirty = false,
   });
 
   final int patternIndex;
   final bool hasDevicePattern;
   final String? patternId;
   final ValueChanged<String?> onChanged;
+  final bool isDirty;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -121,6 +126,17 @@ class _PatternTile extends ConsumerWidget {
                     const SizedBox(width: 4),
                     LinkedItemIcon(
                       onTap: () => _showLinkedPattern(context, ref),
+                    ),
+                  ],
+                  if (isDirty) ...[
+                    const SizedBox(width: 4),
+                    Tooltip(
+                      message: 'Unsaved changes',
+                      child: Icon(
+                        Icons.edit,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ],
                 ],

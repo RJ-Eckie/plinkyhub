@@ -70,6 +70,27 @@ class MyPlinkyDeviceView extends ConsumerWidget {
                 style: theme.textTheme.headlineSmall,
               ),
               const Spacer(),
+              if (state.hasUnsavedChanges)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Unsaved changes',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               PlinkyButton(
                 onPressed: notifier.connectToPlinky,
                 icon: Icons.refresh,
@@ -85,6 +106,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
                     patternIds: state.patternIds,
                     wavetableId: state.wavetableId,
                     parsedFlashImage: state.parsedFlashImage!,
+                    onSaved: notifier.clearDirtyState,
                   ),
                 ),
                 icon: Icons.save,
@@ -96,6 +118,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
           PresetSlotsGrid(
             slots: state.slots,
             devicePresets: state.devicePresets,
+            dirtySlots: state.dirtySlots,
             onPresetChanged: notifier.updateSlotPreset,
             onSampleChanged: notifier.updateSlotSample,
             onEditPressed: (slotIndex) {
@@ -110,6 +133,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
                 preset.buffer.asUint8List(),
                 sourceId: slot.presetId,
               );
+              notifier.setEditingSlotIndex(slotIndex);
               context.go(AppRoute.editor.path);
             },
           ),
@@ -125,6 +149,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
           PatternSection(
             patternIds: state.patternIds,
             devicePatternIndices: state.devicePatternIndices.toSet(),
+            dirtyPatterns: state.dirtyPatterns,
             onPatternChanged: notifier.updatePattern,
           ),
           const SizedBox(height: 16),
@@ -132,6 +157,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
             wavetableId: state.wavetableId,
             deviceHasWavetable: state.deviceHasWavetable,
             showUnknownWhenEmpty: true,
+            isDirty: state.dirtyWavetable,
             onChanged: notifier.updateWavetable,
           ),
           const SizedBox(height: 16),

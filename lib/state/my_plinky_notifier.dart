@@ -35,7 +35,10 @@ class MyPlinkyNotifier extends Notifier<MyPlinkyState> {
       sampleId: updatedSlots[slotIndex].sampleId,
       patternId: updatedSlots[slotIndex].patternId,
     );
-    state = state.copyWith(slots: updatedSlots);
+    state = state.copyWith(
+      slots: updatedSlots,
+      dirtySlots: {...state.dirtySlots, slotIndex},
+    );
   }
 
   void updateSlotSample(int slotIndex, String? sampleId) {
@@ -45,17 +48,48 @@ class MyPlinkyNotifier extends Notifier<MyPlinkyState> {
       sampleId: sampleId,
       patternId: updatedSlots[slotIndex].patternId,
     );
-    state = state.copyWith(slots: updatedSlots);
+    state = state.copyWith(
+      slots: updatedSlots,
+      dirtySlots: {...state.dirtySlots, slotIndex},
+    );
   }
 
   void updatePattern(int patternIndex, String? patternId) {
     final updatedPatternIds = Map<int, String?>.of(state.patternIds);
     updatedPatternIds[patternIndex] = patternId;
-    state = state.copyWith(patternIds: updatedPatternIds);
+    state = state.copyWith(
+      patternIds: updatedPatternIds,
+      dirtyPatterns: {...state.dirtyPatterns, patternIndex},
+    );
   }
 
   void updateWavetable(String? wavetableId) {
-    state = state.copyWith(wavetableId: () => wavetableId);
+    state = state.copyWith(
+      wavetableId: () => wavetableId,
+      dirtyWavetable: true,
+    );
+  }
+
+  void setEditingSlotIndex(int? slotIndex) {
+    state = state.copyWith(editingSlotIndex: () => slotIndex);
+  }
+
+  void updatePresetFromEditor(int slotIndex, Preset preset) {
+    final updatedPresets = Map<int, Preset>.of(state.devicePresets);
+    updatedPresets[slotIndex] = preset;
+    state = state.copyWith(
+      devicePresets: updatedPresets,
+      dirtySlots: {...state.dirtySlots, slotIndex},
+      editingSlotIndex: () => null,
+    );
+  }
+
+  void clearDirtyState() {
+    state = state.copyWith(
+      dirtySlots: const {},
+      dirtyWavetable: false,
+      dirtyPatterns: const {},
+    );
   }
 
   Future<void> connectToPlinky() async {

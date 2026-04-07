@@ -9,6 +9,7 @@ class PresetSlotsGrid extends StatelessWidget {
     required this.onSampleChanged,
     this.devicePresets = const {},
     this.onEditPressed,
+    this.dirtySlots = const {},
     super.key,
   });
 
@@ -17,6 +18,7 @@ class PresetSlotsGrid extends StatelessWidget {
   final void Function(int slotIndex, String? sampleId) onSampleChanged;
   final Map<int, Preset> devicePresets;
   final void Function(int slotIndex)? onEditPressed;
+  final Set<int> dirtySlots;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,7 @@ class PresetSlotsGrid extends StatelessWidget {
               onEditPressed: onEditPressed != null
                   ? () => onEditPressed!(slotIndex)
                   : null,
+              isDirty: dirtySlots.contains(slotIndex),
             );
           },
         ),

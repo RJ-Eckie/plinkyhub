@@ -27,6 +27,10 @@ class MyPlinkyState {
     this.deviceHasWavetable = false,
     this.devicePatternIndices = const [],
     this.matchedPack,
+    this.dirtySlots = const {},
+    this.dirtyWavetable = false,
+    this.dirtyPatterns = const {},
+    this.editingSlotIndex,
   });
 
   final MyPlinkyPageState pageState;
@@ -48,6 +52,22 @@ class MyPlinkyState {
   final List<int> devicePatternIndices;
   final SavedPack? matchedPack;
 
+  /// Slot indices with changes not yet written to the device.
+  final Set<int> dirtySlots;
+
+  /// Whether the wavetable has been changed but not written to the device.
+  final bool dirtyWavetable;
+
+  /// Pattern indices with changes not yet written to the device.
+  final Set<int> dirtyPatterns;
+
+  /// The preset slot currently being edited in the editor, or null.
+  final int? editingSlotIndex;
+
+  /// Whether there are any unsaved changes.
+  bool get hasUnsavedChanges =>
+      dirtySlots.isNotEmpty || dirtyWavetable || dirtyPatterns.isNotEmpty;
+
   MyPlinkyState copyWith({
     MyPlinkyPageState? pageState,
     String? statusMessage,
@@ -65,6 +85,10 @@ class MyPlinkyState {
     bool? deviceHasWavetable,
     List<int>? devicePatternIndices,
     SavedPack? Function()? matchedPack,
+    Set<int>? dirtySlots,
+    bool? dirtyWavetable,
+    Set<int>? dirtyPatterns,
+    int? Function()? editingSlotIndex,
   }) {
     return MyPlinkyState(
       pageState: pageState ?? this.pageState,
@@ -85,6 +109,12 @@ class MyPlinkyState {
       deviceHasWavetable: deviceHasWavetable ?? this.deviceHasWavetable,
       devicePatternIndices: devicePatternIndices ?? this.devicePatternIndices,
       matchedPack: matchedPack != null ? matchedPack() : this.matchedPack,
+      dirtySlots: dirtySlots ?? this.dirtySlots,
+      dirtyWavetable: dirtyWavetable ?? this.dirtyWavetable,
+      dirtyPatterns: dirtyPatterns ?? this.dirtyPatterns,
+      editingSlotIndex: editingSlotIndex != null
+          ? editingSlotIndex()
+          : this.editingSlotIndex,
     );
   }
 }

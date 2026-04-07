@@ -21,6 +21,7 @@ class SaveMyPlinkyDialog extends ConsumerStatefulWidget {
     required this.patternIds,
     required this.wavetableId,
     required this.parsedFlashImage,
+    this.onSaved,
     super.key,
   });
 
@@ -29,6 +30,7 @@ class SaveMyPlinkyDialog extends ConsumerStatefulWidget {
   final Map<int, String?> patternIds;
   final String? wavetableId;
   final ParsedFlashImage parsedFlashImage;
+  final VoidCallback? onSaved;
 
   @override
   ConsumerState<SaveMyPlinkyDialog> createState() => _SaveMyPlinkyDialogState();
@@ -50,6 +52,7 @@ class _SaveMyPlinkyDialogState extends ConsumerState<SaveMyPlinkyDialog> {
 
     try {
       await _generateAndWriteFiles();
+      widget.onSaved?.call();
       setState(() => _step = _DialogStep.done);
     } on Exception catch (error) {
       setState(() {

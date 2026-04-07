@@ -22,6 +22,7 @@ class PackSlotTile extends ConsumerWidget {
     required this.onSampleChanged,
     this.devicePreset,
     this.onEditPressed,
+    this.isDirty = false,
     super.key,
   });
 
@@ -32,6 +33,7 @@ class PackSlotTile extends ConsumerWidget {
   final ValueChanged<String?> onSampleChanged;
   final Preset? devicePreset;
   final VoidCallback? onEditPressed;
+  final bool isDirty;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -107,6 +109,18 @@ class PackSlotTile extends ConsumerWidget {
                             padding: const EdgeInsets.only(left: 4),
                             child: LinkedItemIcon(
                               onTap: () => _showLinkedPreset(context, ref),
+                            ),
+                          ),
+                        if (isDirty)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Tooltip(
+                              message: 'Unsaved changes',
+                              child: Icon(
+                                Icons.edit,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
                       ],
