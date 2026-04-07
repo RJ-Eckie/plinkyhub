@@ -13,11 +13,13 @@ class WavetableSection extends ConsumerWidget {
     required this.wavetableId,
     required this.onChanged,
     this.deviceHasWavetable = false,
+    this.showUnknownWhenEmpty = false,
     super.key,
   });
 
   final String? wavetableId;
   final bool deviceHasWavetable;
+  final bool showUnknownWhenEmpty;
   final ValueChanged<String?> onChanged;
 
   @override
@@ -39,6 +41,8 @@ class WavetableSection extends ConsumerWidget {
         ? wavetableName ?? '(unknown)'
         : deviceHasWavetable
         ? 'Present on device (not linked)'
+        : showUnknownWhenEmpty
+        ? 'Unknown'
         : 'None';
 
     return Column(
@@ -96,6 +100,13 @@ class WavetableSection extends ConsumerWidget {
               statusText,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (showUnknownWhenEmpty && !isLinked)
+              const Tooltip(
+                message:
+                    "The wavetable file isn't always present in a way that "
+                    'we can detect which wavetable that is being used.',
+                child: Icon(Icons.info_outline, size: 20),
+              ),
             if (wavetableId != null)
               IconButton(
                 icon: const Icon(Icons.clear, size: 20),

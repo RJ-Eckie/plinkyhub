@@ -131,6 +131,7 @@ class MyPlinkyDeviceView extends ConsumerWidget {
           WavetableSection(
             wavetableId: state.wavetableId,
             deviceHasWavetable: state.deviceHasWavetable,
+            showUnknownWhenEmpty: true,
             onChanged: notifier.updateWavetable,
           ),
           const SizedBox(height: 16),
