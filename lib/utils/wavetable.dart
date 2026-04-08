@@ -37,8 +37,9 @@ const _outputScale = 16384.0;
 /// Each WAV must be a mono or stereo PCM file containing a single-cycle
 /// waveform with at least 512 samples.
 ///
-/// The output contains 17 shapes: a built-in saw (shape 0), the 15 user
-/// waveforms (shapes 1–15), and a built-in sine (shape 16).
+/// The output contains 17 shapes: a built-in saw (shape 0), a built-in sine
+/// (shape 1), and the 15 user waveforms (shapes 2–16), matching the official
+/// Plinky wavetable format.
 ///
 /// Returns the complete UF2 file as bytes, ready to be flashed to a Plinky.
 Uint8List generateWavetableUf2(List<Uint8List> wavFiles) {
@@ -54,10 +55,10 @@ Uint8List generateWavetableUf2(List<Uint8List> wavFiles) {
     if (shape == 0) {
       return _generateSawLookup();
     }
-    if (shape == wavetableShapeCount - 1) {
+    if (shape == 1) {
       return _generateSineLookup();
     }
-    return _wavToLookup(wavFiles[shape - 1]);
+    return _wavToLookup(wavFiles[shape - 2]);
   });
 
   return _generateUf2FromLookups(lookups);
@@ -70,8 +71,9 @@ Uint8List generateWavetableUf2(List<Uint8List> wavFiles) {
 /// −1.0 to 1.0 representing one cycle of a waveform. The samples are
 /// resampled to the internal lookup table resolution automatically.
 ///
-/// The output contains 17 shapes: a built-in saw (shape 0), the 15 user
-/// waveforms (shapes 1–15), and a built-in sine (shape 16).
+/// The output contains 17 shapes: a built-in saw (shape 0), a built-in sine
+/// (shape 1), and the 15 user waveforms (shapes 2–16), matching the official
+/// Plinky wavetable format.
 ///
 /// Returns the complete UF2 file as bytes, ready to be flashed to a Plinky.
 Uint8List generateWavetableUf2FromSamples(List<List<double>> sampleArrays) {
@@ -86,10 +88,10 @@ Uint8List generateWavetableUf2FromSamples(List<List<double>> sampleArrays) {
     if (shape == 0) {
       return _generateSawLookup();
     }
-    if (shape == wavetableShapeCount - 1) {
+    if (shape == 1) {
       return _generateSineLookup();
     }
-    return _samplesToLookup(sampleArrays[shape - 1]);
+    return _samplesToLookup(sampleArrays[shape - 2]);
   });
 
   return _generateUf2FromLookups(lookups);
@@ -136,7 +138,7 @@ Uint8List _generateUf2FromLookups(List<Float64List> lookups) {
 ///
 /// [rawData] should be the output of `uf2ToData` applied to a wavetable UF2.
 /// Returns a list of 15 sample arrays (512 samples each, in the range −1.0
-/// to 1.0), corresponding to shapes 1–15 (the user-drawn waveforms).
+/// to 1.0), corresponding to shapes 2–16 (the user-drawn waveforms c0–c14).
 ///
 /// Because the UF2 stores anti-aliased octave variants, the extracted samples
 /// are taken from the highest-resolution octave and may differ slightly from
@@ -146,7 +148,7 @@ List<List<double>> extractSamplesFromWavetableData(Uint8List rawData) {
   const samplesPerShapeBytes = wavetableSamplesPerShape * 2;
 
   final result = <List<double>>[];
-  for (var shape = 1; shape <= wavetableUserShapeCount; shape++) {
+  for (var shape = 2; shape < wavetableShapeCount; shape++) {
     final shapeByteOffset = shape * samplesPerShapeBytes;
     final samples = List<double>.filled(wavetableSamplesPerCycle, 0);
 
