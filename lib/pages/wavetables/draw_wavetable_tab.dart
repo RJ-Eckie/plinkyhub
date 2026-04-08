@@ -377,15 +377,6 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
             icon: _isUploading ? Icons.hourglass_empty : buttonIcon,
             label: _isUploading ? 'Uploading...' : buttonLabel,
           ),
-        const SizedBox(height: 24),
-        WaveformEffectsPanel(
-          effects: _currentEffects,
-          enabled: !_isBusy,
-          onEffectsChanged: () {
-            setState(_updatePostEffectSamples);
-          },
-          onApply: _bakeEffects,
-        ),
       ],
     );
 
@@ -442,6 +433,15 @@ class _DrawWavetableTabState extends ConsumerState<DrawWavetableTab> {
           isBusy: _isBusy,
           onCopyToAll: _copyToAllSlots,
           onSineAll: () => _applyPresetToAll(generateSinePreset),
+        ),
+        const SizedBox(height: 16),
+        WaveformEffectsPanel(
+          effects: _currentEffects,
+          enabled: !_isBusy,
+          onEffectsChanged: () {
+            setState(_updatePostEffectSamples);
+          },
+          onApply: _bakeEffects,
         ),
       ],
     );
