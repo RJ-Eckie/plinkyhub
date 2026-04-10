@@ -30,10 +30,11 @@ class _HarmonicEditorState extends State<HarmonicEditor> {
   void _applyDrawAt(Offset localPosition, Size canvasSize) {
     final sampleCount = widget.samples.length;
     final harmonicCount = sampleCount ~/ 2;
+    final visibleCount = min(harmonicCount, 128);
 
-    final harmonicIndex = (localPosition.dx / canvasSize.width * harmonicCount)
+    final harmonicIndex = (localPosition.dx / canvasSize.width * visibleCount)
         .floor()
-        .clamp(0, harmonicCount - 1);
+        .clamp(0, visibleCount - 1);
     final magnitude = (1.0 - localPosition.dy / canvasSize.height).clamp(
       0.0,
       1.0,
