@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:plinkyhub/utils/uf2.dart';
+
 /// Number of waveform shapes in the wavetable.
 const wavetableShapeCount = 17;
 
@@ -19,8 +21,14 @@ const wavetableLookupSize = 65536;
 /// Number of user-provided WAV files (c0 through c14).
 const wavetableUserShapeCount = 15;
 
-/// Base flash address for the wavetable UF2 on the RP2040.
-const _wavetableBaseAddress = 0x08077000;
+/// Base flash address for the wavetable region.
+const wavetableBaseAddress = 0x08077000;
+
+/// Size of the wavetable region in bytes (36 KB).
+const wavetableSize = 36 * 1024;
+
+/// Base flash address of CURRENT.UF2.
+const _currentUf2BaseAddress = 0x08010000;
 
 /// UF2 flags indicating familyID is present.
 const _wavetableUf2Flags = 0x00002000;
@@ -131,7 +139,7 @@ Uint8List _generateUf2FromLookups(List<Float64List> lookups) {
     byteView.setInt16(i * 2, allSamples[i], Endian.little);
   }
 
-  return _packWavetableUf2(rawBytes);
+  return packWavetableUf2(rawBytes);
 }
 
 /// Extracts the 15 user waveform slots from raw wavetable data.
@@ -370,10 +378,47 @@ String _readFourCC(ByteData data, int offset) {
 }
 
 // ---------------------------------------------------------------------------
-// UF2 packing (wavetable-specific flags & base address)
+// UF2 packing and extraction (wavetable-specific flags & base address)
 // ---------------------------------------------------------------------------
 
-Uint8List _packWavetableUf2(Uint8List rawData) {
+/// Extracts the raw wavetable payload from the firmware image in
+/// [currentUf2Bytes].
+///
+/// The wavetable lives at flash address [wavetableBaseAddress] inside the
+/// firmware binary. Returns null if [currentUf2Bytes] is not a valid UF2, if
+/// the firmware image is too small to contain the wavetable region, or if the
+/// extracted region is blank (all 0x00 or all 0xFF).
+Uint8List? extractWavetablePayloadFromCurrentUf2(Uint8List currentUf2Bytes) {
+  Uint8List flashData;
+  try {
+    flashData = uf2ToData(currentUf2Bytes);
+  } on FormatException {
+    return null;
+  }
+
+  const wavetableOffset = wavetableBaseAddress - _currentUf2BaseAddress;
+  if (flashData.length < wavetableOffset + wavetableSize) {
+    return null;
+  }
+
+  final payload = Uint8List.sublistView(
+    flashData,
+    wavetableOffset,
+    wavetableOffset + wavetableSize,
+  );
+
+  if (payload.every((b) => b == 0x00) || payload.every((b) => b == 0xFF)) {
+    return null;
+  }
+
+  return payload;
+}
+
+/// Packs raw wavetable [rawData] into a WAVETAB.UF2-compatible file.
+///
+/// The output uses the wavetable-specific UF2 flags and target addresses and
+/// is byte-for-byte identical to a WAVETAB.UF2 generated from the same data.
+Uint8List packWavetableUf2(Uint8List rawData) {
   const dataPerBlock = 256;
   const blockSize = 512;
   final totalBlocks = (rawData.length + dataPerBlock - 1) ~/ dataPerBlock;
@@ -392,7 +437,7 @@ Uint8List _packWavetableUf2(Uint8List rawData) {
     output.setUint32(blockOffset + 8, _wavetableUf2Flags, Endian.little);
     output.setUint32(
       blockOffset + 12,
-      _wavetableBaseAddress + dataOffset,
+      wavetableBaseAddress + dataOffset,
       Endian.little,
     );
     output.setUint32(blockOffset + 16, dataLength, Endian.little);

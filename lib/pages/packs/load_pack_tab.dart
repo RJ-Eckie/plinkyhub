@@ -20,6 +20,7 @@ import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
 import 'package:plinkyhub/utils/wav.dart';
+import 'package:plinkyhub/utils/wavetable.dart';
 import 'package:plinkyhub/widgets/chromium_required_banner.dart';
 import 'package:plinkyhub/widgets/linked_item_icon.dart';
 import 'package:plinkyhub/widgets/loading_indicator.dart';
@@ -271,11 +272,17 @@ class _LoadPackTabState extends ConsumerState<LoadPackTab> {
         );
       }
 
-      updateProgress('Reading WAVETAB.UF2...');
-      _wavetableUf2Bytes = await readFileFromDirectory(
+      updateProgress('Reading CURRENT.UF2...');
+      final currentUf2Bytes = await readFileFromDirectory(
         directory,
-        'WAVETAB.UF2',
+        'CURRENT.UF2',
       );
+      final wavetablePayload = currentUf2Bytes != null
+          ? extractWavetablePayloadFromCurrentUf2(currentUf2Bytes)
+          : null;
+      _wavetableUf2Bytes = wavetablePayload != null
+          ? packWavetableUf2(wavetablePayload)
+          : null;
 
       // Parse device data on the main thread, yielding to the UI
       // between phases (Isolate.run is not supported in WASM).

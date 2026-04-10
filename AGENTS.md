@@ -18,7 +18,7 @@ Always run `dart format .` before committing to ensure consistent formatting. Th
 
 ## Hardware Reference
 
-The Plinky is a synthesizer. The firmware lives at https://github.com/ember-labs-io/Plinky_LPE and the docs/manual at https://plinkysynth.com/docs/manual — consult these for anything related to how the Plinky works (synth parameters, protocols, MIDI/USB communication, hardware capabilities, etc.).
+The Plinky is a synthesizer. The stable firmware lives at https://github.com/plinkysynth/plinky_public (cloned at `~/repos/plinky_public`) and the docs/manual at https://plinkysynth.com/docs/manual — consult these for anything related to how the Plinky works (synth parameters, protocols, MIDI/USB communication, hardware capabilities, etc.). https://github.com/ember-labs-io/Plinky_LPE (cloned at `~/repos/Plinky_LPE`) is an experimental/development branch, not the stable release.
 
 For details on the UF2 format (memory map, sample encoding, presets, SampleInfo metadata), read `docs/uf2.md`.
 

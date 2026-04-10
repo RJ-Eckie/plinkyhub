@@ -8,6 +8,7 @@ import 'package:plinkyhub/utils/content_hash.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/utils/plinky_device_parser.dart';
 import 'package:plinkyhub/utils/presets_uf2.dart';
+import 'package:plinkyhub/utils/wavetable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final myPlinkyProvider = NotifierProvider<MyPlinkyNotifier, MyPlinkyState>(
@@ -138,11 +139,17 @@ class MyPlinkyNotifier extends Notifier<MyPlinkyState> {
         }
       }
 
-      updateProgress('Reading WAVETAB.UF2...');
-      final wavetableBytes = await readFileFromDirectory(
+      updateProgress('Reading CURRENT.UF2...');
+      final currentUf2Bytes = await readFileFromDirectory(
         directory,
-        'WAVETAB.UF2',
+        'CURRENT.UF2',
       );
+      final wavetablePayload = currentUf2Bytes != null
+          ? extractWavetablePayloadFromCurrentUf2(currentUf2Bytes)
+          : null;
+      final wavetableBytes = wavetablePayload != null
+          ? packWavetableUf2(wavetablePayload)
+          : null;
 
       // Phase 1: Parse presets and patterns.
       updateProgress('Parsing presets...');
