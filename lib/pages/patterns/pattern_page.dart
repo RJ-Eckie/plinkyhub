@@ -131,28 +131,17 @@ class _PatternPageState extends ConsumerState<PatternPage> {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: PatternCard(
-                pattern: _pattern!,
-                isOwned: isOwned,
-                onDeleted: () => context.go(AppRoute.patterns.path),
-              ),
-            ),
+      child: SizedBox.expand(
+        child: PatternPlaybackPanel(
+          pattern: _pattern!,
+          patternData: _patternData,
+          loadError: _patternDataError,
+          header: PatternHeader(
+            pattern: _pattern!,
+            isOwned: isOwned,
+            onDeleted: () => context.go(AppRoute.patterns.path),
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: PatternPlaybackPanel(
-              pattern: _pattern!,
-              patternData: _patternData,
-              loadError: _patternDataError,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

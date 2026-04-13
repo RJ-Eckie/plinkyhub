@@ -164,8 +164,6 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Pattern Grid', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
         Flexible(
           child: LayoutBuilder(
             builder: (context, constraints) {
