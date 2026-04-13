@@ -56,6 +56,10 @@ class PatternGridEditor extends StatefulWidget {
 }
 
 class _PatternGridEditorState extends State<PatternGridEditor> {
+  /// Total width of one grid cell including its 1px margin on each side.
+  /// Must match the values used in [build].
+  static const _cellWithMargin = 38.0;
+
   final _scrollController = ScrollController();
 
   /// Tracks whether the current drag gesture is painting or erasing cells.
@@ -65,6 +69,41 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant PatternGridEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentPlaybackStep != oldWidget.currentPlaybackStep) {
+      _scrollToPlaybackStep();
+    }
+  }
+
+  /// Keeps the currently-playing column horizontally centred in the
+  /// viewport. Clamped at both ends so we don't scroll past the start
+  /// or end of the grid.
+  void _scrollToPlaybackStep() {
+    final step = widget.currentPlaybackStep;
+    if (step == null || !_scrollController.hasClients) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+      final position = _scrollController.position;
+      final viewportWidth = position.viewportDimension;
+      final cellCenterOffset = step * _cellWithMargin + _cellWithMargin / 2;
+      final target = (cellCenterOffset - viewportWidth / 2).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _toggleCell(int step, int row) {

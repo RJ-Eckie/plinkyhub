@@ -18,11 +18,22 @@ final patternPlaybackProvider =
 class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
   Timer? _timer;
   final _activeNotes = <int>{};
+  PatternData? _currentPattern;
+  int _currentChannel = 0;
 
   @override
   PatternPlaybackState build() {
     ref.onDispose(_stopInternal);
     return const PatternPlaybackState();
+  }
+
+  /// Update the playback tempo. Takes effect immediately if a pattern
+  /// is currently playing.
+  void setBeatsPerMinute(double beatsPerMinute) {
+    state = state.copyWith(beatsPerMinute: beatsPerMinute);
+    if (state.isPlaying && _currentPattern != null) {
+      _restartTimer(_currentPattern!, channel: _currentChannel);
+    }
   }
 
   /// Start playing [pattern]. Sends a program change first if
@@ -45,10 +56,8 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
       return;
     }
 
-    // Plinky patterns use 16 sixteenth-note steps; one beat = 4 steps.
-    final stepDurationMilliseconds = (60000 / (beatsPerMinute * 4))
-        .round()
-        .clamp(20, 2000);
+    _currentPattern = pattern;
+    _currentChannel = channel;
 
     state = state.copyWith(
       isPlaying: true,
@@ -60,6 +69,15 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
 
     // Fire the first step immediately so audio starts on click.
     _advance(pattern, channel: channel, initial: true);
+    _restartTimer(pattern, channel: channel);
+  }
+
+  void _restartTimer(PatternData pattern, {required int channel}) {
+    _timer?.cancel();
+    // Plinky patterns use 16 sixteenth-note steps; one beat = 4 steps.
+    final stepDurationMilliseconds = (60000 / (state.beatsPerMinute * 4))
+        .round()
+        .clamp(20, 2000);
     _timer = Timer.periodic(
       Duration(milliseconds: stepDurationMilliseconds),
       (_) => _advance(pattern, channel: channel),
@@ -68,6 +86,7 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
 
   void stop() {
     _stopInternal();
+    _currentPattern = null;
     state = state.copyWith(
       isPlaying: false,
       currentPatternId: null,

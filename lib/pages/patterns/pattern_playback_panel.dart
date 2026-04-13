@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/pattern_data.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
@@ -32,11 +33,19 @@ class PatternPlaybackPanel extends ConsumerStatefulWidget {
 }
 
 class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
+  static const _minimumBpm = 20.0;
+  static const _maximumBpm = 300.0;
+
   int? _presetSlot;
+  late final TextEditingController _bpmController;
+  double _beatsPerMinute = 120;
 
   @override
   void initState() {
     super.initState();
+    _bpmController = TextEditingController(
+      text: _beatsPerMinute.toStringAsFixed(0),
+    );
     // Try to get a MIDI output port ready so the user can play right away.
     Future.microtask(() async {
       final midiState = ref.read(midiProvider);
@@ -44,6 +53,24 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
         await ref.read(midiProvider.notifier).connect();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _bpmController.dispose();
+    super.dispose();
+  }
+
+  void _commitBpm(String value) {
+    final parsed = double.tryParse(value.trim());
+    if (parsed == null) {
+      _bpmController.text = _beatsPerMinute.toStringAsFixed(0);
+      return;
+    }
+    final clamped = parsed.clamp(_minimumBpm, _maximumBpm);
+    setState(() => _beatsPerMinute = clamped);
+    _bpmController.text = clamped.toStringAsFixed(0);
+    ref.read(patternPlaybackProvider.notifier).setBeatsPerMinute(clamped);
   }
 
   List<List<bool>> _gridAsBool(PatternData patternData) {
@@ -82,6 +109,7 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
       patternId: widget.pattern.id,
       pattern: patternData,
       presetSlot: _presetSlot,
+      beatsPerMinute: _beatsPerMinute,
     );
   }
 
@@ -126,6 +154,14 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
                   onPressed: canPlay ? _togglePlay : null,
                   icon: isPlayingThisPattern ? Icons.stop : Icons.play_arrow,
                   label: isPlayingThisPattern ? 'Stop' : 'Play',
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 96,
+                  child: _BpmField(
+                    controller: _bpmController,
+                    onSubmitted: _commitBpm,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -180,6 +216,42 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BpmField extends StatelessWidget {
+  const _BpmField({
+    required this.controller,
+    required this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp('[0-9.]')),
+      ],
+      textAlign: TextAlign.center,
+      decoration: const InputDecoration(
+        labelText: 'BPM',
+        border: OutlineInputBorder(),
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+      ),
+      onSubmitted: onSubmitted,
+      onTapOutside: (_) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        onSubmitted(controller.text);
+      },
     );
   }
 }

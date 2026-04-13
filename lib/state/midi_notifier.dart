@@ -22,9 +22,7 @@ class MidiNotifier extends Notifier<MidiState> {
     state = state.copyWith(
       isConnected: _service.isConnected,
       outputs: outputs,
-      selectedOutputId:
-          state.selectedOutputId ??
-          (outputs.isNotEmpty ? outputs.first.id : null),
+      selectedOutputId: state.selectedOutputId ?? _defaultOutputId(outputs),
     );
   }
 
@@ -38,10 +36,21 @@ class MidiNotifier extends Notifier<MidiState> {
     final stillPresent = outputs.any((output) => output.id == selected);
     state = state.copyWith(
       outputs: outputs,
-      selectedOutputId: stillPresent
-          ? selected
-          : (outputs.isNotEmpty ? outputs.first.id : null),
+      selectedOutputId: stillPresent ? selected : _defaultOutputId(outputs),
     );
+  }
+
+  /// Picks the best output to default to. Prefers a port whose name
+  /// contains "plinky" so the user doesn't have to manually pick it
+  /// when their Plinky is plugged in.
+  String? _defaultOutputId(List<MidiOutputPort> outputs) {
+    if (outputs.isEmpty) {
+      return null;
+    }
+    final plinky = outputs
+        .where((output) => output.name.toLowerCase().contains('plinky'))
+        .firstOrNull;
+    return (plinky ?? outputs.first).id;
   }
 
   void _onMessage(MidiMessage message) {
