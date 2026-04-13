@@ -24,6 +24,41 @@ String _midiNoteName(int midi) {
   return '${_noteNames[midi % 12]}$octave';
 }
 
+/// How the pattern grid arranges and colours its rows.
+enum GridViewMode {
+  /// No string colouring; rows sorted high-to-low by pitch.
+  blank,
+
+  /// Rows sorted high-to-low by pitch, but each row is tinted with
+  /// the colour of its Plinky string (per-string monophony).
+  coloredByString,
+
+  /// Rows grouped by string (string 0 on top, string 7 on bottom),
+  /// columns inside a string run from highest position to lowest;
+  /// each row is tinted with its string colour.
+  orderedByString,
+}
+
+/// One distinct hue per Plinky string (0..7). Picked from evenly
+/// spaced HSV hues so adjacent strings stay easy to tell apart.
+/// Active cells use the full saturated colour; inactive cells get a
+/// muted version via [_inactiveStringColor] so the row-grouping is
+/// still readable but doesn't compete with the active marks.
+Color _stringColor(int stringIndex) {
+  final hue = (stringIndex * 360 / 8) % 360;
+  return HSLColor.fromAHSL(1, hue, 0.6, 0.55).toColor();
+}
+
+Color _inactiveStringColor(int stringIndex, ColorScheme colorScheme) {
+  final base = _stringColor(stringIndex);
+  return Color.lerp(colorScheme.surfaceContainerLow, base, 0.08)!;
+}
+
+Color _inactiveDownbeatStringColor(int stringIndex, ColorScheme colorScheme) {
+  final base = _stringColor(stringIndex);
+  return Color.lerp(colorScheme.surfaceContainerHighest, base, 0.12)!;
+}
+
 /// A piano-roll-style step-sequencer grid for Plinky patterns.
 ///
 /// Each row is one of the 64 Plinky pads (8 strings × 8 columns) sorted
@@ -46,6 +81,7 @@ class PatternGridEditor extends StatefulWidget {
     this.playbackPatternId,
     this.onAppendSteps,
     this.appendStepsTooltip,
+    this.viewMode = GridViewMode.coloredByString,
     super.key,
   });
 
@@ -72,6 +108,9 @@ class PatternGridEditor extends StatefulWidget {
   /// Pass null to disable the button entirely.
   final VoidCallback? onAppendSteps;
   final String? appendStepsTooltip;
+
+  /// Controls how rows are arranged and coloured.
+  final GridViewMode viewMode;
 
   @override
   State<PatternGridEditor> createState() => _PatternGridEditorState();
@@ -106,15 +145,22 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
   @override
   void initState() {
     super.initState();
-    _pads = plinkyPadsByPitch(widget.scale);
+    _pads = _padsForViewMode();
   }
 
   @override
   void didUpdateWidget(covariant PatternGridEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.scale != oldWidget.scale) {
-      _pads = plinkyPadsByPitch(widget.scale);
+    if (widget.scale != oldWidget.scale ||
+        widget.viewMode != oldWidget.viewMode) {
+      _pads = _padsForViewMode();
     }
+  }
+
+  List<PlinkyPad> _padsForViewMode() {
+    return widget.viewMode == GridViewMode.orderedByString
+        ? plinkyPadsByString(widget.scale)
+        : plinkyPadsByPitch(widget.scale);
   }
 
   @override
@@ -185,6 +231,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                   readOnly: widget.readOnly,
                   enabled: widget.enabled,
                   playbackPatternId: widget.playbackPatternId,
+                  viewMode: widget.viewMode,
                   horizontalScrollController: _horizontalScrollController,
                   verticalScrollController: _verticalScrollController,
                   isCellActive: _isCellActive,
@@ -242,6 +289,7 @@ class _PianoRollScroller extends StatelessWidget {
     required this.readOnly,
     required this.enabled,
     required this.playbackPatternId,
+    required this.viewMode,
     required this.horizontalScrollController,
     required this.verticalScrollController,
     required this.isCellActive,
@@ -265,6 +313,7 @@ class _PianoRollScroller extends StatelessWidget {
   final bool readOnly;
   final bool enabled;
   final String? playbackPatternId;
+  final GridViewMode viewMode;
   final ScrollController horizontalScrollController;
   final ScrollController verticalScrollController;
   final bool Function(int step, PlinkyPad pad) isCellActive;
@@ -294,6 +343,7 @@ class _PianoRollScroller extends StatelessWidget {
                   rowHeight: rowHeight,
                   headerHeight: headerHeight,
                   textStyle: textTheme.bodySmall,
+                  viewMode: viewMode,
                 ),
               ),
               Expanded(
@@ -335,6 +385,7 @@ class _PianoRollScroller extends StatelessWidget {
                                       cellWithMargin: cellWithMargin,
                                       rowHeight: rowHeight,
                                       colorScheme: colorScheme,
+                                      viewMode: viewMode,
                                       readOnly: readOnly || !enabled,
                                       isActive: isCellActive,
                                       onTap: onTap,
@@ -387,15 +438,18 @@ class _PitchLabels extends StatelessWidget {
     required this.rowHeight,
     required this.headerHeight,
     required this.textStyle,
+    required this.viewMode,
   });
 
   final List<PlinkyPad> pads;
   final double rowHeight;
   final double headerHeight;
   final TextStyle? textStyle;
+  final GridViewMode viewMode;
 
   @override
   Widget build(BuildContext context) {
+    final colored = viewMode != GridViewMode.blank;
     return Column(
       children: [
         SizedBox(height: headerHeight),
@@ -408,7 +462,11 @@ class _PitchLabels extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   _midiNoteName(pad.midiNote),
-                  style: textStyle?.copyWith(fontSize: 11),
+                  style: textStyle?.copyWith(
+                    fontSize: 11,
+                    color: colored ? _stringColor(pad.string) : null,
+                    fontWeight: colored ? FontWeight.w600 : null,
+                  ),
                   overflow: TextOverflow.fade,
                 ),
               ),
@@ -459,6 +517,7 @@ class _PadRow extends StatelessWidget {
     required this.cellWithMargin,
     required this.rowHeight,
     required this.colorScheme,
+    required this.viewMode,
     required this.readOnly,
     required this.isActive,
     required this.onTap,
@@ -473,6 +532,7 @@ class _PadRow extends StatelessWidget {
   final double cellWithMargin;
   final double rowHeight;
   final ColorScheme colorScheme;
+  final GridViewMode viewMode;
   final bool readOnly;
   final bool Function(int step, PlinkyPad pad) isActive;
   final void Function(int step, int padIndex) onTap;
@@ -482,6 +542,16 @@ class _PadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colored = viewMode != GridViewMode.blank;
+    final activeColor = colored
+        ? _stringColor(pad.string)
+        : colorScheme.primary;
+    final inactiveColor = colored
+        ? _inactiveStringColor(pad.string, colorScheme)
+        : colorScheme.surfaceContainerLow;
+    final inactiveDownbeatColor = colored
+        ? _inactiveDownbeatStringColor(pad.string, colorScheme)
+        : colorScheme.surfaceContainerHighest;
     return Row(
       children: [
         for (var step = 0; step < stepCount; step++)
@@ -490,7 +560,12 @@ class _PadRow extends StatelessWidget {
             isDownbeat: step % 4 == 0,
             cellSize: cellWithMargin - 2,
             rowHeight: rowHeight,
-            colorScheme: colorScheme,
+            activeColor: activeColor,
+            inactiveColor: inactiveColor,
+            inactiveDownbeatColor: inactiveDownbeatColor,
+            outlineColor: colorScheme.outline,
+            outlineVariantColor: colorScheme.outlineVariant,
+            hoverTintColor: colorScheme.onSurface,
             readOnly: readOnly,
             onTap: () => onTap(step, padIndex),
             onDragStart: () => onDragStart(step, padIndex),
@@ -607,7 +682,12 @@ class _GridCell extends StatefulWidget {
     required this.isDownbeat,
     required this.cellSize,
     required this.rowHeight,
-    required this.colorScheme,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.inactiveDownbeatColor,
+    required this.outlineColor,
+    required this.outlineVariantColor,
+    required this.hoverTintColor,
     required this.onTap,
     required this.onDragStart,
     required this.onDragEnter,
@@ -619,7 +699,12 @@ class _GridCell extends StatefulWidget {
   final bool isDownbeat;
   final double cellSize;
   final double rowHeight;
-  final ColorScheme colorScheme;
+  final Color activeColor;
+  final Color inactiveColor;
+  final Color inactiveDownbeatColor;
+  final Color outlineColor;
+  final Color outlineVariantColor;
+  final Color hoverTintColor;
   final VoidCallback onTap;
   final VoidCallback onDragStart;
   final VoidCallback onDragEnter;
@@ -636,16 +721,16 @@ class _GridCellState extends State<_GridCell> {
   @override
   Widget build(BuildContext context) {
     final baseColor = widget.isActive
-        ? widget.colorScheme.primary
+        ? widget.activeColor
         : widget.isDownbeat
-        ? widget.colorScheme.surfaceContainerHighest
-        : widget.colorScheme.surfaceContainerLow;
+        ? widget.inactiveDownbeatColor
+        : widget.inactiveColor;
     final fillColor = _isHovered && !widget.readOnly
-        ? Color.lerp(baseColor, widget.colorScheme.onSurface, 0.15)!
+        ? Color.lerp(baseColor, widget.hoverTintColor, 0.15)!
         : baseColor;
     final borderColor = _isHovered && !widget.readOnly
-        ? widget.colorScheme.outline
-        : widget.colorScheme.outlineVariant;
+        ? widget.outlineColor
+        : widget.outlineVariantColor;
 
     final cell = Container(
       width: widget.cellSize,

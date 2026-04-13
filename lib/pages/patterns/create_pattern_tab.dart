@@ -39,6 +39,7 @@ class CreatePatternTab extends ConsumerStatefulWidget {
 class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
   bool _isSaving = false;
   PlinkyScale _scale = PlinkyScale.major;
+  GridViewMode _viewMode = GridViewMode.coloredByString;
   late List<List<int>> _grid;
 
   @override
@@ -273,6 +274,42 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
                         },
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<GridViewMode>(
+                  initialValue: _viewMode,
+                  decoration: const InputDecoration(
+                    labelText: 'Grid view',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: GridViewMode.blank,
+                      child: Text('Blank'),
+                    ),
+                    DropdownMenuItem(
+                      value: GridViewMode.coloredByString,
+                      child: Text('Coloured by string'),
+                    ),
+                    DropdownMenuItem(
+                      value: GridViewMode.orderedByString,
+                      child: Text('Ordered by string'),
+                    ),
+                  ],
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _viewMode = value);
+                          }
+                        },
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -287,6 +324,7 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
               scale: _scale,
               enabled: !_isSaving,
               playbackPatternId: _editorPatternId,
+              viewMode: _viewMode,
               onGridChanged: (newGrid) => setState(() => _grid = newGrid),
               onAppendSteps: _isSaving || _grid.length >= _maxStepCount
                   ? null

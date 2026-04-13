@@ -99,6 +99,32 @@ class PlinkyPad {
   final int midiNote;
 }
 
+/// Returns the 64 Plinky pads grouped by string (string 0 first,
+/// then string 1, ...). Within each string the columns run from 7
+/// (highest pitch position) down to 0, so rows always read top-down
+/// as decreasing pitch within a string group.
+List<PlinkyPad> plinkyPadsByString(
+  PlinkyScale scale, {
+  int stride = 7,
+  int octaveOffset = 0,
+}) {
+  return [
+    for (var stringIndex = 0; stringIndex < 8; stringIndex++)
+      for (var column = 7; column >= 0; column--)
+        PlinkyPad(
+          string: stringIndex,
+          column: column,
+          midiNote: midiNoteForPad(
+            row: stringIndex,
+            col: column,
+            scale: scale,
+            stride: stride,
+            octaveOffset: octaveOffset,
+          ),
+        ),
+  ];
+}
+
 /// Returns the 64 Plinky pads (8 strings × 8 columns) sorted from
 /// highest to lowest pitch, suitable for piano-roll display.
 List<PlinkyPad> plinkyPadsByPitch(
