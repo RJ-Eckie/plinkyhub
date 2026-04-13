@@ -11,6 +11,7 @@ import 'package:plinkyhub/pages/packs/pack_page.dart';
 import 'package:plinkyhub/pages/packs/saved_packs_page.dart';
 import 'package:plinkyhub/pages/patterns/pattern_page.dart';
 import 'package:plinkyhub/pages/patterns/saved_patterns_page.dart';
+import 'package:plinkyhub/pages/play/play_page.dart';
 import 'package:plinkyhub/pages/presets/preset_page.dart';
 import 'package:plinkyhub/pages/presets/saved_presets_page.dart';
 import 'package:plinkyhub/pages/samples/sample_page.dart';
@@ -162,7 +163,16 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 7: Users
+          // Branch 7: Play
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoute.play.path,
+                builder: (context, state) => const PlayPage(),
+              ),
+            ],
+          ),
+          // Branch 8: Users
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -171,7 +181,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 8: User Profile
+          // Branch 9: User Profile
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -180,7 +190,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 9: Firmware
+          // Branch 10: Firmware
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -189,7 +199,7 @@ GoRouter createRouter(ProviderContainer container) {
               ),
             ],
           ),
-          // Branch 10: About
+          // Branch 11: About
           StatefulShellBranch(
             routes: [
               GoRoute(

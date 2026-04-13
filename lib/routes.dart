@@ -7,6 +7,7 @@ enum AppRoute {
   samples('/samples', itemSegment: 'sample'),
   wavetables('/wavetables', itemSegment: 'wavetable'),
   patterns('/patterns', itemSegment: 'pattern'),
+  play('/play'),
   users('/users'),
   profile('/profile'),
   firmware('/firmware'),
