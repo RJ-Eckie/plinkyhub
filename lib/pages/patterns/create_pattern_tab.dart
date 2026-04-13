@@ -232,14 +232,6 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
 
   @override
   Widget build(BuildContext context) {
-    final playbackState = ref.watch(patternPlaybackProvider);
-    final isEditorPlaying =
-        playbackState.isPlaying &&
-        playbackState.currentPatternId == _editorPatternId;
-    final currentPlaybackStep = isEditorPlaying
-        ? playbackState.currentStep
-        : null;
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -290,34 +282,19 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: PatternGridEditor(
-                    grid: _grid,
-                    scale: _scale,
-                    enabled: !_isSaving,
-                    currentPlaybackStep: currentPlaybackStep,
-                    onGridChanged: (newGrid) => setState(() => _grid = newGrid),
-                  ),
-                ),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: IconButton.outlined(
-                      tooltip: _grid.length >= _maxStepCount
-                          ? 'Pattern is at the maximum length '
-                                '($_maxStepCount steps)'
-                          : 'Add $_stepIncrement steps',
-                      onPressed: _isSaving || _grid.length >= _maxStepCount
-                          ? null
-                          : _appendSteps,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ),
-                ),
-              ],
+            child: PatternGridEditor(
+              grid: _grid,
+              scale: _scale,
+              enabled: !_isSaving,
+              playbackPatternId: _editorPatternId,
+              onGridChanged: (newGrid) => setState(() => _grid = newGrid),
+              onAppendSteps: _isSaving || _grid.length >= _maxStepCount
+                  ? null
+                  : _appendSteps,
+              appendStepsTooltip: _grid.length >= _maxStepCount
+                  ? 'Pattern is at the maximum length '
+                        '($_maxStepCount steps)'
+                  : 'Add $_stepIncrement steps',
             ),
           ),
           const SizedBox(height: 8),

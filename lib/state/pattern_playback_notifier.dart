@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/pattern_data.dart';
 import 'package:plinkyhub/state/midi_notifier.dart';
@@ -117,29 +116,18 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
 
     final nextStep = initial ? 0 : (state.currentStep + 1) % stepCount;
 
-    // Update the visual playhead first so the rebuild is scheduled
-    // before we send any MIDI. Otherwise audio (USB latency ~5 ms)
-    // reaches the user before the next frame paints (~16 ms), and the
-    // playhead appears to lag behind what's playing by one step.
-    state = state.copyWith(currentStep: nextStep);
+    // Send MIDI immediately so audio timing is driven only by the
+    // periodic timer. The visual playhead follows on the next frame
+    // (Riverpod marks watchers dirty when state changes below).
+    _sendStepMidi(nextStep: nextStep, channel: _currentChannel);
 
-    // Defer the MIDI off/on burst until just after the current frame
-    // is painted. This trades ~16 ms of audio latency for accurate
-    // playhead-vs-audio sync. Re-read `_currentPattern` at fire time
-    // so live edits made before the frame painted are picked up.
-    final channel = _currentChannel;
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      _sendStepMidi(nextStep: nextStep, channel: channel);
-    });
+    state = state.copyWith(currentStep: nextStep);
   }
 
   void _sendStepMidi({
     required int nextStep,
     required int channel,
   }) {
-    if (!state.isPlaying) {
-      return;
-    }
     final pattern = _currentPattern;
     if (pattern == null) {
       return;

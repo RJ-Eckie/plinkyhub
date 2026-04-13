@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/state/pattern_playback_notifier.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 
 const _noteNames = [
@@ -41,7 +43,9 @@ class PatternGridEditor extends StatefulWidget {
     required this.onGridChanged,
     this.enabled = true,
     this.readOnly = false,
-    this.currentPlaybackStep,
+    this.playbackPatternId,
+    this.onAppendSteps,
+    this.appendStepsTooltip,
     super.key,
   });
 
@@ -55,9 +59,19 @@ class PatternGridEditor extends StatefulWidget {
   /// When true, cells cannot be toggled and hover effects are disabled.
   final bool readOnly;
 
-  /// When non-null, draws a vertical playback bar over the given step
-  /// index to indicate the currently-playing column.
-  final int? currentPlaybackStep;
+  /// When non-null, an isolated [_PlayheadOverlay] widget watches the
+  /// playback provider for this pattern id and draws the vertical
+  /// playback bar over the active column. Subscribing locally means
+  /// step changes only repaint the overlay (a single Positioned),
+  /// not the entire grid (which is up to 64×64 cells).
+  final String? playbackPatternId;
+
+  /// When non-null, renders a vertically-centred "+" button right
+  /// after the last step inside the horizontal scroll area, so the
+  /// user can extend the pattern length without leaving the grid.
+  /// Pass null to disable the button entirely.
+  final VoidCallback? onAppendSteps;
+  final String? appendStepsTooltip;
 
   @override
   State<PatternGridEditor> createState() => _PatternGridEditorState();
@@ -101,9 +115,6 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
     if (widget.scale != oldWidget.scale) {
       _pads = plinkyPadsByPitch(widget.scale);
     }
-    if (widget.currentPlaybackStep != oldWidget.currentPlaybackStep) {
-      _scrollToPlaybackStep();
-    }
   }
 
   @override
@@ -111,33 +122,6 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
     _horizontalScrollController.dispose();
     _verticalScrollController.dispose();
     super.dispose();
-  }
-
-  /// Keeps the currently-playing column horizontally centred in the
-  /// viewport. Clamped at both ends so we don't scroll past the start
-  /// or end of the grid.
-  void _scrollToPlaybackStep() {
-    final step = widget.currentPlaybackStep;
-    if (step == null || !_horizontalScrollController.hasClients) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_horizontalScrollController.hasClients) {
-        return;
-      }
-      final position = _horizontalScrollController.position;
-      final viewportWidth = position.viewportDimension;
-      final cellCenterOffset = step * _cellWithMargin + _cellWithMargin / 2;
-      final target = (cellCenterOffset - viewportWidth / 2).clamp(
-        position.minScrollExtent,
-        position.maxScrollExtent,
-      );
-      _horizontalScrollController.animateTo(
-        target,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-      );
-    });
   }
 
   /// Returns true when the cell at (step, pad) should appear active —
@@ -202,7 +186,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                   textTheme: theme.textTheme,
                   readOnly: widget.readOnly,
                   enabled: widget.enabled,
-                  currentPlaybackStep: widget.currentPlaybackStep,
+                  playbackPatternId: widget.playbackPatternId,
                   horizontalScrollController: _horizontalScrollController,
                   verticalScrollController: _verticalScrollController,
                   isCellActive: _isCellActive,
@@ -234,6 +218,8 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                     }
                   },
                   onDragEnd: () => _dragPaintValue = null,
+                  onAppendSteps: widget.onAppendSteps,
+                  appendStepsTooltip: widget.appendStepsTooltip,
                 ),
               );
             },
@@ -257,7 +243,7 @@ class _PianoRollScroller extends StatelessWidget {
     required this.textTheme,
     required this.readOnly,
     required this.enabled,
-    required this.currentPlaybackStep,
+    required this.playbackPatternId,
     required this.horizontalScrollController,
     required this.verticalScrollController,
     required this.isCellActive,
@@ -265,6 +251,8 @@ class _PianoRollScroller extends StatelessWidget {
     required this.onDragStart,
     required this.onDragEnter,
     required this.onDragEnd,
+    this.onAppendSteps,
+    this.appendStepsTooltip,
   });
 
   final List<PlinkyPad> pads;
@@ -278,7 +266,7 @@ class _PianoRollScroller extends StatelessWidget {
   final TextTheme textTheme;
   final bool readOnly;
   final bool enabled;
-  final int? currentPlaybackStep;
+  final String? playbackPatternId;
   final ScrollController horizontalScrollController;
   final ScrollController verticalScrollController;
   final bool Function(int step, PlinkyPad pad) isCellActive;
@@ -286,6 +274,8 @@ class _PianoRollScroller extends StatelessWidget {
   final void Function(int step, int padIndex) onDragStart;
   final void Function(int step, int padIndex) onDragEnter;
   final VoidCallback onDragEnd;
+  final VoidCallback? onAppendSteps;
+  final String? appendStepsTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -317,70 +307,69 @@ class _PianoRollScroller extends StatelessWidget {
                   child: SingleChildScrollView(
                     controller: horizontalScrollController,
                     scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: stepCount * cellWithMargin,
-                      child: Stack(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: stepCount * cellWithMargin,
+                          child: Stack(
                             children: [
-                              _StepHeader(
-                                stepCount: stepCount,
-                                cellWidth: cellWithMargin,
-                                headerHeight: headerHeight,
-                                textStyle: textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _StepHeader(
+                                    stepCount: stepCount,
+                                    cellWidth: cellWithMargin,
+                                    headerHeight: headerHeight,
+                                    textStyle: textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  for (
+                                    var padIndex = 0;
+                                    padIndex < pads.length;
+                                    padIndex++
+                                  )
+                                    _PadRow(
+                                      pad: pads[padIndex],
+                                      padIndex: padIndex,
+                                      stepCount: stepCount,
+                                      cellWithMargin: cellWithMargin,
+                                      rowHeight: rowHeight,
+                                      colorScheme: colorScheme,
+                                      readOnly: readOnly || !enabled,
+                                      isActive: isCellActive,
+                                      onTap: onTap,
+                                      onDragStart: onDragStart,
+                                      onDragEnter: onDragEnter,
+                                      onDragEnd: onDragEnd,
+                                    ),
+                                ],
                               ),
-                              for (
-                                var padIndex = 0;
-                                padIndex < pads.length;
-                                padIndex++
-                              )
-                                _PadRow(
-                                  pad: pads[padIndex],
-                                  padIndex: padIndex,
-                                  stepCount: stepCount,
+                              if (playbackPatternId != null)
+                                _PlayheadOverlay(
+                                  patternId: playbackPatternId!,
                                   cellWithMargin: cellWithMargin,
-                                  rowHeight: rowHeight,
-                                  colorScheme: colorScheme,
-                                  readOnly: readOnly || !enabled,
-                                  isActive: isCellActive,
-                                  onTap: onTap,
-                                  onDragStart: onDragStart,
-                                  onDragEnter: onDragEnter,
-                                  onDragEnd: onDragEnd,
+                                  headerHeight: headerHeight,
+                                  bodyHeight: pads.length * rowHeight,
+                                  primaryColor: colorScheme.primary,
+                                  scrollController: horizontalScrollController,
                                 ),
                             ],
                           ),
-                          if (currentPlaybackStep != null)
-                            Positioned(
-                              left: currentPlaybackStep! * cellWithMargin,
-                              top: headerHeight,
-                              width: cellWithMargin,
-                              height: pads.length * rowHeight,
-                              child: IgnorePointer(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primary.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    border: Border(
-                                      left: BorderSide(
-                                        color: colorScheme.primary,
-                                        width: 2,
-                                      ),
-                                      right: BorderSide(
-                                        color: colorScheme.primary,
-                                        width: 2,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                        ),
+                        if (onAppendSteps != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8, right: 8),
+                            child: Center(
+                              child: IconButton.outlined(
+                                tooltip: appendStepsTooltip,
+                                onPressed: onAppendSteps,
+                                icon: const Icon(Icons.add),
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -512,6 +501,105 @@ class _PadRow extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// Watches `patternPlaybackProvider` for the matching pattern id and
+/// renders the vertical playhead bar for the active step. Lives
+/// inside the grid's horizontal scroll Stack so it scrolls with the
+/// cells but only this widget rebuilds on step changes — the cells
+/// themselves are unaffected, which matters for large grids.
+class _PlayheadOverlay extends ConsumerStatefulWidget {
+  const _PlayheadOverlay({
+    required this.patternId,
+    required this.cellWithMargin,
+    required this.headerHeight,
+    required this.bodyHeight,
+    required this.primaryColor,
+    required this.scrollController,
+  });
+
+  final String patternId;
+  final double cellWithMargin;
+  final double headerHeight;
+  final double bodyHeight;
+  final Color primaryColor;
+  final ScrollController scrollController;
+
+  @override
+  ConsumerState<_PlayheadOverlay> createState() => _PlayheadOverlayState();
+}
+
+class _PlayheadOverlayState extends ConsumerState<_PlayheadOverlay> {
+  int? _previousStep;
+
+  @override
+  Widget build(BuildContext context) {
+    final step = ref.watch(
+      patternPlaybackProvider.select(
+        (state) => state.isPlaying && state.currentPatternId == widget.patternId
+            ? state.currentStep
+            : null,
+      ),
+    );
+
+    if (step != _previousStep) {
+      _previousStep = step;
+      if (step != null) {
+        _scrollToStep(step);
+      }
+    }
+
+    if (step == null) {
+      return const SizedBox.shrink();
+    }
+    return Positioned(
+      left: step * widget.cellWithMargin,
+      top: widget.headerHeight,
+      width: widget.cellWithMargin,
+      height: widget.bodyHeight,
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            color: widget.primaryColor.withValues(alpha: 0.2),
+            border: Border(
+              left: BorderSide(color: widget.primaryColor, width: 2),
+              right: BorderSide(color: widget.primaryColor, width: 2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Keeps the playhead horizontally centred in the viewport, clamped
+  /// at both ends. Skips when the target offset is already current
+  /// (within a pixel) so we don't spam scroll animations every step.
+  void _scrollToStep(int step) {
+    if (!widget.scrollController.hasClients) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !widget.scrollController.hasClients) {
+        return;
+      }
+      final position = widget.scrollController.position;
+      final viewportWidth = position.viewportDimension;
+      final cellCenter =
+          step * widget.cellWithMargin + widget.cellWithMargin / 2;
+      final target = (cellCenter - viewportWidth / 2).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      if ((position.pixels - target).abs() < 1) {
+        return;
+      }
+      widget.scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+      );
+    });
   }
 }
 

@@ -4,7 +4,6 @@ import 'package:plinkyhub/models/pattern_data.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/pages/patterns/pattern_grid_editor.dart';
 import 'package:plinkyhub/pages/patterns/pattern_play_controls.dart';
-import 'package:plinkyhub/state/pattern_playback_notifier.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 
 /// Plays a pattern through WebMIDI to the connected Plinky and renders
@@ -42,11 +41,6 @@ class PatternPlaybackPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final playbackState = ref.watch(patternPlaybackProvider);
-
-    final isPlayingThisPattern =
-        playbackState.isPlaying && playbackState.currentPatternId == pattern.id;
-    final currentStep = isPlayingThisPattern ? playbackState.currentStep : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -86,7 +80,7 @@ class PatternPlaybackPanel extends ConsumerWidget {
                   scale: _scale(patternData!),
                   enabled: false,
                   readOnly: true,
-                  currentPlaybackStep: currentStep,
+                  playbackPatternId: pattern.id,
                   onGridChanged: (_) {},
                 ),
               )
