@@ -33,8 +33,18 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
   void setBeatsPerMinute(double beatsPerMinute) {
     state = state.copyWith(beatsPerMinute: beatsPerMinute);
     if (state.isPlaying && _currentPattern != null) {
-      _restartTimer(_currentPattern!, channel: _currentChannel);
+      _restartTimer();
     }
+  }
+
+  /// Replace the live pattern data driving playback. Used by editors so
+  /// that grid edits made while a pattern is playing take effect on the
+  /// next step rather than requiring a stop/start.
+  void updatePattern(String patternId, PatternData pattern) {
+    if (!state.isPlaying || state.currentPatternId != patternId) {
+      return;
+    }
+    _currentPattern = pattern;
   }
 
   /// Start playing [pattern]. Sends a program change first if
@@ -69,11 +79,11 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     );
 
     // Fire the first step immediately so audio starts on click.
-    _advance(pattern, channel: channel, initial: true);
-    _restartTimer(pattern, channel: channel);
+    _advance(initial: true);
+    _restartTimer();
   }
 
-  void _restartTimer(PatternData pattern, {required int channel}) {
+  void _restartTimer() {
     _timer?.cancel();
     // Plinky patterns use 16 sixteenth-note steps; one beat = 4 steps.
     final stepDurationMilliseconds = (60000 / (state.beatsPerMinute * 4))
@@ -81,7 +91,7 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
         .clamp(20, 2000);
     _timer = Timer.periodic(
       Duration(milliseconds: stepDurationMilliseconds),
-      (_) => _advance(pattern, channel: channel),
+      (_) => _advance(),
     );
   }
 
@@ -95,11 +105,11 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     );
   }
 
-  void _advance(
-    PatternData pattern, {
-    required int channel,
-    bool initial = false,
-  }) {
+  void _advance({bool initial = false}) {
+    final pattern = _currentPattern;
+    if (pattern == null) {
+      return;
+    }
     final stepCount = pattern.grid.length;
     if (stepCount == 0) {
       return;
@@ -115,18 +125,23 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
 
     // Defer the MIDI off/on burst until just after the current frame
     // is painted. This trades ~16 ms of audio latency for accurate
-    // playhead-vs-audio sync.
+    // playhead-vs-audio sync. Re-read `_currentPattern` at fire time
+    // so live edits made before the frame painted are picked up.
+    final channel = _currentChannel;
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      _sendStepMidi(pattern, nextStep: nextStep, channel: channel);
+      _sendStepMidi(nextStep: nextStep, channel: channel);
     });
   }
 
-  void _sendStepMidi(
-    PatternData pattern, {
+  void _sendStepMidi({
     required int nextStep,
     required int channel,
   }) {
     if (!state.isPlaying) {
+      return;
+    }
+    final pattern = _currentPattern;
+    if (pattern == null) {
       return;
     }
     final midiNotifier = ref.read(midiProvider.notifier);
@@ -137,6 +152,9 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     }
     _activeNotes.clear();
 
+    if (nextStep >= pattern.grid.length) {
+      return;
+    }
     final scale = _scaleFromIndex(pattern.scaleIndex);
     final rowValues = pattern.grid[nextStep];
     for (var row = 0; row < rowValues.length; row++) {

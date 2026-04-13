@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/pattern_data.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/pages/patterns/pattern_grid_editor.dart';
+import 'package:plinkyhub/pages/patterns/pattern_play_controls.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
+import 'package:plinkyhub/state/pattern_playback_notifier.dart';
 import 'package:plinkyhub/state/saved_patterns_notifier.dart';
 import 'package:plinkyhub/utils/midi_import.dart';
 import 'package:plinkyhub/utils/pitch.dart';
@@ -15,6 +17,12 @@ import 'package:plinkyhub/widgets/plinky_button.dart';
 
 /// The Plinky sequencer uses a fixed 16-step pattern length.
 const fixedStepCount = 16;
+
+/// Synthetic pattern id used by `patternPlaybackProvider` to identify
+/// playback driven from the in-progress pattern editor (so it can show
+/// a playhead in the editor's grid without colliding with saved
+/// patterns).
+const _editorPatternId = '__editor__';
 
 class CreatePatternTab extends ConsumerStatefulWidget {
   const CreatePatternTab({this.onCreated, super.key});
@@ -26,9 +34,6 @@ class CreatePatternTab extends ConsumerStatefulWidget {
 }
 
 class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  bool _isPublic = true;
   bool _isSaving = false;
   PlinkyScale _scale = PlinkyScale.major;
   late List<List<int>> _grid;
@@ -37,13 +42,6 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
   void initState() {
     super.initState();
     _grid = _createEmptyGrid(fixedStepCount);
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
   }
 
   List<List<int>> _createEmptyGrid(int steps) {
@@ -60,9 +58,6 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
 
   void _resetForm() {
     setState(() {
-      _nameController.clear();
-      _descriptionController.clear();
-      _isPublic = true;
       _isSaving = false;
       _scale = PlinkyScale.major;
       _grid = _createEmptyGrid(fixedStepCount);
@@ -71,6 +66,14 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
 
   bool get _hasActiveSteps =>
       _grid.any((step) => step.any((cell) => cell != 0));
+
+  /// Snapshot of the current grid state, ready to play or persist.
+  PatternData get _patternData => PatternData(
+    scaleIndex: _scale.index,
+    grid: [
+      for (final step in _grid) [...step],
+    ],
+  );
 
   Future<void> _importMidi() async {
     final result = await FilePicker.platform.pickFiles(
@@ -84,7 +87,6 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
     }
 
     final bytes = Uint8List.fromList(result.files.single.bytes!);
-    final fileName = result.files.single.name;
 
     try {
       final importResult = importMidiToGrid(
@@ -103,12 +105,12 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
             scale: _scale,
             trackIndex: selectedTrack,
           );
-          _applyMidiImport(trackResult, fileName);
+          _applyMidiImport(trackResult);
           return;
         }
       }
 
-      _applyMidiImport(importResult, fileName);
+      _applyMidiImport(importResult);
     } on Exception catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,15 +120,9 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
     }
   }
 
-  void _applyMidiImport(MidiImportResult result, String fileName) {
+  void _applyMidiImport(MidiImportResult result) {
     setState(() {
       _grid = result.grid;
-      if (_nameController.text.isEmpty) {
-        final baseName = fileName.contains('.')
-            ? fileName.substring(0, fileName.lastIndexOf('.'))
-            : fileName;
-        _nameController.text = baseName;
-      }
     });
   }
 
@@ -146,30 +142,38 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
     );
   }
 
-  Future<void> _save() async {
-    final userId = ref.read(authenticationProvider).user?.id;
-    if (userId == null) {
+  Future<void> _openSaveDialog() async {
+    final result = await showDialog<_SavePatternResult>(
+      context: context,
+      builder: (context) => const _SavePatternDialog(),
+    );
+    if (result == null || !mounted) {
       return;
     }
+    await _save(
+      name: result.name,
+      description: result.description,
+      isPublic: result.isPublic,
+    );
+  }
 
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a name for the pattern')),
-      );
+  Future<void> _save({
+    required String name,
+    required String description,
+    required bool isPublic,
+  }) async {
+    final userId = ref.read(authenticationProvider).user?.id;
+    if (userId == null) {
       return;
     }
 
     setState(() => _isSaving = true);
 
     try {
-      final patternData = PatternData(
-        scaleIndex: _scale.index,
-        grid: [
-          for (final step in _grid) [...step],
-        ],
-      );
+      // Stop any in-progress editor playback before resetting the form.
+      ref.read(patternPlaybackProvider.notifier).stop();
 
+      final patternData = _patternData;
       final jsonString = jsonEncode(patternData.toJson());
       final fileBytes = Uint8List.fromList(utf8.encode(jsonString));
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -183,8 +187,8 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
         filePath: '$userId/$storageName',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        description: _descriptionController.text.trim(),
-        isPublic: _isPublic,
+        description: description,
+        isPublic: isPublic,
       );
 
       await ref
@@ -211,114 +215,200 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final playbackState = ref.watch(patternPlaybackProvider);
+    final isEditorPlaying =
+        playbackState.isPlaying &&
+        playbackState.currentPatternId == _editorPatternId;
+    final currentPlaybackStep = isEditorPlaying
+        ? playbackState.currentStep
+        : null;
 
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Create a step-sequencer pattern for your Plinky. '
-            'Tap cells in the grid to toggle notes on each step, '
-            'or import from a MIDI file.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          PlinkyButton(
-            onPressed: _isSaving ? null : _importMidi,
-            icon: Icons.file_open,
-            label: 'Import from MIDI',
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              border: OutlineInputBorder(),
-            ),
-            enabled: !_isSaving,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'Description',
-              border: OutlineInputBorder(),
-            ),
-            minLines: 3,
-            maxLines: null,
-            enabled: !_isSaving,
-          ),
-          const SizedBox(height: 16),
-          // Scale selector
-          DropdownButtonFormField<PlinkyScale>(
-            initialValue: _scale,
-            decoration: const InputDecoration(
-              labelText: 'Scale',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
+          Row(
+            children: [
+              PlinkyButton(
+                onPressed: _isSaving ? null : _importMidi,
+                icon: Icons.file_open,
+                label: 'Import from MIDI',
               ),
-            ),
-            items: [
-              for (final scale in PlinkyScale.values)
-                DropdownMenuItem(
-                  value: scale,
-                  child: Text(scale.displayName),
-                ),
-            ],
-            onChanged: _isSaving
-                ? null
-                : (value) {
-                    if (value != null) {
-                      setState(() => _scale = value);
-                    }
-                  },
-          ),
-          const SizedBox(height: 16),
-          PatternGridEditor(
-            grid: _grid,
-            scale: _scale,
-            enabled: !_isSaving,
-            onGridChanged: (newGrid) => setState(() => _grid = newGrid),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _isSaving || !_hasActiveSteps ? null : _clearGrid,
-              icon: const Icon(Icons.clear_all, size: 18),
-              label: const Text('Clear grid'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SwitchListTile(
-                  title: const Text('Share with community'),
-                  value: _isPublic,
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<PlinkyScale>(
+                  initialValue: _scale,
+                  decoration: const InputDecoration(
+                    labelText: 'Scale',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                  items: [
+                    for (final scale in PlinkyScale.values)
+                      DropdownMenuItem(
+                        value: scale,
+                        child: Text(scale.displayName),
+                      ),
+                  ],
                   onChanged: _isSaving
                       ? null
-                      : (value) => setState(() => _isPublic = value),
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _scale = value);
+                          }
+                        },
                 ),
-                const SizedBox(height: 16),
-                PlinkyButton(
-                  onPressed: _isSaving || !_hasActiveSteps ? null : _save,
-                  icon: _isSaving ? Icons.hourglass_empty : Icons.save,
-                  label: _isSaving ? 'Saving...' : 'Save Pattern',
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          PatternPlayControls(
+            patternId: _editorPatternId,
+            patternData: _patternData,
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: PatternGridEditor(
+              grid: _grid,
+              scale: _scale,
+              enabled: !_isSaving,
+              currentPlaybackStep: currentPlaybackStep,
+              onGridChanged: (newGrid) => setState(() => _grid = newGrid),
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              TextButton.icon(
+                onPressed: _isSaving || !_hasActiveSteps ? null : _clearGrid,
+                icon: const Icon(Icons.clear_all, size: 18),
+                label: const Text('Clear grid'),
+              ),
+              const Spacer(),
+              PlinkyButton(
+                onPressed: _isSaving || !_hasActiveSteps
+                    ? null
+                    : _openSaveDialog,
+                icon: _isSaving ? Icons.hourglass_empty : Icons.save,
+                label: _isSaving ? 'Saving...' : 'Save Pattern',
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Pattern metadata captured by [_SavePatternDialog].
+class _SavePatternResult {
+  const _SavePatternResult({
+    required this.name,
+    required this.description,
+    required this.isPublic,
+  });
+
+  final String name;
+  final String description;
+  final bool isPublic;
+}
+
+class _SavePatternDialog extends StatefulWidget {
+  const _SavePatternDialog();
+
+  @override
+  State<_SavePatternDialog> createState() => _SavePatternDialogState();
+}
+
+class _SavePatternDialogState extends State<_SavePatternDialog> {
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  bool _isPublic = true;
+  String? _nameError;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _nameError = 'Please enter a name');
+      return;
+    }
+    Navigator.of(context).pop(
+      _SavePatternResult(
+        name: name,
+        description: _descriptionController.text.trim(),
+        isPublic: _isPublic,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Save Pattern'),
+      content: SizedBox(
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                border: const OutlineInputBorder(),
+                errorText: _nameError,
+              ),
+              onChanged: (_) {
+                if (_nameError != null) {
+                  setState(() => _nameError = null);
+                }
+              },
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+              minLines: 3,
+              maxLines: null,
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Share with community'),
+              contentPadding: EdgeInsets.zero,
+              value: _isPublic,
+              onChanged: (value) => setState(() => _isPublic = value),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.save),
+          label: const Text('Save'),
+        ),
+      ],
     );
   }
 }
