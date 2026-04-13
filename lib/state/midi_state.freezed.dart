@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MidiState {
 
- bool get isConnected; Map<int, ActiveNote> get activeNotes;
+ bool get isConnected; Map<int, ActiveNote> get activeNotes; List<MidiOutputPort> get outputs; String? get selectedOutputId;
 /// Create a copy of MidiState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $MidiStateCopyWith<MidiState> get copyWith => _$MidiStateCopyWithImpl<MidiState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MidiState&&(identical(other.isConnected, isConnected) || other.isConnected == isConnected)&&const DeepCollectionEquality().equals(other.activeNotes, activeNotes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MidiState&&(identical(other.isConnected, isConnected) || other.isConnected == isConnected)&&const DeepCollectionEquality().equals(other.activeNotes, activeNotes)&&const DeepCollectionEquality().equals(other.outputs, outputs)&&(identical(other.selectedOutputId, selectedOutputId) || other.selectedOutputId == selectedOutputId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isConnected,const DeepCollectionEquality().hash(activeNotes));
+int get hashCode => Object.hash(runtimeType,isConnected,const DeepCollectionEquality().hash(activeNotes),const DeepCollectionEquality().hash(outputs),selectedOutputId);
 
 @override
 String toString() {
-  return 'MidiState(isConnected: $isConnected, activeNotes: $activeNotes)';
+  return 'MidiState(isConnected: $isConnected, activeNotes: $activeNotes, outputs: $outputs, selectedOutputId: $selectedOutputId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $MidiStateCopyWith<$Res>  {
   factory $MidiStateCopyWith(MidiState value, $Res Function(MidiState) _then) = _$MidiStateCopyWithImpl;
 @useResult
 $Res call({
- bool isConnected, Map<int, ActiveNote> activeNotes
+ bool isConnected, Map<int, ActiveNote> activeNotes, List<MidiOutputPort> outputs, String? selectedOutputId
 });
 
 
@@ -62,11 +62,13 @@ class _$MidiStateCopyWithImpl<$Res>
 
 /// Create a copy of MidiState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isConnected = null,Object? activeNotes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isConnected = null,Object? activeNotes = null,Object? outputs = null,Object? selectedOutputId = freezed,}) {
   return _then(_self.copyWith(
 isConnected: null == isConnected ? _self.isConnected : isConnected // ignore: cast_nullable_to_non_nullable
 as bool,activeNotes: null == activeNotes ? _self.activeNotes : activeNotes // ignore: cast_nullable_to_non_nullable
-as Map<int, ActiveNote>,
+as Map<int, ActiveNote>,outputs: null == outputs ? _self.outputs : outputs // ignore: cast_nullable_to_non_nullable
+as List<MidiOutputPort>,selectedOutputId: freezed == selectedOutputId ? _self.selectedOutputId : selectedOutputId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -151,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isConnected,  Map<int, ActiveNote> activeNotes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isConnected,  Map<int, ActiveNote> activeNotes,  List<MidiOutputPort> outputs,  String? selectedOutputId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MidiState() when $default != null:
-return $default(_that.isConnected,_that.activeNotes);case _:
+return $default(_that.isConnected,_that.activeNotes,_that.outputs,_that.selectedOutputId);case _:
   return orElse();
 
 }
@@ -172,10 +174,10 @@ return $default(_that.isConnected,_that.activeNotes);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isConnected,  Map<int, ActiveNote> activeNotes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isConnected,  Map<int, ActiveNote> activeNotes,  List<MidiOutputPort> outputs,  String? selectedOutputId)  $default,) {final _that = this;
 switch (_that) {
 case _MidiState():
-return $default(_that.isConnected,_that.activeNotes);case _:
+return $default(_that.isConnected,_that.activeNotes,_that.outputs,_that.selectedOutputId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +194,10 @@ return $default(_that.isConnected,_that.activeNotes);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isConnected,  Map<int, ActiveNote> activeNotes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isConnected,  Map<int, ActiveNote> activeNotes,  List<MidiOutputPort> outputs,  String? selectedOutputId)?  $default,) {final _that = this;
 switch (_that) {
 case _MidiState() when $default != null:
-return $default(_that.isConnected,_that.activeNotes);case _:
+return $default(_that.isConnected,_that.activeNotes,_that.outputs,_that.selectedOutputId);case _:
   return null;
 
 }
@@ -207,7 +209,7 @@ return $default(_that.isConnected,_that.activeNotes);case _:
 
 
 class _MidiState implements MidiState {
-  const _MidiState({this.isConnected = false, final  Map<int, ActiveNote> activeNotes = const {}}): _activeNotes = activeNotes;
+  const _MidiState({this.isConnected = false, final  Map<int, ActiveNote> activeNotes = const {}, final  List<MidiOutputPort> outputs = const [], this.selectedOutputId}): _activeNotes = activeNotes,_outputs = outputs;
   
 
 @override@JsonKey() final  bool isConnected;
@@ -218,6 +220,14 @@ class _MidiState implements MidiState {
   return EqualUnmodifiableMapView(_activeNotes);
 }
 
+ final  List<MidiOutputPort> _outputs;
+@override@JsonKey() List<MidiOutputPort> get outputs {
+  if (_outputs is EqualUnmodifiableListView) return _outputs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_outputs);
+}
+
+@override final  String? selectedOutputId;
 
 /// Create a copy of MidiState
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +239,16 @@ _$MidiStateCopyWith<_MidiState> get copyWith => __$MidiStateCopyWithImpl<_MidiSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MidiState&&(identical(other.isConnected, isConnected) || other.isConnected == isConnected)&&const DeepCollectionEquality().equals(other._activeNotes, _activeNotes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MidiState&&(identical(other.isConnected, isConnected) || other.isConnected == isConnected)&&const DeepCollectionEquality().equals(other._activeNotes, _activeNotes)&&const DeepCollectionEquality().equals(other._outputs, _outputs)&&(identical(other.selectedOutputId, selectedOutputId) || other.selectedOutputId == selectedOutputId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isConnected,const DeepCollectionEquality().hash(_activeNotes));
+int get hashCode => Object.hash(runtimeType,isConnected,const DeepCollectionEquality().hash(_activeNotes),const DeepCollectionEquality().hash(_outputs),selectedOutputId);
 
 @override
 String toString() {
-  return 'MidiState(isConnected: $isConnected, activeNotes: $activeNotes)';
+  return 'MidiState(isConnected: $isConnected, activeNotes: $activeNotes, outputs: $outputs, selectedOutputId: $selectedOutputId)';
 }
 
 
@@ -249,7 +259,7 @@ abstract mixin class _$MidiStateCopyWith<$Res> implements $MidiStateCopyWith<$Re
   factory _$MidiStateCopyWith(_MidiState value, $Res Function(_MidiState) _then) = __$MidiStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isConnected, Map<int, ActiveNote> activeNotes
+ bool isConnected, Map<int, ActiveNote> activeNotes, List<MidiOutputPort> outputs, String? selectedOutputId
 });
 
 
@@ -266,11 +276,13 @@ class __$MidiStateCopyWithImpl<$Res>
 
 /// Create a copy of MidiState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isConnected = null,Object? activeNotes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isConnected = null,Object? activeNotes = null,Object? outputs = null,Object? selectedOutputId = freezed,}) {
   return _then(_MidiState(
 isConnected: null == isConnected ? _self.isConnected : isConnected // ignore: cast_nullable_to_non_nullable
 as bool,activeNotes: null == activeNotes ? _self._activeNotes : activeNotes // ignore: cast_nullable_to_non_nullable
-as Map<int, ActiveNote>,
+as Map<int, ActiveNote>,outputs: null == outputs ? _self._outputs : outputs // ignore: cast_nullable_to_non_nullable
+as List<MidiOutputPort>,selectedOutputId: freezed == selectedOutputId ? _self.selectedOutputId : selectedOutputId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

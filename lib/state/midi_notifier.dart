@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/services/webmidi_service.dart';
 import 'package:plinkyhub/state/midi_state.dart';
@@ -14,8 +16,32 @@ class MidiNotifier extends Notifier<MidiState> {
 
   Future<void> connect() async {
     _service.onMessage = _onMessage;
+    _service.onOutputsChanged = _onOutputsChanged;
     await _service.connect();
-    state = state.copyWith(isConnected: _service.isConnected);
+    final outputs = _service.outputs;
+    state = state.copyWith(
+      isConnected: _service.isConnected,
+      outputs: outputs,
+      selectedOutputId:
+          state.selectedOutputId ??
+          (outputs.isNotEmpty ? outputs.first.id : null),
+    );
+  }
+
+  void selectOutput(String? outputId) {
+    state = state.copyWith(selectedOutputId: outputId);
+  }
+
+  void _onOutputsChanged() {
+    final outputs = _service.outputs;
+    final selected = state.selectedOutputId;
+    final stillPresent = outputs.any((output) => output.id == selected);
+    state = state.copyWith(
+      outputs: outputs,
+      selectedOutputId: stillPresent
+          ? selected
+          : (outputs.isNotEmpty ? outputs.first.id : null),
+    );
   }
 
   void _onMessage(MidiMessage message) {
@@ -32,6 +58,69 @@ class MidiNotifier extends Notifier<MidiState> {
         activeNotes: {...state.activeNotes}..remove(message.note),
       );
     }
+  }
+
+  /// Send a MIDI note-on message to the currently selected output.
+  void sendNoteOn(int note, {int channel = 0, int velocity = 100}) {
+    final outputId = state.selectedOutputId;
+    if (outputId == null) {
+      return;
+    }
+    _service.sendToOutput(
+      outputId,
+      Uint8List.fromList([
+        0x90 | (channel & 0x0F),
+        note & 0x7F,
+        velocity & 0x7F,
+      ]),
+    );
+  }
+
+  /// Send a MIDI note-off message to the currently selected output.
+  void sendNoteOff(int note, {int channel = 0}) {
+    final outputId = state.selectedOutputId;
+    if (outputId == null) {
+      return;
+    }
+    _service.sendToOutput(
+      outputId,
+      Uint8List.fromList([
+        0x80 | (channel & 0x0F),
+        note & 0x7F,
+        0,
+      ]),
+    );
+  }
+
+  /// Send a MIDI program-change message to switch the Plinky preset slot.
+  void sendProgramChange(int programNumber, {int channel = 0}) {
+    final outputId = state.selectedOutputId;
+    if (outputId == null) {
+      return;
+    }
+    _service.sendToOutput(
+      outputId,
+      Uint8List.fromList([
+        0xC0 | (channel & 0x0F),
+        programNumber & 0x7F,
+      ]),
+    );
+  }
+
+  /// Send an "all notes off" control-change to the selected output.
+  void sendAllNotesOff({int channel = 0}) {
+    final outputId = state.selectedOutputId;
+    if (outputId == null) {
+      return;
+    }
+    _service.sendToOutput(
+      outputId,
+      Uint8List.fromList([
+        0xB0 | (channel & 0x0F),
+        123,
+        0,
+      ]),
+    );
   }
 
   void disconnect() {

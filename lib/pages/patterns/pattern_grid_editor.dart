@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:plinkyhub/pages/patterns/create_pattern_tab.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 
 const _noteNames = [
@@ -34,6 +33,8 @@ class PatternGridEditor extends StatefulWidget {
     required this.scale,
     required this.onGridChanged,
     this.enabled = true,
+    this.readOnly = false,
+    this.currentPlaybackStep,
     super.key,
   });
 
@@ -42,6 +43,13 @@ class PatternGridEditor extends StatefulWidget {
   final PlinkyScale scale;
   final ValueChanged<List<List<bool>>> onGridChanged;
   final bool enabled;
+
+  /// When true, cells cannot be toggled and hover effects are disabled.
+  final bool readOnly;
+
+  /// When non-null, draws a vertical playback bar over the given step
+  /// index to indicate the currently-playing column.
+  final int? currentPlaybackStep;
 
   @override
   State<PatternGridEditor> createState() => _PatternGridEditorState();
@@ -60,7 +68,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
   }
 
   void _toggleCell(int step, int row) {
-    if (!widget.enabled) {
+    if (!widget.enabled || widget.readOnly) {
       return;
     }
     final newGrid = [
@@ -72,7 +80,7 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
   }
 
   void _setCellValue(int step, int row, {required bool value}) {
-    if (!widget.enabled) {
+    if (!widget.enabled || widget.readOnly) {
       return;
     }
     if (widget.grid[step][row] == value) {
@@ -146,59 +154,97 @@ class _PatternGridEditorState extends State<PatternGridEditor> {
                     child: SingleChildScrollView(
                       controller: _scrollController,
                       scrollDirection: Axis.horizontal,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Stack(
                         children: [
-                          // Step numbers header
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              for (var step = 0; step < fixedStepCount; step++)
-                                SizedBox(
-                                  width: cellWithMargin,
-                                  height: 20,
-                                  child: Center(
-                                    child: Text(
-                                      '${step + 1}',
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
+                              // Step numbers header
+                              Row(
+                                children: [
+                                  for (
+                                    var step = 0;
+                                    step < widget.grid.length;
+                                    step++
+                                  )
+                                    SizedBox(
+                                      width: cellWithMargin,
+                                      height: 20,
+                                      child: Center(
+                                        child: Text(
+                                          '${step + 1}',
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                ],
+                              ),
+                              // Grid cells
+                              for (var row = 0; row < 8; row++)
+                                Row(
+                                  children: [
+                                    for (
+                                      var step = 0;
+                                      step < widget.grid.length;
+                                      step++
+                                    )
+                                      _GridCell(
+                                        isActive: widget.grid[step][row],
+                                        isDownbeat: step % 4 == 0,
+                                        cellSize: cellSize,
+                                        colorScheme: colorScheme,
+                                        readOnly: widget.readOnly,
+                                        onTap: () => _toggleCell(step, row),
+                                        onDragStart: () {
+                                          _dragPaintValue =
+                                              !widget.grid[step][row];
+                                          _toggleCell(step, row);
+                                        },
+                                        onDragEnter: () {
+                                          if (_dragPaintValue != null) {
+                                            _setCellValue(
+                                              step,
+                                              row,
+                                              value: _dragPaintValue!,
+                                            );
+                                          }
+                                        },
+                                        onDragEnd: () => _dragPaintValue = null,
+                                      ),
+                                  ],
                                 ),
                             ],
                           ),
-                          // Grid cells
-                          for (var row = 0; row < 8; row++)
-                            Row(
-                              children: [
-                                for (
-                                  var step = 0;
-                                  step < fixedStepCount;
-                                  step++
-                                )
-                                  _GridCell(
-                                    isActive: widget.grid[step][row],
-                                    isDownbeat: step % 4 == 0,
-                                    cellSize: cellSize,
-                                    colorScheme: colorScheme,
-                                    onTap: () => _toggleCell(step, row),
-                                    onDragStart: () {
-                                      _dragPaintValue = !widget.grid[step][row];
-                                      _toggleCell(step, row);
-                                    },
-                                    onDragEnter: () {
-                                      if (_dragPaintValue != null) {
-                                        _setCellValue(
-                                          step,
-                                          row,
-                                          value: _dragPaintValue!,
-                                        );
-                                      }
-                                    },
-                                    onDragEnd: () => _dragPaintValue = null,
+                          if (widget.currentPlaybackStep != null)
+                            Positioned(
+                              left:
+                                  widget.currentPlaybackStep! * cellWithMargin,
+                              top: 20,
+                              width: cellWithMargin,
+                              height: cellWithMargin * 8,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.25,
+                                    ),
+                                    border: Border(
+                                      left: BorderSide(
+                                        color: colorScheme.primary,
+                                        width: 2,
+                                      ),
+                                      right: BorderSide(
+                                        color: colorScheme.primary,
+                                        width: 2,
+                                      ),
+                                    ),
                                   ),
-                              ],
+                                ),
+                              ),
                             ),
                         ],
                       ),
@@ -224,6 +270,7 @@ class _GridCell extends StatefulWidget {
     required this.onDragStart,
     required this.onDragEnter,
     required this.onDragEnd,
+    this.readOnly = false,
   });
 
   final bool isActive;
@@ -234,6 +281,7 @@ class _GridCell extends StatefulWidget {
   final VoidCallback onDragStart;
   final VoidCallback onDragEnter;
   final VoidCallback onDragEnd;
+  final bool readOnly;
 
   @override
   State<_GridCell> createState() => _GridCellState();
@@ -249,16 +297,34 @@ class _GridCellState extends State<_GridCell> {
         : widget.isDownbeat
         ? widget.colorScheme.surfaceContainerHighest
         : widget.colorScheme.surfaceContainerLow;
-    final fillColor = _isHovered
+    final fillColor = _isHovered && !widget.readOnly
         ? Color.lerp(
             baseColor,
             widget.colorScheme.onSurface,
             0.15,
           )!
         : baseColor;
-    final borderColor = _isHovered
+    final borderColor = _isHovered && !widget.readOnly
         ? widget.colorScheme.outline
         : widget.colorScheme.outlineVariant;
+
+    final cell = Container(
+      width: widget.cellSize,
+      height: widget.cellSize,
+      decoration: BoxDecoration(
+        color: fillColor,
+        border: Border.all(
+          color: borderColor,
+          width: 0.5,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      margin: const EdgeInsets.all(1),
+    );
+
+    if (widget.readOnly) {
+      return cell;
+    }
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -274,19 +340,7 @@ class _GridCellState extends State<_GridCell> {
             widget.onDragEnter();
             return false;
           },
-          builder: (context, _, __) => Container(
-            width: widget.cellSize,
-            height: widget.cellSize,
-            decoration: BoxDecoration(
-              color: fillColor,
-              border: Border.all(
-                color: borderColor,
-                width: 0.5,
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            margin: const EdgeInsets.all(1),
-          ),
+          builder: (context, _, __) => cell,
         ),
       ),
     );

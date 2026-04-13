@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/models/pattern_data.dart';
 import 'package:plinkyhub/models/saved_pattern.dart';
 import 'package:plinkyhub/pages/patterns/pattern_card.dart';
+import 'package:plinkyhub/pages/patterns/pattern_playback_panel.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
+import 'package:plinkyhub/state/saved_patterns_notifier.dart';
+import 'package:plinkyhub/utils/pattern_decoder.dart';
 import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,6 +28,8 @@ class PatternPage extends ConsumerStatefulWidget {
 
 class _PatternPageState extends ConsumerState<PatternPage> {
   SavedPattern? _pattern;
+  PatternData? _patternData;
+  String? _patternDataError;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -37,6 +43,7 @@ class _PatternPageState extends ConsumerState<PatternPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _patternDataError = null;
     });
 
     try {
@@ -52,24 +59,53 @@ class _PatternPageState extends ConsumerState<PatternPage> {
           .limit(1)
           .maybeSingle();
 
-      if (response != null) {
-        setState(() {
-          _pattern = SavedPattern.fromJson(
-            response,
-          );
-          _isLoading = false;
-        });
-      } else {
+      if (response == null) {
         setState(() {
           _isLoading = false;
           _errorMessage = 'Pattern not found';
         });
+        return;
       }
-    } on Exception catch (error) {
+
+      final pattern = SavedPattern.fromJson(response);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _pattern = pattern;
+        _isLoading = false;
+      });
+
+      await _loadPatternData(pattern);
+    } on Object catch (error) {
       setState(() {
         _isLoading = false;
         _errorMessage = error.toString();
       });
+    }
+  }
+
+  Future<void> _loadPatternData(SavedPattern pattern) async {
+    try {
+      final bytes = await ref
+          .read(savedPatternsProvider.notifier)
+          .downloadFile(pattern.filePath);
+      final data = decodePatternFile(bytes);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _patternData = data;
+        _patternDataError = data == null
+            ? 'Unsupported pattern file format'
+            : null;
+      });
+    } on Object catch (error) {
+      debugPrint('Failed to load pattern data: $error');
+      if (!mounted) {
+        return;
+      }
+      setState(() => _patternDataError = error.toString());
     }
   }
 
@@ -95,19 +131,26 @@ class _PatternPageState extends ConsumerState<PatternPage> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Column(
-            children: [
-              PatternCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: PatternCard(
                 pattern: _pattern!,
                 isOwned: isOwned,
                 onDeleted: () => context.go(AppRoute.patterns.path),
               ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          PatternPlaybackPanel(
+            pattern: _pattern!,
+            patternData: _patternData,
+            loadError: _patternDataError,
+          ),
+        ],
       ),
     );
   }
