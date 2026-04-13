@@ -129,7 +129,7 @@ class _PatternPageState extends ConsumerState<PatternPage> {
     final currentUserId = ref.watch(authenticationProvider).user?.id;
     final isOwned = _pattern!.userId == currentUserId;
 
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,10 +145,12 @@ class _PatternPageState extends ConsumerState<PatternPage> {
             ),
           ),
           const SizedBox(height: 8),
-          PatternPlaybackPanel(
-            pattern: _pattern!,
-            patternData: _patternData,
-            loadError: _patternDataError,
+          Expanded(
+            child: PatternPlaybackPanel(
+              pattern: _pattern!,
+              patternData: _patternData,
+              loadError: _patternDataError,
+            ),
           ),
         ],
       ),

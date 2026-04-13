@@ -42,7 +42,7 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     required String patternId,
     required PatternData pattern,
     int? presetSlot,
-    double beatsPerMinute = 120,
+    double beatsPerMinute = 80,
     int channel = 0,
   }) {
     _stopInternal();
@@ -116,15 +116,20 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     final rowValues = pattern.grid[nextStep];
 
     for (var row = 0; row < rowValues.length; row++) {
-      if (rowValues[row] != 0) {
-        final midiNote = midiNoteForPad(
-          row: row,
-          col: 0,
-          scale: scale,
-        );
-        midiNotifier.sendNoteOn(midiNote, channel: channel);
-        _activeNotes.add(midiNote);
+      final value = rowValues[row];
+      if (value == 0) {
+        continue;
       }
+      // Cell values 1..8 encode the touch-strip column (0..7); legacy
+      // patterns (always 0/1) effectively play column 0.
+      final column = (value - 1).clamp(0, 7);
+      final midiNote = midiNoteForPad(
+        row: row,
+        col: column,
+        scale: scale,
+      );
+      midiNotifier.sendNoteOn(midiNote, channel: channel);
+      _activeNotes.add(midiNote);
     }
 
     state = state.copyWith(currentStep: nextStep);

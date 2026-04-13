@@ -79,3 +79,76 @@ int midiNoteForPad({
 double playbackSpeedForMidi(int targetMidi, int baseMidi) {
   return pow(2, (targetMidi - baseMidi) / 12).toDouble();
 }
+
+/// One of the 64 (string, column) Plinky pads, with the MIDI note it
+/// produces under a given scale/stride/octave configuration.
+class PlinkyPad {
+  const PlinkyPad({
+    required this.string,
+    required this.column,
+    required this.midiNote,
+  });
+
+  /// Pattern editor row (0 = highest pitch base note, 7 = lowest).
+  final int string;
+
+  /// Touch-strip column (0 = lowest position, 7 = highest position).
+  final int column;
+
+  /// MIDI note (0-127) this pad produces.
+  final int midiNote;
+}
+
+/// Returns the 64 Plinky pads (8 strings × 8 columns) sorted from
+/// highest to lowest pitch, suitable for piano-roll display.
+List<PlinkyPad> plinkyPadsByPitch(
+  PlinkyScale scale, {
+  int stride = 7,
+  int octaveOffset = 0,
+}) {
+  final pads = <PlinkyPad>[
+    for (var stringIndex = 0; stringIndex < 8; stringIndex++)
+      for (var column = 0; column < 8; column++)
+        PlinkyPad(
+          string: stringIndex,
+          column: column,
+          midiNote: midiNoteForPad(
+            row: stringIndex,
+            col: column,
+            scale: scale,
+            stride: stride,
+            octaveOffset: octaveOffset,
+          ),
+        ),
+  ];
+  // Highest pitch at the top, like a real piano roll. Stable on
+  // (string, column) so duplicate pitches keep a predictable order.
+  pads.sort((a, b) {
+    final byPitch = b.midiNote.compareTo(a.midiNote);
+    if (byPitch != 0) {
+      return byPitch;
+    }
+    final byString = a.string.compareTo(b.string);
+    if (byString != 0) {
+      return byString;
+    }
+    return a.column.compareTo(b.column);
+  });
+  return pads;
+}
+
+/// Finds the pad whose MIDI note is closest to [targetMidi], breaking
+/// ties by preferring the lower string then the lower column (so
+/// imported MIDI defaults to the simplest representation).
+PlinkyPad closestPadForMidiNote(List<PlinkyPad> pads, int targetMidi) {
+  var best = pads.first;
+  var bestDistance = (best.midiNote - targetMidi).abs();
+  for (final pad in pads.skip(1)) {
+    final distance = (pad.midiNote - targetMidi).abs();
+    if (distance < bestDistance) {
+      best = pad;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}

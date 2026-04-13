@@ -210,7 +210,7 @@ return $default(_that.isPlaying,_that.currentPatternId,_that.currentStep,_that.p
 
 
 class _PatternPlaybackState implements PatternPlaybackState {
-  const _PatternPlaybackState({this.isPlaying = false, this.currentPatternId, this.currentStep = 0, this.presetSlot, this.beatsPerMinute = 120});
+  const _PatternPlaybackState({this.isPlaying = false, this.currentPatternId, this.currentStep = 0, this.presetSlot, this.beatsPerMinute = 80});
   
 
 @override@JsonKey() final  bool isPlaying;

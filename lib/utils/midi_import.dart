@@ -11,8 +11,9 @@ class MidiImportResult {
     required this.trackNames,
   });
 
-  // 2D grid indexed by step then row, true = active.
-  final List<List<bool>> grid;
+  /// 2D grid indexed by step then row. Cell value: 0 = inactive,
+  /// 1..8 = active at touch-strip column 0..7.
+  final List<List<int>> grid;
 
   /// Names of tracks found in the MIDI file (for track selection UI).
   final List<String> trackNames;
@@ -66,7 +67,7 @@ MidiImportResult importMidiToGrid({
     return MidiImportResult(
       grid: [
         for (var s = 0; s < fixedStepCount; s++)
-          [for (var r = 0; r < 8; r++) false],
+          [for (var r = 0; r < 8; r++) 0],
       ],
       trackNames: trackNames,
     );
@@ -75,17 +76,13 @@ MidiImportResult importMidiToGrid({
   // Determine the quantization grid: one step = one sixteenth note.
   final ticksPerStep = ticksPerBeat ~/ 4;
 
-  // Build a reverse lookup: for each MIDI note, find the closest grid row.
-  // Compute MIDI notes for each row in the current scale.
-  final rowMidiNotes = <int>[
-    for (var row = 0; row < 8; row++)
-      midiNoteForPad(row: row, col: 0, scale: scale),
-  ];
+  // Compute every (string, column) pad for the current scale so we
+  // can map each MIDI note to the closest pad rather than rounding
+  // to one of just 8 strings.
+  final pads = plinkyPadsByPitch(scale);
 
-  // Create the grid (always 64 steps to match firmware storage).
   final grid = [
-    for (var s = 0; s < fixedStepCount; s++)
-      [for (var r = 0; r < 8; r++) false],
+    for (var s = 0; s < fixedStepCount; s++) [for (var r = 0; r < 8; r++) 0],
   ];
 
   for (final note in noteOns) {
@@ -93,19 +90,10 @@ MidiImportResult importMidiToGrid({
     if (step >= fixedStepCount) {
       continue;
     }
-
-    // Find the closest row for this MIDI note.
-    var bestRow = 0;
-    var bestDistance = (note.noteNumber - rowMidiNotes[0]).abs();
-    for (var row = 1; row < 8; row++) {
-      final distance = (note.noteNumber - rowMidiNotes[row]).abs();
-      if (distance < bestDistance) {
-        bestRow = row;
-        bestDistance = distance;
-      }
-    }
-
-    grid[step][bestRow] = true;
+    final pad = closestPadForMidiNote(pads, note.noteNumber);
+    // Cell value 1..8 = column 0..7. Per-string monophony: each step
+    // can hold one column per string.
+    grid[step][pad.string] = pad.column + 1;
   }
 
   return MidiImportResult(

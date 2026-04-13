@@ -9,6 +9,6 @@ abstract class PatternPlaybackState with _$PatternPlaybackState {
     String? currentPatternId,
     @Default(0) int currentStep,
     int? presetSlot,
-    @Default(120) double beatsPerMinute,
+    @Default(80) double beatsPerMinute,
   }) = _PatternPlaybackState;
 }

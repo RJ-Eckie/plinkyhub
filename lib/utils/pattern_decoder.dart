@@ -75,21 +75,28 @@ PatternData? _tryDecodeBinary(Uint8List bytes) {
         final fingerOffset =
             quarterOffset +
             (step * _stringCount + stringIndex) * _fingerRecordBytes;
-        // FingerRecord layout: pos[4], pressure[8]. The step is "active"
-        // for this string when any pressure sample is non-zero.
-        var hasPressure = false;
+        // FingerRecord layout: pos[4], pressure[8]. The step is active
+        // for this string when any pressure sample is non-zero. The
+        // first non-zero pressure substep also tells us which position
+        // sample to look at (firmware writes `pos[substep / 2]`).
+        var firstActiveSubstep = -1;
         for (var pressureIndex = 0; pressureIndex < 8; pressureIndex++) {
           if (bytes[fingerOffset + 4 + pressureIndex] != 0) {
-            hasPressure = true;
+            firstActiveSubstep = pressureIndex;
             break;
           }
         }
-        if (hasPressure) {
-          // Plinky string index 0 is the lowest pitch; the pattern
-          // editor uses row 0 as the highest pitch. Flip so the visual
-          // matches the editor's note layout.
-          row[_stringCount - 1 - stringIndex] = 1;
+        if (firstActiveSubstep < 0) {
+          continue;
         }
+        final positionByte = bytes[fingerOffset + (firstActiveSubstep ~/ 2)];
+        // pos_decompress gives `8 * positionByte`, and the column index
+        // is the high bits: `(8 * positionByte) >> 8` == `positionByte >> 5`.
+        final column = (positionByte >> 5) & 0x07;
+        // Plinky string index 0 is the lowest pitch; the pattern editor
+        // uses row 0 as the highest pitch. Flip so the visual matches
+        // the editor's note layout.
+        row[_stringCount - 1 - stringIndex] = column + 1;
       }
       grid.add(row);
     }

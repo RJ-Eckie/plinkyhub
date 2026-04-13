@@ -38,7 +38,7 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
 
   int? _presetSlot;
   late final TextEditingController _bpmController;
-  double _beatsPerMinute = 120;
+  double _beatsPerMinute = 80;
 
   @override
   void initState() {
@@ -73,10 +73,12 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
     ref.read(patternPlaybackProvider.notifier).setBeatsPerMinute(clamped);
   }
 
-  List<List<bool>> _gridAsBool(PatternData patternData) {
+  /// Pads each step out to exactly 8 entries so the grid widget always
+  /// has a value for every (step, row) cell.
+  List<List<int>> _normalizedGrid(PatternData patternData) {
     return [
       for (final step in patternData.grid)
-        [for (var row = 0; row < 8; row++) row < step.length && step[row] != 0],
+        [for (var row = 0; row < 8; row++) row < step.length ? step[row] : 0],
     ];
   }
 
@@ -200,13 +202,15 @@ class _PatternPlaybackPanelState extends ConsumerState<PatternPlaybackPanel> {
             ],
             const SizedBox(height: 16),
             if (patternData != null)
-              PatternGridEditor(
-                grid: _gridAsBool(patternData),
-                scale: _scale(patternData),
-                enabled: false,
-                readOnly: true,
-                currentPlaybackStep: currentStep,
-                onGridChanged: (_) {},
+              Expanded(
+                child: PatternGridEditor(
+                  grid: _normalizedGrid(patternData),
+                  scale: _scale(patternData),
+                  enabled: false,
+                  readOnly: true,
+                  currentPlaybackStep: currentStep,
+                  onGridChanged: (_) {},
+                ),
               )
             else if (widget.loadError == null)
               const Padding(

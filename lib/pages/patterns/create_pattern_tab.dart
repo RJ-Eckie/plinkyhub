@@ -31,7 +31,7 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
   bool _isPublic = true;
   bool _isSaving = false;
   PlinkyScale _scale = PlinkyScale.major;
-  late List<List<bool>> _grid;
+  late List<List<int>> _grid;
 
   @override
   void initState() {
@@ -46,9 +46,9 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
     super.dispose();
   }
 
-  List<List<bool>> _createEmptyGrid(int steps) {
+  List<List<int>> _createEmptyGrid(int steps) {
     return [
-      for (var s = 0; s < steps; s++) [for (var r = 0; r < 8; r++) false],
+      for (var s = 0; s < steps; s++) [for (var r = 0; r < 8; r++) 0],
     ];
   }
 
@@ -69,7 +69,8 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
     });
   }
 
-  bool get _hasActiveSteps => _grid.any((step) => step.any((cell) => cell));
+  bool get _hasActiveSteps =>
+      _grid.any((step) => step.any((cell) => cell != 0));
 
   Future<void> _importMidi() async {
     final result = await FilePicker.platform.pickFiles(
@@ -165,7 +166,7 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
       final patternData = PatternData(
         scaleIndex: _scale.index,
         grid: [
-          for (final step in _grid) [for (final cell in step) cell ? 1 : 0],
+          for (final step in _grid) [...step],
         ],
       );
 
