@@ -202,6 +202,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
           ),
           const SizedBox(height: 12),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.touch_app_outlined,
@@ -209,12 +210,13 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                 color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
-              Expanded(
+              Flexible(
                 child: Text(
                   'Press near the centre of a pad for full velocity; '
                   'pressure falls off toward the edges and the cell '
                   'brightens to match. Sliding your finger sends '
                   'polyphonic aftertouch to the Plinky.',
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
