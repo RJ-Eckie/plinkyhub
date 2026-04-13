@@ -15,8 +15,11 @@ import 'package:plinkyhub/utils/midi_import.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
 
-/// The Plinky sequencer uses a fixed 16-step pattern length.
+/// Plinky patterns start at 16 steps; the editor lets the user extend
+/// up to the firmware-supported 64 steps in 16-step increments.
 const fixedStepCount = 16;
+const _stepIncrement = 16;
+const _maxStepCount = 64;
 
 /// Synthetic pattern id used by `patternPlaybackProvider` to identify
 /// playback driven from the in-progress pattern editor (so it can show
@@ -53,6 +56,20 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
   void _clearGrid() {
     setState(() {
       _grid = _createEmptyGrid(fixedStepCount);
+    });
+  }
+
+  void _appendSteps() {
+    final remaining = _maxStepCount - _grid.length;
+    if (remaining <= 0) {
+      return;
+    }
+    final toAdd = remaining < _stepIncrement ? remaining : _stepIncrement;
+    setState(() {
+      _grid = [
+        ..._grid,
+        for (var s = 0; s < toAdd; s++) [for (var r = 0; r < 8; r++) 0],
+      ];
     });
   }
 
@@ -273,12 +290,34 @@ class _CreatePatternTabState extends ConsumerState<CreatePatternTab> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: PatternGridEditor(
-              grid: _grid,
-              scale: _scale,
-              enabled: !_isSaving,
-              currentPlaybackStep: currentPlaybackStep,
-              onGridChanged: (newGrid) => setState(() => _grid = newGrid),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: PatternGridEditor(
+                    grid: _grid,
+                    scale: _scale,
+                    enabled: !_isSaving,
+                    currentPlaybackStep: currentPlaybackStep,
+                    onGridChanged: (newGrid) => setState(() => _grid = newGrid),
+                  ),
+                ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: IconButton.outlined(
+                      tooltip: _grid.length >= _maxStepCount
+                          ? 'Pattern is at the maximum length '
+                                '($_maxStepCount steps)'
+                          : 'Add $_stepIncrement steps',
+                      onPressed: _isSaving || _grid.length >= _maxStepCount
+                          ? null
+                          : _appendSteps,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
