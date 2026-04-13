@@ -40,7 +40,7 @@ class PackCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: pack.username.isNotEmpty
-            ? () => context.go(
+            ? () => context.push(
                 AppRoute.packs.itemPage(pack.username, pack.name),
               )
             : null,

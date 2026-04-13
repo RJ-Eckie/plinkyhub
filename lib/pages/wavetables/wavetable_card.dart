@@ -34,7 +34,7 @@ class WavetableCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: wavetable.username.isNotEmpty
-            ? () => context.go(
+            ? () => context.push(
                 AppRoute.wavetables.itemPage(
                   wavetable.username,
                   wavetable.name,
@@ -94,7 +94,7 @@ class WavetableCard extends ConsumerWidget {
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
                       tooltip: 'Edit wavetable',
-                      onPressed: () => context.go(
+                      onPressed: () => context.push(
                         AppRoute.wavetableEditPage(
                           wavetable.username,
                           wavetable.name,

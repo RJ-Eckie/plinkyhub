@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/pattern_data.dart';
 import 'package:plinkyhub/state/midi_notifier.dart';
@@ -99,11 +100,36 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     required int channel,
     bool initial = false,
   }) {
-    final midiNotifier = ref.read(midiProvider.notifier);
     final stepCount = pattern.grid.length;
     if (stepCount == 0) {
       return;
     }
+
+    final nextStep = initial ? 0 : (state.currentStep + 1) % stepCount;
+
+    // Update the visual playhead first so the rebuild is scheduled
+    // before we send any MIDI. Otherwise audio (USB latency ~5 ms)
+    // reaches the user before the next frame paints (~16 ms), and the
+    // playhead appears to lag behind what's playing by one step.
+    state = state.copyWith(currentStep: nextStep);
+
+    // Defer the MIDI off/on burst until just after the current frame
+    // is painted. This trades ~16 ms of audio latency for accurate
+    // playhead-vs-audio sync.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _sendStepMidi(pattern, nextStep: nextStep, channel: channel);
+    });
+  }
+
+  void _sendStepMidi(
+    PatternData pattern, {
+    required int nextStep,
+    required int channel,
+  }) {
+    if (!state.isPlaying) {
+      return;
+    }
+    final midiNotifier = ref.read(midiProvider.notifier);
 
     // Release notes from the previous step.
     for (final note in _activeNotes) {
@@ -111,10 +137,8 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
     }
     _activeNotes.clear();
 
-    final nextStep = initial ? 0 : (state.currentStep + 1) % stepCount;
     final scale = _scaleFromIndex(pattern.scaleIndex);
     final rowValues = pattern.grid[nextStep];
-
     for (var row = 0; row < rowValues.length; row++) {
       final value = rowValues[row];
       if (value == 0) {
@@ -131,8 +155,6 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
       midiNotifier.sendNoteOn(midiNote, channel: channel);
       _activeNotes.add(midiNote);
     }
-
-    state = state.copyWith(currentStep: nextStep);
   }
 
   PlinkyScale _scaleFromIndex(int scaleIndex) {

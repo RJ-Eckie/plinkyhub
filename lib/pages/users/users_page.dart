@@ -182,7 +182,7 @@ class UserListTile extends StatelessWidget {
         ),
         title: Text(user.username),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.go(AppRoute.userPage(user.username)),
+        onTap: () => context.push(AppRoute.userPage(user.username)),
       ),
     );
   }

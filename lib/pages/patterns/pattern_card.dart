@@ -33,7 +33,7 @@ class PatternCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: pattern.username.isNotEmpty
-            ? () => context.go(
+            ? () => context.push(
                 AppRoute.patterns.itemPage(pattern.username, pattern.name),
               )
             : null,

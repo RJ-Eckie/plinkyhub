@@ -331,13 +331,7 @@ class _ItemPageShell extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: BackButton(
-                    onPressed: () {
-                      if (Navigator.of(context).canPop()) {
-                        Navigator.of(context).pop();
-                      } else {
-                        context.go(AppRoute.initial.path);
-                      }
-                    },
+                    onPressed: () => _onBackPressed(context),
                   ),
                 ),
                 Expanded(child: child),
@@ -348,4 +342,60 @@ class _ItemPageShell extends ConsumerWidget {
       ),
     );
   }
+
+  void _onBackPressed(BuildContext context) {
+    // In-app navigation uses `context.push(...)`, so popping the
+    // navigator gets us back to whatever page the user came from.
+    // For direct deep-links there's no history to pop, so derive a
+    // sensible parent route from the current URL instead of falling
+    // back to the home tab.
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    final location = GoRouterState.of(context).uri.path;
+    context.go(_parentRouteFor(location));
+  }
+}
+
+/// Returns the URL the back button should navigate to from [location].
+/// Edit pages step back to their view page; item detail pages step
+/// back to their parent listing tab; user profile pages step back to
+/// the users tab.
+String _parentRouteFor(String location) {
+  final segments = location
+      .split('/')
+      .where((segment) => segment.isNotEmpty)
+      .toList();
+
+  if (segments.isEmpty) {
+    return AppRoute.initial.path;
+  }
+
+  // /firmware/<name> -> /firmware
+  if (segments.first == 'firmware') {
+    return AppRoute.firmware.path;
+  }
+
+  // /<username>/<itemSegment>/<name>/edit -> /<username>/<itemSegment>/<name>
+  if (segments.length >= 4 && segments.last == 'edit') {
+    return '/${segments[0]}/${segments[1]}/${segments[2]}';
+  }
+
+  // /<username>/<itemSegment>/<name> -> /<itemSegment-list>
+  if (segments.length >= 3) {
+    final itemSegment = segments[1];
+    for (final route in AppRoute.values) {
+      if (route.itemSegment == itemSegment) {
+        return route.path;
+      }
+    }
+  }
+
+  // /<username> -> /users
+  if (segments.length == 1) {
+    return AppRoute.users.path;
+  }
+
+  return AppRoute.initial.path;
 }

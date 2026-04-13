@@ -39,7 +39,7 @@ class UsernameDateLine extends ConsumerWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                  context.go(AppRoute.userPage(username));
+                  context.push(AppRoute.userPage(username));
                 },
                 child: Text(
                   username,
