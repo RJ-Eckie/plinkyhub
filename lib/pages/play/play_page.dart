@@ -43,6 +43,16 @@ class _PlayPageState extends ConsumerState<PlayPage> {
   PlinkyScale _scale = PlinkyScale.major;
   int _octaveOffset = 0;
   int? _presetSlot;
+  bool _latch = false;
+
+  void _onLatchChanged(bool value) {
+    setState(() => _latch = value);
+    // Turning latch off should silence anything that was being held —
+    // otherwise a stranded note would keep sounding.
+    if (!value) {
+      ref.read(midiPlayProvider.notifier).releaseAll();
+    }
+  }
 
   @override
   void initState() {
@@ -143,29 +153,47 @@ class _PlayPageState extends ConsumerState<PlayPage> {
             ],
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<int?>(
-            initialValue: _presetSlot,
-            decoration: const InputDecoration(
-              labelText: 'Preset slot (optional)',
-              helperText: 'Sends a program change to switch the Plinky preset',
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-            ),
-            items: [
-              const DropdownMenuItem<int?>(
-                child: Text('Use currently selected preset'),
-              ),
-              for (var slot = 0; slot < _presetSlotCount; slot++)
-                DropdownMenuItem<int?>(
-                  value: slot,
-                  child: Text('Preset ${slot + 1}'),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int?>(
+                  initialValue: _presetSlot,
+                  decoration: const InputDecoration(
+                    labelText: 'Preset slot (optional)',
+                    helperText:
+                        'Sends a program change to switch the Plinky preset',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      child: Text('Use currently selected preset'),
+                    ),
+                    for (var slot = 0; slot < _presetSlotCount; slot++)
+                      DropdownMenuItem<int?>(
+                        value: slot,
+                        child: Text('Preset ${slot + 1}'),
+                      ),
+                  ],
+                  onChanged: _onPresetSlotChanged,
                 ),
+              ),
+              const SizedBox(width: 16),
+              Tooltip(
+                message: 'Hold notes until you tap the pad again',
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Latch'),
+                    Switch(value: _latch, onChanged: _onLatchChanged),
+                  ],
+                ),
+              ),
             ],
-            onChanged: _onPresetSlotChanged,
           ),
           if (!hasOutput) ...[
             const SizedBox(height: 12),
@@ -187,6 +215,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                   octaveOffset: _octaveOffset,
                   activePads: activePads,
                   enabled: hasOutput,
+                  latch: _latch,
                 ),
               ),
             ),
@@ -244,12 +273,14 @@ class _PadGrid extends ConsumerWidget {
     required this.octaveOffset,
     required this.activePads,
     required this.enabled,
+    required this.latch,
   });
 
   final PlinkyScale scale;
   final int octaveOffset;
   final Set<int> activePads;
   final bool enabled;
+  final bool latch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -273,17 +304,33 @@ class _PadGrid extends ConsumerWidget {
                         ),
                         isActive: activePads.contains(row * 8 + col),
                         enabled: enabled,
-                        onPressStart: () => ref
-                            .read(midiPlayProvider.notifier)
-                            .pressPad(
+                        onPressStart: () {
+                          final notifier = ref.read(
+                            midiPlayProvider.notifier,
+                          );
+                          // In latch mode a second press on an already
+                          // playing pad releases it; otherwise pressing
+                          // always starts the note.
+                          if (latch && activePads.contains(row * 8 + col)) {
+                            notifier.releasePad(row, col);
+                          } else {
+                            notifier.pressPad(
                               row: row,
                               col: col,
                               scale: scale,
                               octaveOffset: octaveOffset,
-                            ),
-                        onPressEnd: () => ref
-                            .read(midiPlayProvider.notifier)
-                            .releasePad(row, col),
+                            );
+                          }
+                        },
+                        onPressEnd: () {
+                          // Latched notes stay sounding until pressed
+                          // again; only release on pointer-up otherwise.
+                          if (!latch) {
+                            ref
+                                .read(midiPlayProvider.notifier)
+                                .releasePad(row, col);
+                          }
+                        },
                       ),
                     ),
                   ),

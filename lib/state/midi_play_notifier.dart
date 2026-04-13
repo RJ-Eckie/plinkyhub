@@ -75,14 +75,19 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
     state = state.copyWith(activeNotesByPad: updated);
   }
 
-  void _releaseAll() {
+  /// Release every currently-held pad. Called automatically on
+  /// dispose, and also from the play page when the latch toggle is
+  /// switched off so stranded notes don't keep sounding.
+  void releaseAll({int channel = 0}) {
     if (state.activeNotesByPad.isEmpty) {
       return;
     }
     final midiNotifier = ref.read(midiProvider.notifier);
     for (final note in state.activeNotesByPad.values) {
-      midiNotifier.sendNoteOff(note);
+      midiNotifier.sendNoteOff(note, channel: channel);
     }
     state = const MidiPlayState();
   }
+
+  void _releaseAll() => releaseAll();
 }
