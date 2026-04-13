@@ -158,30 +158,33 @@ class _PlayPageState extends ConsumerState<PlayPage> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<int?>(
-                  initialValue: _presetSlot,
-                  decoration: const InputDecoration(
-                    labelText: 'Preset slot (optional)',
-                    helperText:
-                        'Sends a program change to switch the Plinky preset',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      child: Text('Use currently selected preset'),
-                    ),
-                    for (var slot = 0; slot < _presetSlotCount; slot++)
-                      DropdownMenuItem<int?>(
-                        value: slot,
-                        child: Text('Preset ${slot + 1}'),
+                child: Tooltip(
+                  message:
+                      'Sends a program change to switch the Plinky '
+                      'preset',
+                  child: DropdownButtonFormField<int?>(
+                    initialValue: _presetSlot,
+                    decoration: const InputDecoration(
+                      labelText: 'Preset slot (optional)',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
                       ),
-                  ],
-                  onChanged: _onPresetSlotChanged,
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        child: Text('Use currently selected preset'),
+                      ),
+                      for (var slot = 0; slot < _presetSlotCount; slot++)
+                        DropdownMenuItem<int?>(
+                          value: slot,
+                          child: Text('Preset ${slot + 1}'),
+                        ),
+                    ],
+                    onChanged: _onPresetSlotChanged,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
