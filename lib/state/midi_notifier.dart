@@ -101,6 +101,28 @@ class MidiNotifier extends Notifier<MidiState> {
     );
   }
 
+  /// Send polyphonic aftertouch (0xA_) for [note]. The Plinky firmware
+  /// uses this to update the per-string pressure of an already-pressed
+  /// MIDI note (see `processmidimsg` case 0xa).
+  void sendPolyphonicAftertouch(
+    int note,
+    int pressure, {
+    int channel = 0,
+  }) {
+    final outputId = state.selectedOutputId;
+    if (outputId == null) {
+      return;
+    }
+    _service.sendToOutput(
+      outputId,
+      Uint8List.fromList([
+        0xA0 | (channel & 0x0F),
+        note & 0x7F,
+        pressure & 0x7F,
+      ]),
+    );
+  }
+
   /// Send a MIDI program-change message to switch the Plinky preset slot.
   void sendProgramChange(int programNumber, {int channel = 0}) {
     final outputId = state.selectedOutputId;

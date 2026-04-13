@@ -2,20 +2,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/state/midi_notifier.dart';
 import 'package:plinkyhub/utils/pitch.dart';
 
-/// Per-pad state for the WebMIDI play page. Tracks which pads are
-/// currently held down and what MIDI note each one sent, so we know
-/// what to release on note-off (the scale or octave can change while
-/// a pad is still pressed).
+/// Per-pad state for the WebMIDI play page. Tracks each held pad's
+/// MIDI note (so we know what to release on note-off, even if the
+/// scale or octave shifts mid-press) and its current pressure (0..1)
+/// so the UI can render brightness that reflects the touch position.
 class MidiPlayState {
-  const MidiPlayState({this.activeNotesByPad = const {}});
+  const MidiPlayState({
+    this.activeNotesByPad = const {},
+    this.pressureByPad = const {},
+  });
 
+  /// padIndex (row * 8 + col) -> MIDI note that was sent on press.
   final Map<int, int> activeNotesByPad;
+
+  /// padIndex -> latest pressure value in [0, 1].
+  final Map<int, double> pressureByPad;
 
   Set<int> get activePadIndices => activeNotesByPad.keys.toSet();
 
-  MidiPlayState copyWith({Map<int, int>? activeNotesByPad}) {
+  MidiPlayState copyWith({
+    Map<int, int>? activeNotesByPad,
+    Map<int, double>? pressureByPad,
+  }) {
     return MidiPlayState(
       activeNotesByPad: activeNotesByPad ?? this.activeNotesByPad,
+      pressureByPad: pressureByPad ?? this.pressureByPad,
     );
   }
 }
@@ -32,8 +43,9 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
   }
 
   /// Sends a MIDI note-on for the pad at [row], [col] using the given
-  /// [scale] / [stride] / [octaveOffset] mapping, and tracks the
-  /// note so we can release it later.
+  /// scale mapping. [pressure] (0..1) drives both the note-on velocity
+  /// and the initial polyphonic-aftertouch value, and is stored so
+  /// the UI can light the cell to match.
   void pressPad({
     required int row,
     required int col,
@@ -41,7 +53,7 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
     int stride = 7,
     int octaveOffset = 0,
     int channel = 0,
-    int velocity = 100,
+    double pressure = 1,
   }) {
     final padIndex = row * 8 + col;
     if (state.activeNotesByPad.containsKey(padIndex)) {
@@ -54,11 +66,37 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
       stride: stride,
       octaveOffset: octaveOffset,
     );
-    ref
-        .read(midiProvider.notifier)
-        .sendNoteOn(note, channel: channel, velocity: velocity);
+    final clamped = pressure.clamp(0.0, 1.0);
+    final velocity = (clamped * 127).round().clamp(1, 127);
+    final midi = ref.read(midiProvider.notifier)
+      ..sendNoteOn(note, channel: channel, velocity: velocity);
+    midi.sendPolyphonicAftertouch(note, velocity, channel: channel);
     state = state.copyWith(
       activeNotesByPad: {...state.activeNotesByPad, padIndex: note},
+      pressureByPad: {...state.pressureByPad, padIndex: clamped},
+    );
+  }
+
+  /// Updates the live pressure for an already-pressed pad. Sends
+  /// polyphonic aftertouch so the Plinky tracks the new value.
+  void updatePadPressure({
+    required int row,
+    required int col,
+    required double pressure,
+    int channel = 0,
+  }) {
+    final padIndex = row * 8 + col;
+    final note = state.activeNotesByPad[padIndex];
+    if (note == null) {
+      return;
+    }
+    final clamped = pressure.clamp(0.0, 1.0);
+    final value = (clamped * 127).round().clamp(0, 127);
+    ref
+        .read(midiProvider.notifier)
+        .sendPolyphonicAftertouch(note, value, channel: channel);
+    state = state.copyWith(
+      pressureByPad: {...state.pressureByPad, padIndex: clamped},
     );
   }
 
@@ -71,8 +109,12 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
       return;
     }
     ref.read(midiProvider.notifier).sendNoteOff(note, channel: channel);
-    final updated = {...state.activeNotesByPad}..remove(padIndex);
-    state = state.copyWith(activeNotesByPad: updated);
+    final notes = {...state.activeNotesByPad}..remove(padIndex);
+    final pressures = {...state.pressureByPad}..remove(padIndex);
+    state = state.copyWith(
+      activeNotesByPad: notes,
+      pressureByPad: pressures,
+    );
   }
 
   /// Release every currently-held pad. Called automatically on
