@@ -309,33 +309,41 @@ class _PadsTab extends ConsumerWidget {
       midiPlayProvider.select((state) => state.pressureByPad),
     );
 
-    return Column(
+    final hintStyle = theme.textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
+
+    return Row(
       children: [
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.touch_app_outlined,
-              size: 16,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                'Press near the centre of a pad for full velocity; '
-                'pressure falls off toward the edges and the cell '
-                'brightens to match. Sliding your finger sends '
-                'polyphonic aftertouch to the Plinky.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+        SizedBox(
+          width: 180,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _HintRow(
+                  icon: Icons.touch_app_outlined,
+                  text: 'Press near the centre for full velocity',
+                  style: hintStyle,
                 ),
-              ),
+                const SizedBox(height: 8),
+                _HintRow(
+                  icon: Icons.swipe_outlined,
+                  text: 'Slide to send polyphonic aftertouch',
+                  style: hintStyle,
+                ),
+                const SizedBox(height: 8),
+                _HintRow(
+                  icon: Icons.double_arrow_outlined,
+                  text: 'Double-tap a pad to latch it',
+                  style: hintStyle,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
         Expanded(
           child: Center(
             child: AspectRatio(
@@ -350,6 +358,7 @@ class _PadsTab extends ConsumerWidget {
             ),
           ),
         ),
+        const SizedBox(width: 180),
       ],
     );
   }
@@ -357,6 +366,29 @@ class _PadsTab extends ConsumerWidget {
 
 // -----------------------------------------------------------------------
 // Shared widgets
+class _HintRow extends StatelessWidget {
+  const _HintRow({
+    required this.icon,
+    required this.text,
+    required this.style,
+  });
+
+  final IconData icon;
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: style?.color),
+        const SizedBox(width: 6),
+        Flexible(child: Text(text, style: style)),
+      ],
+    );
+  }
+}
+
 // -----------------------------------------------------------------------
 
 class _MidiOutputDropdown extends StatelessWidget {
@@ -426,6 +458,18 @@ class _PadGrid extends ConsumerStatefulWidget {
 class _PadGridState extends ConsumerState<_PadGrid> {
   final Map<int, int> _pointerToPad = {};
   final Set<int> _pointersThatToggledOff = {};
+  final Map<int, int> _lastPointerDownTimeByPad = {};
+  final Set<int> _individuallyLatchedPads = {};
+
+  static const _doubleTapThresholdMs = 300;
+
+  @override
+  void didUpdateWidget(covariant _PadGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.latch != oldWidget.latch) {
+      _individuallyLatchedPads.clear();
+    }
+  }
 
   ({int row, int column, int padIndex, double pressure})? _hitTest(
     Offset position,
@@ -514,7 +558,22 @@ class _PadGridState extends ConsumerState<_PadGrid> {
         _pressPad(row: hit.row, column: hit.column, pressure: hit.pressure);
       }
     } else {
-      _pressPad(row: hit.row, column: hit.column, pressure: hit.pressure);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final lastTap = _lastPointerDownTimeByPad[padIndex];
+      final isDoubleTap =
+          lastTap != null && (now - lastTap) < _doubleTapThresholdMs;
+
+      if (_individuallyLatchedPads.contains(padIndex)) {
+        _individuallyLatchedPads.remove(padIndex);
+        _releasePad(padIndex);
+        _pointersThatToggledOff.add(event.pointer);
+      } else if (isDoubleTap) {
+        _individuallyLatchedPads.add(padIndex);
+        _pressPad(row: hit.row, column: hit.column, pressure: hit.pressure);
+      } else {
+        _pressPad(row: hit.row, column: hit.column, pressure: hit.pressure);
+      }
+      _lastPointerDownTimeByPad[padIndex] = now;
     }
     _pointerToPad[event.pointer] = padIndex;
   }
@@ -524,7 +583,9 @@ class _PadGridState extends ConsumerState<_PadGrid> {
     final previousPad = _pointerToPad[event.pointer];
 
     if (hit == null) {
-      if (previousPad != null && !widget.latch) {
+      if (previousPad != null &&
+          !widget.latch &&
+          !_individuallyLatchedPads.contains(previousPad)) {
         _releasePad(previousPad);
       }
       _pointerToPad.remove(event.pointer);
@@ -549,7 +610,8 @@ class _PadGridState extends ConsumerState<_PadGrid> {
       return;
     }
 
-    if (previousPad != null) {
+    if (previousPad != null &&
+        !_individuallyLatchedPads.contains(previousPad)) {
       _releasePad(previousPad);
     }
     _pressPad(row: hit.row, column: hit.column, pressure: hit.pressure);
@@ -563,6 +625,9 @@ class _PadGridState extends ConsumerState<_PadGrid> {
       return;
     }
     if (widget.latch || toggledOff) {
+      return;
+    }
+    if (_individuallyLatchedPads.contains(padIndex)) {
       return;
     }
     _releasePad(padIndex);
