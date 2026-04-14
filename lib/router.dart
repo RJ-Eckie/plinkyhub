@@ -169,6 +169,14 @@ GoRouter createRouter(ProviderContainer container) {
               GoRoute(
                 path: AppRoute.play.path,
                 builder: (context, state) => const PlayPage(),
+                routes: [
+                  GoRoute(
+                    path: ':tab',
+                    builder: (context, state) => PlayPage(
+                      initialTab: state.pathParameters['tab'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

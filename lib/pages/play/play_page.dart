@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:plinkyhub/pages/play/webcam_play_tab.dart';
+import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/midi_notifier.dart';
 import 'package:plinkyhub/state/midi_play_notifier.dart';
 import 'package:plinkyhub/state/midi_state.dart';
@@ -30,8 +32,12 @@ String _midiNoteName(int midi) {
 
 const _presetSlotCount = 32;
 
+enum PlayTab { pads, webcam }
+
 class PlayPage extends ConsumerStatefulWidget {
-  const PlayPage({super.key});
+  const PlayPage({this.initialTab, super.key});
+
+  final String? initialTab;
 
   @override
   ConsumerState<PlayPage> createState() => _PlayPageState();
@@ -48,7 +54,20 @@ class _PlayPageState extends ConsumerState<PlayPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final initialIndex = widget.initialTab != null
+        ? PlayTab.values
+              .firstWhere(
+                (tab) => tab.name == widget.initialTab,
+                orElse: () => PlayTab.pads,
+              )
+              .index
+        : 0;
+    _tabController = TabController(
+      length: PlayTab.values.length,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
+    _tabController.addListener(_handleTabChange);
     Future.microtask(() async {
       final midiState = ref.read(midiProvider);
       if (!midiState.isConnected) {
@@ -58,7 +77,30 @@ class _PlayPageState extends ConsumerState<PlayPage>
   }
 
   @override
+  void didUpdateWidget(PlayPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
+      final tab = PlayTab.values.firstWhere(
+        (tab) => tab.name == widget.initialTab,
+        orElse: () => PlayTab.pads,
+      );
+      if (_tabController.index != tab.index) {
+        _tabController.animateTo(tab.index);
+      }
+    }
+  }
+
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      final tabName = PlayTab.values[_tabController.index].name;
+      context.go(AppRoute.play.tab(tabName));
+    }
+  }
+
+  @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
