@@ -230,17 +230,19 @@ class _PlayPageState extends ConsumerState<PlayPage>
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Tooltip(
-                message: 'Hold notes until you tap the pad again',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Latch'),
-                    Switch(value: _latch, onChanged: _onLatchChanged),
-                  ],
+              if (_tabController.index == PlayTab.pads.index) ...[
+                const SizedBox(width: 16),
+                Tooltip(
+                  message: 'Hold notes until you tap the pad again',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Latch'),
+                      Switch(value: _latch, onChanged: _onLatchChanged),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           if (!hasOutput) ...[

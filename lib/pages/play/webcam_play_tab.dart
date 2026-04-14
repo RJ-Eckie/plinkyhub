@@ -286,17 +286,15 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
       _middlePinchWasActive[handIndex] = isActive;
 
       if (isActive && !wasActive) {
-        // Rising edge — toggle latch on the pad under the middle
-        // finger pinch point.
+        // Rising edge — latch the pad under the middle finger pinch
+        // point. Use index pinch to unlatch.
         final mappedX = _remapX(middlePinch.x);
         final mappedY = _remapY(middlePinch.y);
         final column = (mappedX * 8).floor().clamp(0, 7);
         final row = (mappedY * 8).floor().clamp(0, 7);
         final padIndex = row * 8 + column;
         final pressureMap = ref.read(midiPlayProvider).pressureByPad;
-        if (pressureMap.containsKey(padIndex)) {
-          notifier.releasePad(row, column);
-        } else {
+        if (!pressureMap.containsKey(padIndex)) {
           notifier.pressPad(
             row: row,
             column: column,
@@ -425,31 +423,41 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
       );
     }
 
-    return Column(
+    final hintStyle = theme.textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
+
+    return Row(
       children: [
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.pinch_outlined,
-              size: 16,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                'Pinch thumb + index to play a note. '
-                'Pinch thumb + middle finger to latch/unlatch it.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+        SizedBox(
+          width: 180,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _HintRow(
+                  icon: Icons.pinch_outlined,
+                  text: 'Thumb + index pinch to play',
+                  style: hintStyle,
                 ),
-              ),
+                const SizedBox(height: 8),
+                _HintRow(
+                  icon: Icons.push_pin_outlined,
+                  text: 'Thumb + middle pinch to latch',
+                  style: hintStyle,
+                ),
+                const SizedBox(height: 8),
+                _HintRow(
+                  icon: Icons.lock_open_outlined,
+                  text: 'Index pinch a latched note to unlatch',
+                  style: hintStyle,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
         Expanded(
           child: Center(
             child: AspectRatio(
@@ -477,6 +485,30 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
             ),
           ),
         ),
+        const SizedBox(width: 180),
+      ],
+    );
+  }
+}
+
+class _HintRow extends StatelessWidget {
+  const _HintRow({
+    required this.icon,
+    required this.text,
+    required this.style,
+  });
+
+  final IconData icon;
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: style?.color),
+        const SizedBox(width: 6),
+        Flexible(child: Text(text, style: style)),
       ],
     );
   }
