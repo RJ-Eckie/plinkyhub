@@ -37,6 +37,7 @@ class WebcamPlayTab extends ConsumerStatefulWidget {
     required this.octaveOffset,
     required this.enabled,
     required this.latch,
+    required this.active,
     super.key,
   });
 
@@ -44,6 +45,10 @@ class WebcamPlayTab extends ConsumerStatefulWidget {
   final int octaveOffset;
   final bool enabled;
   final bool latch;
+
+  /// Whether this tab is currently visible. When false the camera
+  /// stream is stopped and all held notes are released.
+  final bool active;
 
   @override
   ConsumerState<WebcamPlayTab> createState() => _WebcamPlayTabState();
@@ -67,13 +72,31 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
   /// Maps each hand index to the grid pad it is currently pinching.
   final Map<int, int> _fingertipToPad = {};
 
+  /// Tracks which hands had an active middle-finger pinch on the
+  /// previous frame, so we only toggle latch on the rising edge.
+  final Map<int, bool> _middlePinchWasActive = {};
+
   /// Latest hand landmarks for rendering the skeleton overlay.
   List<List<HandLandmark>> _latestHands = const [];
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    if (widget.active) {
+      _initializeCamera();
+    } else {
+      _initializing = false;
+    }
+  }
+
+  @override
+  void didUpdateWidget(WebcamPlayTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      _initializeCamera();
+    } else if (!widget.active && oldWidget.active) {
+      _deactivate();
+    }
   }
 
   @override
@@ -83,16 +106,33 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
     super.dispose();
   }
 
+  /// Stops the camera stream, MediaPipe processing, and releases all
+  /// held notes. Called when the user navigates away from this tab.
+  void _deactivate() {
+    _mediaPipe.dispose();
+    _stopCamera();
+    _fingertipToPad.clear();
+    _middlePinchWasActive.clear();
+    _latestHands = const [];
+    ref.read(midiPlayProvider.notifier).releaseAll();
+    setState(() {});
+  }
+
   Future<void> _initializeCamera() async {
     try {
-      final video = web.document.createElement('video') as web.HTMLVideoElement;
-      video.autoplay = true;
-      video.setAttribute('playsinline', '');
-      video.style.width = '100%';
-      video.style.height = '100%';
-      video.style.objectFit = 'cover';
-      video.style.transform = 'scaleX(-1)';
-      _videoElement = video;
+      // Reuse the existing video element when reactivating so we
+      // don't re-register the platform view.
+      var video = _videoElement;
+      if (video == null) {
+        video = web.document.createElement('video') as web.HTMLVideoElement;
+        video.autoplay = true;
+        video.setAttribute('playsinline', '');
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+        video.style.transform = 'scaleX(-1)';
+        _videoElement = video;
+      }
 
       final stream = await web.window.navigator.mediaDevices
           .getUserMedia(
@@ -107,11 +147,14 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
       await video.onLoadedMetadata.first;
       _updateCropOffsets();
 
-      final viewType = 'webcam-play-${identityHashCode(this)}';
-      ui_web.platformViewRegistry.registerViewFactory(
-        viewType,
-        (int viewId) => video,
-      );
+      if (_viewType == null) {
+        final viewType = 'webcam-play-${identityHashCode(this)}';
+        ui_web.platformViewRegistry.registerViewFactory(
+          viewType,
+          (int viewId) => video!,
+        );
+        _viewType = viewType;
+      }
 
       _mediaPipe.onResults = _onHandResults;
 
@@ -119,7 +162,6 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
         return;
       }
       setState(() {
-        _viewType = viewType;
         _initializing = false;
       });
 
@@ -201,24 +243,61 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
     }
 
     final newFingertips = <int, ({int padIndex, double pressure})>{};
+    final notifier = ref.read(midiPlayProvider.notifier);
 
-    // Detect pinch gestures (thumb tip + index tip close together).
-    // One pinch per hand → max two simultaneous voices.
     for (var handIndex = 0; handIndex < hands.length; handIndex++) {
-      final pinch = detectPinch(hands[handIndex]);
-      if (pinch == null || !pinch.isPinching) {
-        continue;
+      final hand = hands[handIndex];
+
+      // --- Index-finger pinch: play notes (existing behaviour) ---
+      final pinch = detectPinch(hand);
+      if (pinch != null && pinch.isPinching) {
+        final mappedX = _remapX(pinch.x);
+        final mappedY = _remapY(pinch.y);
+        final column = (mappedX * 8).floor().clamp(0, 7);
+        final row = (mappedY * 8).floor().clamp(0, 7);
+        final padIndex = row * 8 + column;
+        newFingertips[handIndex] = (
+          padIndex: padIndex,
+          pressure: pinch.closeness,
+        );
       }
-      final mappedX = _remapX(pinch.x);
-      final mappedY = _remapY(pinch.y);
-      final column = (mappedX * 8).floor().clamp(0, 7);
-      final row = (mappedY * 8).floor().clamp(0, 7);
-      final padIndex = row * 8 + column;
-      newFingertips[handIndex] = (
-        padIndex: padIndex,
-        pressure: pinch.closeness,
+
+      // --- Middle-finger pinch: toggle latch on rising edge ---
+      final middlePinch = detectPinch(
+        hand,
+        fingertipIndex: middleTipIndex,
       );
+      final wasActive = _middlePinchWasActive[handIndex] ?? false;
+      final isActive = middlePinch != null && middlePinch.isPinching;
+      _middlePinchWasActive[handIndex] = isActive;
+
+      if (isActive && !wasActive) {
+        // Rising edge — toggle latch on the pad under the middle
+        // finger pinch point.
+        final mappedX = _remapX(middlePinch.x);
+        final mappedY = _remapY(middlePinch.y);
+        final column = (mappedX * 8).floor().clamp(0, 7);
+        final row = (mappedY * 8).floor().clamp(0, 7);
+        final padIndex = row * 8 + column;
+        final pressureMap = ref.read(midiPlayProvider).pressureByPad;
+        if (pressureMap.containsKey(padIndex)) {
+          notifier.releasePad(row, column);
+        } else {
+          notifier.pressPad(
+            row: row,
+            column: column,
+            scale: widget.scale,
+            octaveOffset: widget.octaveOffset,
+            pressure: middlePinch.closeness,
+          );
+        }
+      }
     }
+
+    // Clean up middle-pinch state for hands that disappeared.
+    _middlePinchWasActive.removeWhere(
+      (handIndex, _) => handIndex >= hands.length,
+    );
 
     _reconcileFingertips(newFingertips);
   }
@@ -346,9 +425,8 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                'Pinch your thumb and index finger together over a '
-                'cell to play its note. The tighter the pinch, the '
-                'higher the velocity.',
+                'Pinch thumb + index to play a note. '
+                'Pinch thumb + middle finger to latch/unlatch it.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -484,15 +562,24 @@ class _HandSkeletonPainter extends CustomPainter {
 
       // Draw landmarks as dots.
       final dotPaint = Paint()..style = PaintingStyle.fill;
-      final pinch = detectPinch(hand);
+      final indexPinch = detectPinch(hand);
+      final middlePinch = detectPinch(
+        hand,
+        fingertipIndex: middleTipIndex,
+      );
       for (var i = 0; i < hand.length; i++) {
         final position = _toCanvas(hand[i], size);
-        final isPinchFinger = i == thumbTipIndex || i == indexTipIndex;
+        final isIndexFinger = i == thumbTipIndex || i == indexTipIndex;
+        final isMiddleFinger = i == middleTipIndex;
+        final isIndexPinching =
+            isIndexFinger && indexPinch != null && indexPinch.isPinching;
+        final isMiddlePinching =
+            isMiddleFinger && middlePinch != null && middlePinch.isPinching;
 
-        if (isPinchFinger && pinch != null && pinch.isPinching) {
+        if (isIndexPinching || isMiddlePinching) {
           dotPaint.color = primaryColor;
           canvas.drawCircle(position, 7, dotPaint);
-        } else if (isPinchFinger) {
+        } else if (isIndexFinger || isMiddleFinger) {
           dotPaint.color = Colors.white.withValues(alpha: 0.9);
           canvas.drawCircle(position, 6, dotPaint);
         } else {
@@ -502,16 +589,29 @@ class _HandSkeletonPainter extends CustomPainter {
       }
 
       // Draw a line between thumb and index to visualise the pinch.
-      if (pinch != null) {
+      if (indexPinch != null) {
         final thumbPosition = _toCanvas(hand[thumbTipIndex], size);
         final indexPosition = _toCanvas(hand[indexTipIndex], size);
         final pinchLinePaint = Paint()
-          ..color = pinch.isPinching
+          ..color = indexPinch.isPinching
               ? primaryColor.withValues(alpha: 0.8)
               : Colors.white.withValues(alpha: 0.3)
-          ..strokeWidth = pinch.isPinching ? 3 : 1
+          ..strokeWidth = indexPinch.isPinching ? 3 : 1
           ..style = PaintingStyle.stroke;
         canvas.drawLine(thumbPosition, indexPosition, pinchLinePaint);
+      }
+
+      // Draw a line between thumb and middle finger for latch pinch.
+      if (middlePinch != null) {
+        final thumbPosition = _toCanvas(hand[thumbTipIndex], size);
+        final middlePosition = _toCanvas(hand[middleTipIndex], size);
+        final latchLinePaint = Paint()
+          ..color = middlePinch.isPinching
+              ? primaryColor.withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.3)
+          ..strokeWidth = middlePinch.isPinching ? 3 : 1
+          ..style = PaintingStyle.stroke;
+        canvas.drawLine(thumbPosition, middlePosition, latchLinePaint);
       }
     }
   }

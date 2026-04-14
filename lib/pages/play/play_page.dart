@@ -95,6 +95,8 @@ class _PlayPageState extends ConsumerState<PlayPage>
     if (!_tabController.indexIsChanging) {
       final tabName = PlayTab.values[_tabController.index].name;
       context.go(AppRoute.play.tab(tabName));
+      // Rebuild so WebcamPlayTab receives the updated active flag.
+      setState(() {});
     }
   }
 
@@ -274,6 +276,7 @@ class _PlayPageState extends ConsumerState<PlayPage>
                   octaveOffset: _octaveOffset,
                   enabled: hasOutput,
                   latch: _latch,
+                  active: _tabController.index == PlayTab.webcam.index,
                 ),
               ],
             ),

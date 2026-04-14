@@ -35,9 +35,10 @@ class HandLandmark {
   final double z;
 }
 
-/// Thumb tip and index finger tip landmark indices.
+/// Thumb tip and fingertip landmark indices.
 const thumbTipIndex = 4;
 const indexTipIndex = 8;
+const middleTipIndex = 12;
 
 /// Normalized distance threshold below which the thumb and index
 /// finger are considered to be pinching. Tuned for typical webcam
@@ -69,17 +70,24 @@ class PinchResult {
 }
 
 /// Detects whether a hand is making a pinch gesture (thumb tip close
-/// to index finger tip). Much more reliable across hand angles than
+/// to the given fingertip). Much more reliable across hand angles than
 /// per-finger extension checks because it only measures the distance
 /// between two well-tracked landmarks.
-PinchResult? detectPinch(List<HandLandmark> hand) {
-  if (hand.length <= indexTipIndex) {
+///
+/// By default checks the index finger ([indexTipIndex]). Pass
+/// [fingertipIndex] to check a different finger (e.g.
+/// [middleTipIndex] for a latch gesture).
+PinchResult? detectPinch(
+  List<HandLandmark> hand, {
+  int fingertipIndex = indexTipIndex,
+}) {
+  if (hand.length <= fingertipIndex) {
     return null;
   }
   final thumb = hand[thumbTipIndex];
-  final index = hand[indexTipIndex];
-  final dx = thumb.x - index.x;
-  final dy = thumb.y - index.y;
+  final finger = hand[fingertipIndex];
+  final dx = thumb.x - finger.x;
+  final dy = thumb.y - finger.y;
   final distance = sqrt(dx * dx + dy * dy);
   final isPinching = distance < pinchThreshold;
   final closeness = isPinching
@@ -87,8 +95,8 @@ PinchResult? detectPinch(List<HandLandmark> hand) {
       : 0.0;
   return PinchResult(
     isPinching: isPinching,
-    x: (thumb.x + index.x) / 2,
-    y: (thumb.y + index.y) / 2,
+    x: (thumb.x + finger.x) / 2,
+    y: (thumb.y + finger.y) / 2,
     closeness: closeness,
   );
 }
