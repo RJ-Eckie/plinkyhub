@@ -244,26 +244,26 @@ class SlotSelectionGrid extends StatelessWidget {
         for (var row = 0; row < rows; row++)
           Row(
             children: [
-              for (var col = 0; col < columns; col++)
+              for (var column = 0; column < columns; column++)
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(
-                      right: col < columns - 1 ? 8 : 0,
+                      right: column < columns - 1 ? 8 : 0,
                       bottom: row < rows - 1 ? 8 : 0,
                     ),
-                    child: row * columns + col < slotCount
+                    child: row * columns + column < slotCount
                         ? ChoiceChip(
                             label: SizedBox(
                               width: double.infinity,
                               child: Text(
-                                '${row * columns + col + displayOffset}',
+                                '${row * columns + column + displayOffset}',
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                            selected: selectedSlot == row * columns + col,
+                            selected: selectedSlot == row * columns + column,
                             showCheckmark: false,
                             onSelected: (_) =>
-                                onSlotChanged(row * columns + col),
+                                onSlotChanged(row * columns + column),
                           )
                         : const SizedBox.shrink(),
                   ),

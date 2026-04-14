@@ -50,7 +50,8 @@ int _scaleDegreeSemitones(int row, PlinkyScale scale) {
   return octave * 12 + intervals[step];
 }
 
-/// Computes the MIDI note number for a pad at [row], [col] in the 8x8 grid.
+/// Computes the MIDI note number for a pad at [row], [column] in the
+/// 8x8 grid.
 ///
 /// [scale] selects the musical scale.
 /// [stride] is the semitone interval between columns (typically 7 = fifth).
@@ -58,14 +59,14 @@ int _scaleDegreeSemitones(int row, PlinkyScale scale) {
 /// [pitchOffset] is a fine-tune in semitones (fractional).
 int midiNoteForPad({
   required int row,
-  required int col,
+  required int column,
   PlinkyScale scale = PlinkyScale.chromatic,
   int stride = 7,
   int octaveOffset = 0,
   double pitchOffset = 0,
 }) {
   const baseMidi = 48; // C3
-  final colOffset = col * stride;
+  final colOffset = column * stride;
   final rowOffset = _scaleDegreeSemitones(row, scale);
   return baseMidi +
       octaveOffset * 12 +
@@ -116,7 +117,7 @@ List<PlinkyPad> plinkyPadsByString(
           column: column,
           midiNote: midiNoteForPad(
             row: stringIndex,
-            col: column,
+            column: column,
             scale: scale,
             stride: stride,
             octaveOffset: octaveOffset,
@@ -140,7 +141,7 @@ List<PlinkyPad> plinkyPadsByPitch(
           column: column,
           midiNote: midiNoteForPad(
             row: stringIndex,
-            col: column,
+            column: column,
             scale: scale,
             stride: stride,
             octaveOffset: octaveOffset,

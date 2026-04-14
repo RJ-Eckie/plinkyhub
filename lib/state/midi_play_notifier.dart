@@ -12,7 +12,7 @@ class MidiPlayState {
     this.pressureByPad = const {},
   });
 
-  /// padIndex (row * 8 + col) -> MIDI note that was sent on press.
+  /// padIndex (row * 8 + column) -> MIDI note that was sent on press.
   final Map<int, int> activeNotesByPad;
 
   /// padIndex -> latest pressure value in [0, 1].
@@ -42,26 +42,26 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
     return const MidiPlayState();
   }
 
-  /// Sends a MIDI note-on for the pad at [row], [col] using the given
+  /// Sends a MIDI note-on for the pad at [row], [column] using the given
   /// scale mapping. [pressure] (0..1) drives both the note-on velocity
   /// and the initial polyphonic-aftertouch value, and is stored so
   /// the UI can light the cell to match.
   void pressPad({
     required int row,
-    required int col,
+    required int column,
     required PlinkyScale scale,
     int stride = 7,
     int octaveOffset = 0,
     int channel = 0,
     double pressure = 1,
   }) {
-    final padIndex = row * 8 + col;
+    final padIndex = row * 8 + column;
     if (state.activeNotesByPad.containsKey(padIndex)) {
       return;
     }
     final note = midiNoteForPad(
       row: row,
-      col: col,
+      column: column,
       scale: scale,
       stride: stride,
       octaveOffset: octaveOffset,
@@ -81,11 +81,11 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
   /// polyphonic aftertouch so the Plinky tracks the new value.
   void updatePadPressure({
     required int row,
-    required int col,
+    required int column,
     required double pressure,
     int channel = 0,
   }) {
-    final padIndex = row * 8 + col;
+    final padIndex = row * 8 + column;
     final note = state.activeNotesByPad[padIndex];
     if (note == null) {
       return;
@@ -102,8 +102,8 @@ class MidiPlayNotifier extends Notifier<MidiPlayState> {
 
   /// Sends a MIDI note-off for the previously-pressed pad and clears
   /// it from the active set.
-  void releasePad(int row, int col, {int channel = 0}) {
-    final padIndex = row * 8 + col;
+  void releasePad(int row, int column, {int channel = 0}) {
+    final padIndex = row * 8 + column;
     final note = state.activeNotesByPad[padIndex];
     if (note == null) {
       return;

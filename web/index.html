@@ -35,6 +35,16 @@
   <script src="assets/packages/flutter_soloud/web/libflutter_soloud_plugin.js" defer></script>
   <script src="assets/packages/flutter_soloud/web/init_module.dart.js" defer></script>
 
+  <!-- MediaPipe Tasks Vision for webcam-based play mode.
+       The bundle is an ES module, so we import the symbols we need
+       and attach them to window so dart:js_interop can find them. -->
+  <script type="module">
+    import { FilesetResolver, HandLandmarker }
+      from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs';
+    window.FilesetResolver = FilesetResolver;
+    window.HandLandmarker = HandLandmarker;
+  </script>
+
   <style>
     html, body {
       margin: 0;

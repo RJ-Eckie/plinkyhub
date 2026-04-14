@@ -155,7 +155,7 @@ class PatternPlaybackNotifier extends Notifier<PatternPlaybackState> {
       final column = (value - 1).clamp(0, 7);
       final midiNote = midiNoteForPad(
         row: row,
-        col: column,
+        column: column,
         scale: scale,
       );
       midiNotifier.sendNoteOn(midiNote, channel: channel);
