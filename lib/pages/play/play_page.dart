@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/main.dart';
 import 'package:plinkyhub/pages/play/webcam_play_tab.dart';
 import 'package:plinkyhub/routes.dart';
 import 'package:plinkyhub/state/midi_notifier.dart';
@@ -127,6 +128,8 @@ class _PlayPageState extends ConsumerState<PlayPage>
     final colorScheme = theme.colorScheme;
     final midiState = ref.watch(midiProvider);
     final hasOutput = midiState.selectedOutputId != null;
+    final isPlayPageVisible =
+        ShellBranchIndex.of(context) == AppRoute.play.index;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -278,7 +281,9 @@ class _PlayPageState extends ConsumerState<PlayPage>
                   octaveOffset: _octaveOffset,
                   enabled: hasOutput,
                   latch: _latch,
-                  active: _tabController.index == PlayTab.webcam.index,
+                  active:
+                      isPlayPageVisible &&
+                      _tabController.index == PlayTab.webcam.index,
                 ),
               ],
             ),

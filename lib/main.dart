@@ -122,6 +122,28 @@ class PlinkyHubApp extends ConsumerWidget {
   }
 }
 
+/// Exposes the current shell branch index so descendant pages can
+/// check whether they are the active branch.
+class ShellBranchIndex extends InheritedWidget {
+  const ShellBranchIndex({
+    required this.currentIndex,
+    required super.child,
+    super.key,
+  });
+
+  final int currentIndex;
+
+  static int of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<ShellBranchIndex>()!
+        .currentIndex;
+  }
+
+  @override
+  bool updateShouldNotify(ShellBranchIndex oldWidget) =>
+      currentIndex != oldWidget.currentIndex;
+}
+
 class PlinkyHubShell extends ConsumerStatefulWidget {
   const PlinkyHubShell({required this.navigationShell, super.key});
 
@@ -162,31 +184,34 @@ class _PlinkyHubShellState extends ConsumerState<PlinkyHubShell> {
       }
     });
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Row(
-            children: [
-              NavigationSidebar(
-                selectedIndex: widget.navigationShell.currentIndex,
-                onDestinationSelected: (index) {
-                  widget.navigationShell.goBranch(
-                    index,
-                    initialLocation:
-                        index == widget.navigationShell.currentIndex,
-                  );
-                },
-              ),
-              const VerticalDivider(thickness: 1, width: 1),
-              Expanded(child: widget.navigationShell),
-            ],
-          ),
-          const Positioned(
-            bottom: 8,
-            right: 8,
-            child: _BetaLabel(),
-          ),
-        ],
+    return ShellBranchIndex(
+      currentIndex: widget.navigationShell.currentIndex,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Row(
+              children: [
+                NavigationSidebar(
+                  selectedIndex: widget.navigationShell.currentIndex,
+                  onDestinationSelected: (index) {
+                    widget.navigationShell.goBranch(
+                      index,
+                      initialLocation:
+                          index == widget.navigationShell.currentIndex,
+                    );
+                  },
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: widget.navigationShell),
+              ],
+            ),
+            const Positioned(
+              bottom: 8,
+              right: 8,
+              child: _BetaLabel(),
+            ),
+          ],
+        ),
       ),
     );
   }
