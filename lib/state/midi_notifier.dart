@@ -34,9 +34,19 @@ class MidiNotifier extends Notifier<MidiState> {
     final outputs = _service.outputs;
     final selected = state.selectedOutputId;
     final stillPresent = outputs.any((output) => output.id == selected);
+
+    // Always switch to a Plinky when one appears, even if another
+    // output is already selected.
+    final plinkyId = outputs
+        .where((output) => output.name.toLowerCase().contains('plinky'))
+        .firstOrNull
+        ?.id;
+    final newSelection =
+        plinkyId ?? (stillPresent ? selected : _defaultOutputId(outputs));
+
     state = state.copyWith(
       outputs: outputs,
-      selectedOutputId: stillPresent ? selected : _defaultOutputId(outputs),
+      selectedOutputId: newSelection,
     );
   }
 

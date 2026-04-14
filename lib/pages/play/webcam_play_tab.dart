@@ -230,7 +230,10 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
     }
   }
 
-  void _onHandResults(List<List<HandLandmark>> hands) {
+  void _onHandResults(
+    List<List<HandLandmark>> hands,
+    List<Handedness> handedness,
+  ) {
     if (!mounted) {
       return;
     }
@@ -247,6 +250,17 @@ class _WebcamPlayTabState extends ConsumerState<WebcamPlayTab> {
 
     for (var handIndex = 0; handIndex < hands.length; handIndex++) {
       final hand = hands[handIndex];
+      final h = handIndex < handedness.length
+          ? handedness[handIndex]
+          : Handedness.right;
+
+      // Only detect gestures when the palm is facing the camera.
+      if (!isPalmFacingCamera(hand, h)) {
+        // Reset middle-pinch edge state so a stale pinch does not
+        // carry over when the palm becomes visible again.
+        _middlePinchWasActive[handIndex] = false;
+        continue;
+      }
 
       // --- Index-finger pinch: play notes (existing behaviour) ---
       final pinch = detectPinch(hand);

@@ -40,6 +40,14 @@ const thumbTipIndex = 4;
 const indexTipIndex = 8;
 const middleTipIndex = 12;
 
+/// MCP (knuckle) indices used for palm-orientation detection.
+const _wristIndex = 0;
+const _indexMcpIndex = 5;
+const _pinkyMcpIndex = 17;
+
+/// Which hand MediaPipe detected (from the image's perspective).
+enum Handedness { left, right }
+
 /// Normalized distance threshold below which the thumb and index
 /// finger are considered to be pinching. Tuned for typical webcam
 /// hand sizes — roughly 6 % of the frame width.
@@ -101,9 +109,35 @@ PinchResult? detectPinch(
   );
 }
 
+/// Returns true when the palm side of [hand] faces the camera.
+///
+/// Uses the 2D cross product of the wrist → index-MCP and
+/// wrist → pinky-MCP vectors. The sign of the cross product
+/// flips when the hand turns over; combined with [handedness]
+/// this reliably distinguishes palm from back-of-hand.
+bool isPalmFacingCamera(List<HandLandmark> hand, Handedness handedness) {
+  if (hand.length <= _pinkyMcpIndex) {
+    return false;
+  }
+  final wrist = hand[_wristIndex];
+  final indexMcp = hand[_indexMcpIndex];
+  final pinkyMcp = hand[_pinkyMcpIndex];
+
+  final v1x = indexMcp.x - wrist.x;
+  final v1y = indexMcp.y - wrist.y;
+  final v2x = pinkyMcp.x - wrist.x;
+  final v2y = pinkyMcp.y - wrist.y;
+  final cross = v1x * v2y - v1y * v2x;
+
+  // MediaPipe labels hands from the image perspective, so "Left" in
+  // the image is the person's right hand. Flip the sign accordingly.
+  return handedness == Handedness.left ? cross > 0 : cross < 0;
+}
+
 typedef HandResultsCallback =
     void Function(
       List<List<HandLandmark>> hands,
+      List<Handedness> handedness,
     );
 
 /// Wraps the MediaPipe Tasks Vision HandLandmarker (loaded from CDN
@@ -185,12 +219,22 @@ class MediaPipeHandsService {
 
     final landmarksRaw = results['landmarks'];
     if (landmarksRaw == null || landmarksRaw.isUndefinedOrNull) {
-      callback([]);
+      callback([], []);
       return;
     }
 
     final handsArray = landmarksRaw as JSArray;
+
+    // Extract handedness classifications that sit alongside landmarks.
+    final handednessRaw = results['handedness'];
+    final handednessArray =
+        handednessRaw != null && !handednessRaw.isUndefinedOrNull
+        ? handednessRaw as JSArray
+        : null;
+
     final hands = <List<HandLandmark>>[];
+    final handedness = <Handedness>[];
+
     for (var handIndex = 0; handIndex < handsArray.length; handIndex++) {
       final handRaw = handsArray[handIndex];
       if (handRaw == null) {
@@ -219,8 +263,24 @@ class MediaPipeHandsService {
         );
       }
       hands.add(points);
+
+      // Determine handedness for this hand.
+      var h = Handedness.right;
+      if (handednessArray != null && handIndex < handednessArray.length) {
+        final classifications = handednessArray[handIndex] as JSArray?;
+        if (classifications != null && classifications.length > 0) {
+          final first = classifications[0] as JSObject?;
+          final label = first?['categoryName'];
+          if (label != null) {
+            h = (label as JSString).toDart == 'Left'
+                ? Handedness.left
+                : Handedness.right;
+          }
+        }
+      }
+      handedness.add(h);
     }
-    callback(hands);
+    callback(hands, handedness);
   }
 
   void dispose() {
