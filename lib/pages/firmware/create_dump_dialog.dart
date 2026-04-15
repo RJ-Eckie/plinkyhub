@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plinkyhub/pages/firmware/lpe_firmware_required_notice.dart';
 import 'package:plinkyhub/state/dumps_notifier.dart';
 import 'package:plinkyhub/state/plinky_notifier.dart';
 import 'package:plinkyhub/state/plinky_state.dart';
@@ -213,6 +214,8 @@ class _DumpFormView extends StatelessWidget {
           'few minutes to transfer.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
+        const SizedBox(height: 12),
+        const LpeFirmwareRequiredNotice(),
         const SizedBox(height: 12),
         TextField(
           controller: titleController,

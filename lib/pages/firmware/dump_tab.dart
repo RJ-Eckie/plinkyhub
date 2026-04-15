@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/pages/firmware/create_dump_dialog.dart';
 import 'package:plinkyhub/pages/firmware/dump_card.dart';
 import 'package:plinkyhub/pages/firmware/firmware_admins.dart';
+import 'package:plinkyhub/pages/firmware/lpe_firmware_required_notice.dart';
 import 'package:plinkyhub/services/webusb_service.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/dumps_notifier.dart';
@@ -67,6 +68,8 @@ class DumpTab extends ConsumerWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          const SizedBox(height: 16),
+          const LpeFirmwareRequiredNotice(),
           const SizedBox(height: 16),
           const ChromiumRequiredBanner(requireWebUsb: true),
           const SizedBox(height: 16),
