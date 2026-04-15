@@ -37,7 +37,8 @@ class EditorHeader extends ConsumerWidget {
                 switch (state.connectionState) {
                   PlinkyConnectionState.connected => Icons.usb,
                   PlinkyConnectionState.connecting => Icons.sync,
-                  PlinkyConnectionState.loadingPreset => Icons.download,
+                  PlinkyConnectionState.loadingPreset ||
+                  PlinkyConnectionState.readingFlashDump => Icons.download,
                   PlinkyConnectionState.savingPreset ||
                   PlinkyConnectionState.sendingSample ||
                   PlinkyConnectionState.sendingWavetable => Icons.upload,
@@ -49,7 +50,8 @@ class EditorHeader extends ConsumerWidget {
                   PlinkyConnectionState.loadingPreset ||
                   PlinkyConnectionState.savingPreset ||
                   PlinkyConnectionState.sendingSample ||
-                  PlinkyConnectionState.sendingWavetable => Colors.green,
+                  PlinkyConnectionState.sendingWavetable ||
+                  PlinkyConnectionState.readingFlashDump => Colors.green,
                   PlinkyConnectionState.connecting => Colors.orange,
                   PlinkyConnectionState.error => Colors.red,
                   PlinkyConnectionState.disconnected => Theme.of(

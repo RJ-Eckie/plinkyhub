@@ -11,6 +11,7 @@ enum PlinkyConnectionState {
   savingPreset,
   sendingSample,
   sendingWavetable,
+  readingFlashDump,
   error,
 }
 

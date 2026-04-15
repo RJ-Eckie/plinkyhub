@@ -18,6 +18,22 @@ const _magicHeaderExtended = [0xF3, 0x0F, 0xAB, 0xCB];
 /// Keeps memory usage reasonable and allows progress updates.
 const _sendBatchSize = 256;
 
+/// Index sent to the Plinky to request an internal flash dump
+/// (1 MB starting at 0x08000000). See
+/// https://github.com/ember-labs-io/Plinky_LPE commit f2d05a9.
+const flashDumpInternalIndex = 254;
+
+/// Index sent to the Plinky to request an external flash dump
+/// (32 MB starting at 0x40000000). See
+/// https://github.com/ember-labs-io/Plinky_LPE commit f2d05a9.
+const flashDumpExternalIndex = 255;
+
+/// Size of the Plinky's internal flash memory in bytes (1 MB).
+const flashDumpInternalSize = 0x100000;
+
+/// Size of the Plinky's external flash memory in bytes (32 MB).
+const flashDumpExternalSize = 0x2000000;
+
 /// Delay after SPI writes before sending SampleInfo, giving the firmware
 /// time to clear g_disable_fx and resume its main loop.
 const _postSpiDelay = Duration(milliseconds: 500);
@@ -354,6 +370,121 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       );
       rethrow;
     }
+  }
+
+  /// Reads a flash dump from Plinky over WebUSB using the 32-bit
+  /// header protocol.
+  ///
+  /// [flashIndex] must be [flashDumpInternalIndex] or
+  /// [flashDumpExternalIndex]. The firmware responds with the full
+  /// flash region when the requested length is 0.
+  ///
+  /// [onProgress] is called with a value between 0.0 and 1.0.
+  Future<Uint8List> readFlashDump({
+    required int flashIndex,
+    ValueChanged<double>? onProgress,
+  }) async {
+    assert(
+      flashIndex == flashDumpInternalIndex ||
+          flashIndex == flashDumpExternalIndex,
+      'flashIndex must be a flash dump index',
+    );
+
+    state = state.copyWith(
+      connectionState: PlinkyConnectionState.readingFlashDump,
+    );
+
+    try {
+      await _webUsbService.resetInterface();
+      _receivedData.clear();
+
+      // Request: magic_32 + cmd=0 (send) + idx + offset_32=0 + len_32=0.
+      // With len=0 the firmware responds with the entire flash region.
+      final requestBuffer = Uint8List.fromList([
+        ..._magicHeaderExtended,
+        0, // request to send
+        flashIndex,
+        0, 0, 0, 0, // offset_32 (little endian)
+        0, 0, 0, 0, // len_32 (little endian)
+      ]);
+      _webUsbService.send(requestBuffer);
+
+      // Wait for the 14-byte 32-bit header reply.
+      ByteData headerData;
+      while (true) {
+        headerData = await _waitForData();
+        if (_isValidFlashDumpHeader(headerData, flashIndex)) {
+          break;
+        }
+      }
+
+      final bytesToProcess =
+          headerData.getUint8(10) +
+          headerData.getUint8(11) * 256 +
+          headerData.getUint8(12) * 65536 +
+          headerData.getUint8(13) * 16777216;
+
+      final dumpBytes = Uint8List(bytesToProcess);
+      var processedBytes = 0;
+      var lastReportedProgress = 0.0;
+      onProgress?.call(0);
+      while (processedBytes < bytesToProcess) {
+        final chunkData = await _waitForData();
+        final chunkLength = chunkData.lengthInBytes;
+        for (var index = 0; index < chunkLength; index++) {
+          if (processedBytes + index >= bytesToProcess) {
+            break;
+          }
+          dumpBytes[processedBytes + index] = chunkData.getUint8(index);
+        }
+        processedBytes += chunkLength;
+        final progress = (processedBytes / bytesToProcess).clamp(0.0, 1.0);
+        if (progress - lastReportedProgress > 0.005 ||
+            processedBytes >= bytesToProcess) {
+          lastReportedProgress = progress;
+          onProgress?.call(progress);
+        }
+      }
+
+      state = state.copyWith(
+        connectionState: PlinkyConnectionState.connected,
+      );
+      return dumpBytes;
+    } on Exception catch (error) {
+      debugPrint('$error');
+      state = state.copyWith(
+        connectionState: PlinkyConnectionState.error,
+        errorMessage: error.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  bool _isValidFlashDumpHeader(ByteData data, int flashIndex) {
+    if (data.lengthInBytes < 14) {
+      return false;
+    }
+    // Extended magic: 0xF3, 0x0F, 0xAB, 0xCB
+    if (data.getUint8(0) != 0xF3) {
+      return false;
+    }
+    if (data.getUint8(1) != 0x0F) {
+      return false;
+    }
+    if (data.getUint8(2) != 0xAB) {
+      return false;
+    }
+    if (data.getUint8(3) != 0xCB) {
+      return false;
+    }
+    // Firmware sets cmd=1 in the response.
+    if (data.getUint8(4) != 1) {
+      return false;
+    }
+    if (data.getUint8(5) != flashIndex) {
+      return false;
+    }
+    return true;
   }
 
   /// Reads the current wavetable from Plinky over WebUSB (command 4).

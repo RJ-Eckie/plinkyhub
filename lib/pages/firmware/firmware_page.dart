@@ -1,72 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:plinkyhub/pages/firmware/firmware_card.dart';
-import 'package:plinkyhub/pages/firmware/upload_firmware_dialog.dart';
-import 'package:plinkyhub/state/authentication_notifier.dart';
-import 'package:plinkyhub/state/firmwares_notifier.dart';
-import 'package:plinkyhub/widgets/plinky_button.dart';
-import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
+import 'package:go_router/go_router.dart';
+import 'package:plinkyhub/pages/firmware/dump_tab.dart';
+import 'package:plinkyhub/pages/firmware/firmware_list_tab.dart';
+import 'package:plinkyhub/routes.dart';
 
-const _firmwareAdminIds = {
-  '1fc66f06-5180-48d6-814d-9cbcdd0980d8',
-  'a1248a67-da78-4b23-856f-02fc2c23d4bc',
-  '3e60fdc3-fd09-44e1-a211-8c790f69899b',
-};
+enum FirmwareTab {
+  firmware,
+  dump,
+}
 
-class FirmwarePage extends ConsumerWidget {
-  const FirmwarePage({super.key});
+class FirmwarePage extends ConsumerStatefulWidget {
+  const FirmwarePage({this.initialTab, super.key});
+
+  final String? initialTab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final firmwaresState = ref.watch(firmwaresProvider);
-    final currentUserId = ref.watch(authenticationProvider).user?.id;
-    final isAdmin =
-        currentUserId != null && _firmwareAdminIds.contains(currentUserId);
+  ConsumerState<FirmwarePage> createState() => _FirmwarePageState();
+}
 
-    if (firmwaresState.isLoading) {
-      return const Center(child: PlinkyLoadingAnimation());
+class _FirmwarePageState extends ConsumerState<FirmwarePage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = widget.initialTab != null
+        ? FirmwareTab.values
+              .firstWhere(
+                (tab) => tab.name == widget.initialTab,
+                orElse: () => FirmwareTab.firmware,
+              )
+              .index
+        : 0;
+
+    _tabController = TabController(
+      length: FirmwareTab.values.length,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
+    _tabController.addListener(_handleTabChange);
+  }
+
+  @override
+  void didUpdateWidget(FirmwarePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != null &&
+        widget.initialTab != oldWidget.initialTab) {
+      final tab = FirmwareTab.values.firstWhere(
+        (entry) => entry.name == widget.initialTab,
+        orElse: () => FirmwareTab.firmware,
+      );
+      if (_tabController.index != tab.index) {
+        _tabController.animateTo(tab.index);
+      }
     }
+  }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Firmware',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const Spacer(),
-              if (isAdmin)
-                PlinkyButton(
-                  onPressed: () => showDialog<void>(
-                    context: context,
-                    builder: (context) => const UploadFirmwareDialog(),
-                  ),
-                  icon: Icons.upload,
-                  label: 'Upload firmware',
-                ),
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      final tabName = FirmwareTab.values[_tabController.index].name;
+      // Use a query parameter instead of a path segment to avoid
+      // colliding with the firmware detail route (/firmware/:name).
+      context.go('${AppRoute.firmware.path}?tab=$tabName');
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Firmware'),
+            Tab(text: 'Dump'),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: const [
+              FirmwareListTab(),
+              DumpTab(),
             ],
           ),
-          const SizedBox(height: 16),
-          if (firmwaresState.errorMessage != null)
-            Text(
-              firmwaresState.errorMessage!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            )
-          else if (firmwaresState.firmwares.isEmpty)
-            const Text('No firmware versions available yet.')
-          else
-            ...firmwaresState.firmwares.map(
-              (firmware) => FirmwareCard(
-                firmware: firmware,
-                isAdmin: isAdmin,
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
