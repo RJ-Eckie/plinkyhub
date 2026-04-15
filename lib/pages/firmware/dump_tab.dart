@@ -57,10 +57,12 @@ class DumpTab extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             "Create a binary snapshot of your Plinky's internal (1 MB) "
-            'and external (32 MB) flash memory. Dumps are stored '
-            'privately in your account and can be downloaded later.'
-            '${isAdmin ? ' As a firmware admin you can download '
-                      'dumps from every user.' : ''}',
+            'and external (32 MB) flash memory.\n'
+            'Dumps are stored privately in your account and can be '
+            'downloaded later.'
+            '${isAdmin ? '\n'
+                      'As a firmware admin you can download dumps from '
+                      'every user.' : ''}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
