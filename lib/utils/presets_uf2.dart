@@ -173,12 +173,18 @@ int sampleSlotToRaw(int slotIndex) {
 ///   storedIndex = raw_to_index(raw, 9)  =  ((raw << 6) * 9) >> 16
 ///   sampleSlot  = (storedIndex - 1 + 9) % 9
 /// where storedIndex 0 maps to NO_SAMPLE (slot 8 → -1).
+///
+/// Raw values above the slot-7 range clamp to slot 7 to mirror the
+/// firmware's `clampi(index, 0, range - 1)` in `save_param_index`.
 int rawToSampleSlot(int rawValue) {
   if (rawValue == 0) {
     return -1;
   }
   const range = sampleCount + 1; // 9 = NUM_SAMPLES + 1
-  final storedIndex = ((rawValue << 6) * range) >> 16;
+  var storedIndex = ((rawValue << 6) * range) >> 16;
+  if (storedIndex >= range) {
+    storedIndex = range - 1;
+  }
   final slot = (storedIndex - 1 + range) % range;
   if (slot >= sampleCount) {
     return -1; // NO_SAMPLE
