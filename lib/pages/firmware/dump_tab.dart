@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/pages/firmware/create_dump_dialog.dart';
 import 'package:plinkyhub/pages/firmware/dump_card.dart';
+import 'package:plinkyhub/pages/firmware/firmware_admins.dart';
 import 'package:plinkyhub/services/webusb_service.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/dumps_notifier.dart';
@@ -26,6 +27,7 @@ class DumpTab extends ConsumerWidget {
     }
 
     final canCreateDump = WebUsbService.isSupported;
+    final isAdmin = firmwareAdminIds.contains(authenticationState.user?.id);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -56,7 +58,9 @@ class DumpTab extends ConsumerWidget {
           Text(
             "Create a binary snapshot of your Plinky's internal (1 MB) "
             'and external (32 MB) flash memory. Dumps are stored '
-            'privately in your account and can be downloaded later.',
+            'privately in your account and can be downloaded later.'
+            '${isAdmin ? ' As a firmware admin you can download '
+                      'dumps from every user.' : ''}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

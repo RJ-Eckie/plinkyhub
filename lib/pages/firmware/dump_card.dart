@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_dump.dart';
+import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/dumps_notifier.dart';
 import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/widgets/plinky_button.dart';
@@ -85,7 +86,11 @@ class _DumpCardState extends ConsumerState<DumpCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dump = widget.dump;
-    final username = dump.username.isEmpty ? 'you' : dump.username;
+    final currentUserId = ref.watch(authenticationProvider).user?.id;
+    final isOwner = currentUserId != null && dump.userId == currentUserId;
+    final username = dump.username.isEmpty
+        ? (isOwner ? 'you' : 'unknown')
+        : dump.username;
     final createdAt = _formatDate(dump.createdAt);
 
     return Card(
@@ -152,11 +157,12 @@ class _DumpCardState extends ConsumerState<DumpCard> {
                       : 'External flash '
                             '(${_formatBytes(dump.externalFlashSize)})',
                 ),
-                PlinkyButton(
-                  onPressed: _confirmDelete,
-                  icon: Icons.delete_outline,
-                  label: 'Delete',
-                ),
+                if (isOwner)
+                  PlinkyButton(
+                    onPressed: _confirmDelete,
+                    icon: Icons.delete_outline,
+                    label: 'Delete',
+                  ),
               ],
             ),
           ],

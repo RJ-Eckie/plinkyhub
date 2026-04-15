@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plinkyhub/models/saved_dump.dart';
+import 'package:plinkyhub/pages/firmware/firmware_admins.dart';
 import 'package:plinkyhub/state/authentication_notifier.dart';
 import 'package:plinkyhub/state/dumps_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -32,10 +33,11 @@ class DumpsNotifier extends Notifier<DumpsState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final response = await _supabase
-          .from('dumps')
-          .select('*, profiles(username)')
-          .eq('user_id', userId)
+      // Firmware admins see dumps from every user so they can help
+      // debug devices; RLS grants the extra SELECT access.
+      final isAdmin = firmwareAdminIds.contains(userId);
+      final query = _supabase.from('dumps').select('*, profiles(username)');
+      final response = await (isAdmin ? query : query.eq('user_id', userId))
           .order('created_at', ascending: false);
       final dumps = (response as List)
           .map((row) => SavedDump.fromJson(row as Map<String, dynamic>))
