@@ -36,6 +36,26 @@ const flashDumpInternalSize = 0x100000;
 /// Size of the Plinky's external flash memory in bytes (32 MB).
 const flashDumpExternalSize = 0x2000000;
 
+/// Thrown when a flash dump stalls mid-transfer. Carries the bytes
+/// received so far so the caller can save them for debugging the
+/// firmware-side timeout / address issues.
+class FlashDumpTimeoutException implements Exception {
+  FlashDumpTimeoutException({
+    required this.flashIndex,
+    required this.partialBytes,
+    required this.expectedBytes,
+  });
+
+  final int flashIndex;
+  final Uint8List partialBytes;
+  final int expectedBytes;
+
+  @override
+  String toString() =>
+      'FlashDumpTimeoutException(flashIndex=$flashIndex, '
+      'received=${partialBytes.length}, expected=$expectedBytes)';
+}
+
 /// Delay after SPI writes before sending SampleInfo, giving the firmware
 /// time to clear g_disable_fx and resume its main loop.
 const _postSpiDelay = Duration(milliseconds: 500);
@@ -374,16 +394,22 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
     }
   }
 
-  /// Reads a flash dump from Plinky over WebUSB using the 32-bit
-  /// header protocol.
+  /// Reads the entire flash region for [flashIndex] over WebUSB.
   ///
-  /// [flashIndex] must be [flashDumpInternalIndex] or
-  /// [flashDumpExternalIndex]. The firmware responds with the full
-  /// flash region when the requested length is 0.
+  /// When [chunkBytes] is set the region is fetched through multiple
+  /// smaller requests of that size. This is the workaround for the LPE
+  /// firmware's 5 s state timeout, which drops large single transfers:
+  /// each request goes through the state machine from scratch, so the
+  /// timeout never fires against a single long SEND_DATA phase.
   ///
-  /// [onProgress] is called with a value between 0.0 and 1.0.
+  /// When [chunkBytes] is null a single request is issued for the whole
+  /// region (original behavior — works for small regions like presets).
+  ///
+  /// [onProgress] is called with a value between 0.0 and 1.0 against the
+  /// total region size.
   Future<Uint8List> readFlashDump({
     required int flashIndex,
+    int? chunkBytes,
     ValueChanged<double>? onProgress,
   }) async {
     assert(
@@ -391,6 +417,71 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
           flashIndex == flashDumpExternalIndex,
       'flashIndex must be a flash dump index',
     );
+    assert(chunkBytes == null || chunkBytes > 0, 'chunkBytes must be positive');
+
+    if (chunkBytes == null) {
+      return _readFlashDumpRange(
+        flashIndex: flashIndex,
+        byteOffset: 0,
+        byteCount: null,
+        onProgress: onProgress,
+      );
+    }
+
+    final regionSize = flashIndex == flashDumpInternalIndex
+        ? flashDumpInternalSize
+        : flashDumpExternalSize;
+    final combined = Uint8List(regionSize);
+    var offset = 0;
+    onProgress?.call(0);
+
+    try {
+      while (offset < regionSize) {
+        final remaining = regionSize - offset;
+        final thisChunk = remaining < chunkBytes ? remaining : chunkBytes;
+        final chunk = await _readFlashDumpRange(
+          flashIndex: flashIndex,
+          byteOffset: offset,
+          byteCount: thisChunk,
+        );
+        combined.setRange(offset, offset + chunk.length, chunk);
+        offset += chunk.length;
+        onProgress?.call(offset / regionSize);
+      }
+    } on FlashDumpTimeoutException catch (error) {
+      // Splice whatever the failing chunk managed to collect into the
+      // cumulative buffer, then rethrow with the merged partial bytes.
+      if (error.partialBytes.isNotEmpty) {
+        final spliceEnd = offset + error.partialBytes.length;
+        final clampedEnd = spliceEnd > regionSize ? regionSize : spliceEnd;
+        combined.setRange(
+          offset,
+          clampedEnd,
+          error.partialBytes,
+        );
+        offset = clampedEnd;
+      }
+      throw FlashDumpTimeoutException(
+        flashIndex: error.flashIndex,
+        partialBytes: Uint8List.sublistView(combined, 0, offset),
+        expectedBytes: regionSize,
+      );
+    }
+
+    return combined;
+  }
+
+  /// Requests a single [byteCount]-sized slice starting at [byteOffset]
+  /// (or the rest of the region when [byteCount] is null). Performs one
+  /// full request/response exchange with the firmware.
+  Future<Uint8List> _readFlashDumpRange({
+    required int flashIndex,
+    required int byteOffset,
+    required int? byteCount,
+    ValueChanged<double>? onProgress,
+  }) async {
+    assert(byteOffset >= 0, 'byteOffset must be non-negative');
+    assert(byteCount == null || byteCount > 0, 'byteCount must be positive');
 
     state = state.copyWith(
       connectionState: PlinkyConnectionState.readingFlashDump,
@@ -400,24 +491,46 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       await _webUsbService.resetInterface();
       _receivedData.clear();
 
-      // Request: magic_32 + cmd=0 (send) + idx + offset_32=0 + len_32=0.
-      // With len=0 the firmware responds with the entire flash region.
+      // Request: magic_32 + cmd=0 (send) + idx + offset_32 + len_32.
+      // With len=0 the firmware responds with the entire flash region
+      // from [byteOffset] onward.
+      final requestedLength = byteCount ?? 0;
       final requestBuffer = Uint8List.fromList([
         ..._magicHeaderExtended,
         0, // request to send
         flashIndex,
-        0, 0, 0, 0, // offset_32 (little endian)
-        0, 0, 0, 0, // len_32 (little endian)
+        byteOffset & 0xFF,
+        (byteOffset >> 8) & 0xFF,
+        (byteOffset >> 16) & 0xFF,
+        (byteOffset >> 24) & 0xFF,
+        requestedLength & 0xFF,
+        (requestedLength >> 8) & 0xFF,
+        (requestedLength >> 16) & 0xFF,
+        (requestedLength >> 24) & 0xFF,
       ]);
       _webUsbService.send(requestBuffer);
 
-      // Wait for the 14-byte 32-bit header reply.
+      // Wait for the 14-byte 32-bit header reply. Keep any non-matching
+      // packets around so a timeout can surface whatever the firmware
+      // did send (or nothing, if it silently dropped the request).
+      final preHeaderBytes = <int>[];
       ByteData headerData;
-      while (true) {
-        headerData = await _waitForData();
-        if (_isValidFlashDumpHeader(headerData, flashIndex)) {
-          break;
+      try {
+        while (true) {
+          headerData = await _waitForData();
+          if (_isValidFlashDumpHeader(headerData, flashIndex)) {
+            break;
+          }
+          for (var index = 0; index < headerData.lengthInBytes; index++) {
+            preHeaderBytes.add(headerData.getUint8(index));
+          }
         }
+      } on TimeoutException {
+        throw FlashDumpTimeoutException(
+          flashIndex: flashIndex,
+          partialBytes: Uint8List.fromList(preHeaderBytes),
+          expectedBytes: 0,
+        );
       }
 
       final bytesToProcess =
@@ -431,7 +544,16 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       var lastReportedProgress = 0.0;
       onProgress?.call(0);
       while (processedBytes < bytesToProcess) {
-        final chunkData = await _waitForData();
+        final ByteData chunkData;
+        try {
+          chunkData = await _waitForData();
+        } on TimeoutException {
+          throw FlashDumpTimeoutException(
+            flashIndex: flashIndex,
+            partialBytes: Uint8List.sublistView(dumpBytes, 0, processedBytes),
+            expectedBytes: bytesToProcess,
+          );
+        }
         final chunkLength = chunkData.lengthInBytes;
         for (var index = 0; index < chunkLength; index++) {
           if (processedBytes + index >= bytesToProcess) {

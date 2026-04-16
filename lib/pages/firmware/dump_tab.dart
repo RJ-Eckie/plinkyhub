@@ -35,25 +35,9 @@ class DumpTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Flash dumps',
-                style: theme.textTheme.headlineSmall,
-              ),
-              const Spacer(),
-              PlinkyButton(
-                onPressed: canCreateDump
-                    ? () => showDialog<void>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const CreateDumpDialog(),
-                      )
-                    : null,
-                icon: Icons.save_alt,
-                label: 'Create dump',
-              ),
-            ],
+          Text(
+            'Flash dumps',
+            style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
@@ -67,6 +51,18 @@ class DumpTab extends ConsumerWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
+          ),
+          const SizedBox(height: 16),
+          PlinkyButton(
+            onPressed: canCreateDump
+                ? () => showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const CreateDumpDialog(),
+                  )
+                : null,
+            icon: Icons.save_alt,
+            label: 'Create dump',
           ),
           const SizedBox(height: 16),
           const LpeFirmwareRequiredNotice(),

@@ -79,7 +79,7 @@ class _FlashFirmwareDialogState extends ConsumerState<FlashFirmwareDialog> {
             statusMessage: _statusMessage,
           ),
           _DialogStep.done => const Text(
-            'Firmware written successfully! '
+            'Firmware written successfully!\n'
             'Eject the drive and restart your Plinky.',
           ),
           _DialogStep.error => SaveErrorView(errorMessage: _errorMessage),
