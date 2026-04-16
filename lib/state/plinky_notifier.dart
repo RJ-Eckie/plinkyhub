@@ -14,9 +14,11 @@ const _usbBufferSize = 64;
 const _magicHeader = [0xF3, 0x0F, 0xAB, 0xCA];
 const _magicHeaderExtended = [0xF3, 0x0F, 0xAB, 0xCB];
 
-/// Number of USB packets to send per batch before yielding.
-/// Keeps memory usage reasonable and allows progress updates.
-const _sendBatchSize = 256;
+/// Size of each buffer passed to WebUSB `transferOut` when streaming
+/// large payloads (samples, wavetables). The browser handles splitting
+/// this into max-packet-size USB packets internally, so a larger value
+/// means far fewer JS-interop round-trips.
+const _transferOutChunkSize = 16 * 1024;
 
 /// Index sent to the Plinky to request an internal flash dump
 /// (1 MB starting at 0x08000000). See
@@ -648,24 +650,23 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
       (byteCount >> 8) & 0xFF,
     ]);
 
-    final futures = <Future<void>>[];
-    futures.add(_webUsbService.send(header));
+    // Fire-and-forget the header, then send data in one or more
+    // large slices. The browser handles USB packetization internally.
+    await _webUsbService.send(header);
 
     var position = 0;
     while (position < data.length) {
-      final end = (position + _usbBufferSize).clamp(0, data.length);
-      futures.add(_webUsbService.send(data.sublist(position, end)));
-      position += _usbBufferSize;
+      final end = min(position + _transferOutChunkSize, data.length);
+      await _webUsbService.send(data.sublist(position, end));
+      position = end;
     }
-
-    await Future.wait(futures);
   }
 
   /// Sends a large data payload with an extended 14-byte (32-bit) header.
   ///
-  /// Data is sent in batches of [_sendBatchSize] USB packets to avoid
-  /// queuing too many transfers at once. The firmware handles internal
-  /// chunking (e.g. 64KB SPI writes) transparently.
+  /// Data is sent in [_transferOutChunkSize] slices. The browser handles
+  /// splitting each slice into 64-byte USB packets, so we avoid
+  /// thousands of individual JS-interop round-trips.
   Future<void> _sendStreamWithExtendedHeader({
     required int command,
     required int index,
@@ -694,13 +695,9 @@ class PlinkyNotifier extends Notifier<PlinkyState> {
 
     var position = 0;
     while (position < data.length) {
-      final futures = <Future<void>>[];
-      for (var i = 0; i < _sendBatchSize && position < data.length; i++) {
-        final end = (position + _usbBufferSize).clamp(0, data.length);
-        futures.add(_webUsbService.send(data.sublist(position, end)));
-        position += _usbBufferSize;
-      }
-      await Future.wait(futures);
+      final end = min(position + _transferOutChunkSize, data.length);
+      await _webUsbService.send(data.sublist(position, end));
+      position = end;
       onProgress?.call(position / data.length);
     }
   }
