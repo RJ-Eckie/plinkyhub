@@ -4,6 +4,15 @@ import 'package:plinkyhub/utils/file_system_access.dart';
 import 'package:plinkyhub/widgets/chromium_required_banner.dart';
 import 'package:plinkyhub/widgets/plinky_loading_animation.dart';
 
+/// How data is transferred to the Plinky device.
+enum TransferMethod {
+  /// Send directly over WebUSB while the Plinky is running normally.
+  webUsb,
+
+  /// Write UF2 files to the Plinky drive in Tunnel of Lights mode.
+  tunnelOfLights,
+}
+
 class TunnelOfLightsInstructions extends StatelessWidget {
   const TunnelOfLightsInstructions({
     required this.itemType,
@@ -155,7 +164,7 @@ class TransferMethodSelection extends StatelessWidget {
         ],
         const _TransferMethodOption(
           icon: Icons.folder_open,
-          title: 'Tunnel of Lights',
+          title: 'Tunnel of Lights (faster)',
           description:
               'Write UF2 files to the Plinky drive. Requires putting '
               'Plinky into Tunnel of Lights mode first.',
